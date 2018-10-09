@@ -1,0 +1,13 @@
+﻿{
+  "PSCredential": [
+    {
+      "Username": "automation.user@felix.bodmer.name",
+      "Password": "pxHMGCg08rU8ajDrfLZCeAtB7Lxw2TH6ROvJpV9kUgCeoLsEatq301JKo78r70DErb00SfICk52Bv2/tGQSWcf1N2qhvy8fGaA5z2OXhoKMJTXoKWnZ/f5BlohD8620Z2iAufPJUO+54KNG3zHZT1QQ/mz0ntlQtFmz6FPGzQuzbtbYvP8b3kFAS3jTYF3aRIfROHIpbqBS5AdT+VKGs4uKq/7EAyS6/94F3VaCcc7ye+jLnCJqg6a5/EMb3B17gRFwwLqI0MR60JXSFnXRMWOFBdpATNxsr1cQt6PiXahOCcM2IXhsSixrEZhHn+m2ElcTF/yWm8ciGFSmznv4EHA==",
+      "Name": "CRE-AUTO-AutomationUser",
+      "LastModified": "2018-10-04 10:32:48Z"
+    }
+  ],
+  "Connection": [],
+  "Variable": [],
+  "Certificate": []
+}

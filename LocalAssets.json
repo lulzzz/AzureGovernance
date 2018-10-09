@@ -1,0 +1,23 @@
+﻿{
+  "Variable": [
+    {
+      "Value": "wus-te-rg-auto-01",
+      "Encrypted": false,
+      "Name": "VAR-AUTO-CoreResourceGroup",
+      "LastModified": "2017-12-20 14:45:51Z"
+    },
+    {
+      "Value": "felamstecore01s",
+      "Encrypted": false,
+      "Name": "VAR-AUTO-StorageAccountName",
+      "LastModified": "2017-04-26 09:39:32Z"
+    },
+    {
+      "Value": "Test-te",
+      "Encrypted": false,
+      "Name": "VAR-AUTO-SubscriptionName",
+      "LastModified": "2017-11-07 16:04:51Z"
+    }
+  ],
+  "Certificate": []
+}
