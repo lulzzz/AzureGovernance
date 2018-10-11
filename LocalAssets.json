@@ -7,16 +7,22 @@
       "LastModified": "2017-12-20 14:45:51Z"
     },
     {
-      "Value": "felamstecore01s",
-      "Encrypted": false,
-      "Name": "VAR-AUTO-StorageAccountName",
-      "LastModified": "2017-04-26 09:39:32Z"
-    },
-    {
       "Value": "Test-te",
       "Encrypted": false,
       "Name": "VAR-AUTO-SubscriptionName",
       "LastModified": "2017-11-07 16:04:51Z"
+    },
+    {
+      "Value": "wus-te-auto-dev-01",
+      "Encrypted": false,
+      "Name": "VAR-AUTO-AutomationAccountName",
+      "LastModified": "2018-10-11 15:14:32Z"
+    },
+    {
+      "Value": "felwustecore01s",
+      "Encrypted": false,
+      "Name": "VAR-AUTO-StorageAccountName",
+      "LastModified": "2018-10-11 15:25:26Z"
     }
   ],
   "Certificate": []
