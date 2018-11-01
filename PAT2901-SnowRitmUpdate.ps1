@@ -1,6 +1,6 @@
 ﻿###############################################################################################################################################################
-# Updates the SNOW Service Request Item (RTIM). This will set the status of the RTIM to 'Closed Complete' and send the server information to the user.
-## 
+# Updates the ServiceNow Service Request Item (RTIM). This will set the status of the RTIM to 'Closed Complete' and send the server information to the user.
+# 
 # Output:         'Success' or 'Failure'
 #
 # Requirements:   AzureAutomationAuthoringToolkit
