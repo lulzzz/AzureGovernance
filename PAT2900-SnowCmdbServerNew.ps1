@@ -2,9 +2,6 @@
 # Creating the required CIs in the ServiceNow CMDB. This includes cmdb_ci_win/linux_server and in the case of an Availability Set the corresponding 
 # cmdb_ci_cluster and cmdb_ci_cluster_node. In addition, all CIs are connected to the cmdb_ci_environment using the relationship table cmdb_environment_to_ci.
 #
-# Error Handling: Errors related to the execution of the cmdlets are listed in the runbooks log.
-#                 On the first failure the pattern will return control to the parent runbook
-#
 # Output:         'Success' or 'Failure'
 # 
 # Template:       PAT2900-SnowCmdbServerNew -DepartmentName $DepartmentName -ServerName $ServerName -ServerOwnerName $ServerOwnerName `
