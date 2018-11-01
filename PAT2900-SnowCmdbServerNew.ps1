@@ -1,16 +1,15 @@
-﻿ ###############################################################################################################################################################
-# Creating the required CIs in the ServiceNow CMDB. This includes cmdb_ci_win/linux_server and in the case of an Availability Set the corresponding cmdb_ci_cluster 
-# and cmdb_ci_cluster_node. In addition, all CIs are connected to the cmdb_ci_environment using the relationship table cmdb_environment_to_ci.
+﻿###############################################################################################################################################################
+# Creating the required CIs in the ServiceNow CMDB. This includes cmdb_ci_win/linux_server and in the case of an Availability Set the corresponding 
+# cmdb_ci_cluster and cmdb_ci_cluster_node. In addition, all CIs are connected to the cmdb_ci_environment using the relationship table cmdb_environment_to_ci.
 #
 # Error Handling: Errors related to the execution of the cmdlets are listed in the runbooks log.
 #                 On the first failure the pattern will return control to the parent runbook
 #
 # Output:         'Success' or 'Failure'
 # 
-# Template:       PAT0013-UpdateCmdb -DepartmentName $DepartmentName -ServerName $ServerName -ServerOwnerName $ServerOwnerName -ServerTier $ServerTier `
-#                                    -ApplicationName $ApplicationName -ApplicationDescription $ApplicationDescription -ServerEndOfLife $ServerEndOfLife `
-#                                    -ReqRitm $ReqRitm -Uri $Uri -AvailabilitySetName $AvailabilitySetName -CountryName $CountryName `
-#                                    -PrivateIpAddress $PrivateIpAddress
+# Template:       PAT2900-SnowCmdbServerNew -DepartmentName $DepartmentName -ServerName $ServerName -ServerOwnerName $ServerOwnerName `
+#                                           -Environment $Environment -ApplicationName $ApplicationName -ApplicationDescription $ApplicationDescription `
+#                                           -ReqRitm $ReqRitm -Uri $Uri -AvailabilitySetName $AvailabilitySetName -PrivateIpAddress $PrivateIpAddress
 #
 # Requirements:   - 
 #
@@ -24,23 +23,31 @@ workflow PAT2900-SnowCmdbServerNew
   
   param
   (
-    [Parameter(Mandatory = $false)][String] $DepartmentName = 'FIBS_TC',
-    [Parameter(Mandatory = $false)][String] $ServerName = 'li-felixc02',
-    [Parameter(Mandatory = $false)][String] $ServerOwnerName = 'Cuauhtemoc.Tello@hilti.com',
-    [Parameter(Mandatory = $false)][String] $ServerTier = 'Crash and Burn',
-    [Parameter(Mandatory = $false)][String] $ApplicationName = 'SCOM',
-    [Parameter(Mandatory = $false)][String] $ApplicationDescription = 'SCOM Database',
-    [Parameter(Mandatory = $false)][String] $ServerEndOfLife = '2019.12.31',
+    [Parameter(Mandatory = $false)][String] $DepartmentName = 'DEPT-1',
+    [Parameter(Mandatory = $false)][String] $ServerName = 'azw1234',
+    [Parameter(Mandatory = $false)][String] $ServerOwnerName = 'owern.name@customer.com',
+    [Parameter(Mandatory = $false)][String] $Environment = 'Development',
+    [Parameter(Mandatory = $false)][String] $ApplicationName = 'APP-1',
+    [Parameter(Mandatory = $false)][String] $ApplicationDescription = 'APP-1 Database',
     [Parameter(Mandatory = $false)][String] $ReqRitm = 'REQ0098779 RITM0125931',
-    [Parameter(Mandatory = $false)][String] $Uri = 'hiltidev.service-now.com',
+    [Parameter(Mandatory = $false)][String] $Uri = 'customerdev.service-now.com',
     [Parameter(Mandatory = $false)][String] $AvailabilitySetName = '',
-    [Parameter(Mandatory = $false)][String] $CountryName = 'Liechtenstein',
-    [Parameter(Mandatory = $false)][String] $PrivateIpAddress = '10.208.0.138'
+    [Parameter(Mandatory = $false)][String] $PrivateIpAddress = '10.10.10.10'
   )
 
-  $VerbosePreference = 'Continue'
+  #############################################################################################################################################################
+  #  
+  # Import modules prior to Verbose setting to avoid clutter in Azure Automation log
+  #
+  #############################################################################################################################################################
+  InlineScript
+  {
+    $VerbosePreference = 'SilentlyContinue'
+    $Result = Import-Module AzureRM.Compute, AzureRM.Resources, CimCmdlets
+    $VerbosePreference = 'Continue'
+  }
+  TEC0005-AzureContextSet
 
-  TEC0005-SetAzureContext
 
   #############################################################################################################################################################
   #
@@ -52,9 +59,8 @@ workflow PAT2900-SnowCmdbServerNew
   
   $ServerName = $ServerName.ToUpper()
   $AvailabilitySetName = $AvailabilitySetName.ToUpper()
-  $ServerEndOfLife = $ServerEndOfLife.Replace('.', '-')
   $StartDate = Get-Date -UFormat '%Y-%m-%d'
-  $AssignmentGroup = 'HILTI Infrastructure Platform Services'
+  $AssignmentGroup = 'Server Team'
   $Manufacturer = 'Microsoft Corporation'
   $ModelId = 'Virtual Machine'
   $DeploymentMethod = Get-AutomationVariable -Name 'VAR-AUTO-HaoVersion'
@@ -72,27 +78,23 @@ workflow PAT2900-SnowCmdbServerNew
     $ServerCi = 'cmdb_ci_linux_server'
   }
 
-  Write-Verbose -Message ('PAT0013-DepartmentName: ' + $DepartmentName)
-  Write-Verbose -Message ('PAT0013-ServerName: ' + $ServerName)
-  Write-Verbose -Message ('PAT0013-ServerOwnerName: ' + $ServerOwnerName)
-  Write-Verbose -Message ('PAT0013-ServerTier: ' + $ServerTier)
-  Write-Verbose -Message ('PAT0013-ApplicationName: ' + $ApplicationName)
-  Write-Verbose -Message ('PAT0013-ApplicationDescription: ' + $ApplicationDescription)
-  Write-Verbose -Message ('PAT0013-ServerEndOfLife: ' + $ServerEndOfLife)
-  Write-Verbose -Message ('PAT0013-ReqRitm: ' + $ReqRitm)
-  Write-Verbose -Message ('PAT0013-SerialNumber: ' + $SerialNumber)
-  Write-Verbose -Message ('PAT0013-Uri: ' + $Uri)
-  Write-Verbose -Message ('PAT0013-AvailabilitySetName: ' + $AvailabilitySetName)
-  # $CountryName should be written to cmdb_ci_win/linux_server as to Location attribute. This is currently not working because the Location attribute in 
-  # SNOW is used for companies instead of locations. Once this is remediated in SNOW this should work.
-  Write-Verbose -Message ('PAT0013-CountryName: ' + $CountryName)
-  Write-Verbose -Message ('PAT0013-PrivateIpAddress: ' + $PrivateIpAddress)
-  Write-Verbose -Message ('PAT0013-StartDate: ' + $StartDate)
-  Write-Verbose -Message ('PAT0013-AssignmentGroup: ' + $AssignmentGroup)
-  Write-Verbose -Message ('PAT0013-Manufacturer: ' + $Manufacturer)
-  Write-Verbose -Message ('PAT0013-ModelId: ' + $ModelId)
-  Write-Verbose -Message ('PAT0013-DeploymentMethod: ' + $DeploymentMethod)
-  Write-Verbose -Message ('PAT0013-ServerCi: ' + $ServerCi)
+  Write-Verbose -Message ('PAT2900-DepartmentName: ' + $DepartmentName)
+  Write-Verbose -Message ('PAT2900-ServerName: ' + $ServerName)
+  Write-Verbose -Message ('PAT2900-ServerOwnerName: ' + $ServerOwnerName)
+  Write-Verbose -Message ('PAT2900-Environment: ' + $Environment)
+  Write-Verbose -Message ('PAT2900-ApplicationName: ' + $ApplicationName)
+  Write-Verbose -Message ('PAT2900-ApplicationDescription: ' + $ApplicationDescription)
+  Write-Verbose -Message ('PAT2900-ReqRitm: ' + $ReqRitm)
+  Write-Verbose -Message ('PAT2900-SerialNumber: ' + $SerialNumber)
+  Write-Verbose -Message ('PAT2900-Uri: ' + $Uri)
+  Write-Verbose -Message ('PAT2900-AvailabilitySetName: ' + $AvailabilitySetName)
+  Write-Verbose -Message ('PAT2900-PrivateIpAddress: ' + $PrivateIpAddress)
+  Write-Verbose -Message ('PAT2900-StartDate: ' + $StartDate)
+  Write-Verbose -Message ('PAT2900-AssignmentGroup: ' + $AssignmentGroup)
+  Write-Verbose -Message ('PAT2900-Manufacturer: ' + $Manufacturer)
+  Write-Verbose -Message ('PAT2900-ModelId: ' + $ModelId)
+  Write-Verbose -Message ('PAT2900-DeploymentMethod: ' + $DeploymentMethod)
+  Write-Verbose -Message ('PAT2900-ServerCi: ' + $ServerCi)
 
 
   #############################################################################################################################################################
@@ -109,7 +111,6 @@ workflow PAT2900-SnowCmdbServerNew
           <host_name>$ServerName</host_name>
           <ip_address>$PrivateIpAddress</ip_address>
           <justification>$ApplicationName</justification>
-          <location>$CountryName</location>
           <manufacturer>$Manufacturer</manufacturer>
           <model_id>$ModelId</model_id>
           <name>$ServerName</name>
@@ -118,7 +119,6 @@ workflow PAT2900-SnowCmdbServerNew
           <serial_number>$SerialNumber</serial_number>
           <short_description>$ApplicationDescription</short_description>
           <start_date>$StartDate</start_date>
-          <warranty_expiration>$ServerEndOfLife</warranty_expiration>
         </insert>
       </soapenv:Body>
   </soapenv:Envelope>
@@ -133,11 +133,11 @@ workflow PAT2900-SnowCmdbServerNew
 
   If ($SnowSysIdWindowsServer.Length -ne 0)
   {
-    Write-Verbose -Message ('PAT0013-SnowWindowsServerCiCreated: ' + $ServerCi + ' sys_id ' + $SnowSysIdWindowsServer)
+    Write-Verbose -Message ('PAT2900-SnowWindowsServerCiCreated: ' + $ServerCi + ' sys_id ' + $SnowSysIdWindowsServer)
   }
   else
   {
-    Write-Verbose -Message ('PAT0013-SnowWindowsServerCiCreationFailed: ' + $Result.RawContent)
+    Write-Verbose -Message ('PAT2900-SnowWindowsServerCiCreationFailed: ' + $Result.RawContent)
     Return 'Failure'
   }
   
@@ -148,7 +148,7 @@ workflow PAT2900-SnowCmdbServerNew
       <soapenv:Body>
         <insert>
           <ci>$SnowSysIdWindowsServer</ci>
-          <environment>$ServerTier</environment>
+          <environment>$Environment</environment>
         </insert>
       </soapenv:Body>
   </soapenv:Envelope>
@@ -162,11 +162,11 @@ workflow PAT2900-SnowCmdbServerNew
 
   If ($SnowSysIdEnvCiRel.Length -ne 0)
   {
-    Write-Verbose -Message ('PAT0013-SnowWindowsServerCiRelatedToEnvironment: cmdb_environment_to_ci sys_id ' + $SnowSysIdEnvCiRel)
+    Write-Verbose -Message ('PAT2900-SnowWindowsServerCiRelatedToEnvironment: cmdb_environment_to_ci sys_id ' + $SnowSysIdEnvCiRel)
   }
   else
   {
-    Write-Verbose -Message ('PAT0013-SnowWindowsServerCiRelatedToEnvironmentFailed: ' + $Result.RawContent)
+    Write-Verbose -Message ('PAT2900-SnowWindowsServerCiRelatedToEnvironmentFailed: ' + $Result.RawContent)
     Return 'Failure'
   }
  
@@ -218,11 +218,11 @@ workflow PAT2900-SnowCmdbServerNew
 
       If ($SnowSysIdAvs.Length -ne 0)
       {
-        Write-Verbose -Message ('PAT0013-SnowClusterCiCreated: cmdb_ci_cluster sys_id ' + $SnowSysIdAvs)
+        Write-Verbose -Message ('PAT2900-SnowClusterCiCreated: cmdb_ci_cluster sys_id ' + $SnowSysIdAvs)
       }
       else
       {
-        Write-Verbose -Message ('PAT0013-SnowClusterCiCreationFailed: ' + $Result.RawContent)
+        Write-Verbose -Message ('PAT2900-SnowClusterCiCreationFailed: ' + $Result.RawContent)
         Return 'Failure'
       }
         # Create relationship CI -> Environment
@@ -232,7 +232,7 @@ workflow PAT2900-SnowCmdbServerNew
             <soapenv:Body>
             <insert>
                 <ci>$SnowSysIdAvs</ci>
-                <environment>$ServerTier</environment>
+                <environment>$Environment</environment>
             </insert>
             </soapenv:Body>
         </soapenv:Envelope>
@@ -246,17 +246,17 @@ workflow PAT2900-SnowCmdbServerNew
 
         If ($SnowSysIdEnvCiRel.Length -ne 0)
         {
-        Write-Verbose -Message ('PAT0013-SnowClusterCiRelatedToEnvironment: cmdb_environment_to_ci sys_id ' + $SnowSysIdEnvCiRel)
+        Write-Verbose -Message ('PAT2900-SnowClusterCiRelatedToEnvironment: cmdb_environment_to_ci sys_id ' + $SnowSysIdEnvCiRel)
         }
         else
         {
-        Write-Verbose -Message ('PAT0013-SnowClusterCiRelatedToEnvironmentFailed: ' + $Result.RawContent)
+        Write-Verbose -Message ('PAT2900-SnowClusterCiRelatedToEnvironmentFailed: ' + $Result.RawContent)
         Return 'Failure'
         }
     }
     else
     {
-        Write-Verbose -Message ('PAT0013-SnowClusterCiExisting: ' + $SnowSysIdAvs)
+        Write-Verbose -Message ('PAT2900-SnowClusterCiExisting: ' + $SnowSysIdAvs)
     }
 
 
@@ -286,11 +286,11 @@ workflow PAT2900-SnowCmdbServerNew
 
     If ($SnowSysIdClusterNode.Length -ne 0)
     {
-    Write-Verbose -Message ('PAT0013-SnowClusterNodeCiCreated: cmdb_ci_cluster_node sys_id ' + $SnowSysIdClusterNode)
+    Write-Verbose -Message ('PAT2900-SnowClusterNodeCiCreated: cmdb_ci_cluster_node sys_id ' + $SnowSysIdClusterNode)
     }
     else
     {
-    Write-Verbose -Message ('PAT0013-SnowClusterNodeCiCreationFailed: ' + $Result.RawContent)
+    Write-Verbose -Message ('PAT2900-SnowClusterNodeCiCreationFailed: ' + $Result.RawContent)
     Return 'Failure'
     }
 
@@ -301,7 +301,7 @@ workflow PAT2900-SnowCmdbServerNew
         <soapenv:Body>
         <insert>
             <ci>$SnowSysIdClusterNode</ci>
-            <environment>$ServerTier</environment>
+            <environment>$Environment</environment>
         </insert>
         </soapenv:Body>
     </soapenv:Envelope>
@@ -315,11 +315,11 @@ workflow PAT2900-SnowCmdbServerNew
 
     If ($SnowSysIdEnvCiRel.Length -ne 0)
     {
-    Write-Verbose -Message ('PAT0013-SnowClusterNodeCiRelatedToEnvironment: cmdb_environment_to_ci sys_id ' + $SnowSysIdEnvCiRel)
+    Write-Verbose -Message ('PAT2900-SnowClusterNodeCiRelatedToEnvironment: cmdb_environment_to_ci sys_id ' + $SnowSysIdEnvCiRel)
     }
     else
     {
-    Write-Verbose -Message ('PAT0013-SnowClusterNodeCiNodeRelatedToEnvironmentFailed: ' + $Result.RawContent)
+    Write-Verbose -Message ('PAT2900-SnowClusterNodeCiNodeRelatedToEnvironmentFailed: ' + $Result.RawContent)
     Return 'Failure'
     }
   }
