@@ -6,8 +6,6 @@
 # These rate cards do not include customer specific discounts but should be sufficient for a cost approximation.
 # https://docs.microsoft.com/en-us/azure/billing/billing-usage-rate-card-overview#azure-resource-ratecard-api-preview
 # 
-# Error Handling: There is no error handling available in this pattern. Errors related to the execution of the cmdlet are listed in the runbooks log. 
-# 
 # Output:         None
 #
 # Requirements:   AzureRM.profile, AzureRM.Resources, AzureRM.UsageAggregates, Microsoft.ADAL.PowerShell - this avoids loading the ADAL libraries
@@ -25,19 +23,29 @@ workflow TEC0009-CostControl
   param
   (
     [Parameter(Mandatory=$false)][String] $AdTenant = 'felix.bodmer.name',
-    [Parameter(Mandatory=$false)][String] $AadApplicationId = '81eda7e9-c29e-41fa-aa61-c63d23ee52ae',
+    [Parameter(Mandatory=$false)][String] $AadApplicationId = '<AadApplicationId>',
     [Parameter(Mandatory=$false)][String] $OfferDurableId = 'MS-AZR-0017P',                                                                                      # https://azure.microsoft.com/en-us/support/legal/offer-details/
-    [Parameter(Mandatory=$false)][String] $Currency = 'USD',  # USD / CHF
-    [Parameter(Mandatory=$false)][String] $Locale = 'en-US',  # en-US / de-CH
-    [Parameter(Mandatory=$false)][String] $RegionInfo = 'US', # US / CH
+    [Parameter(Mandatory=$false)][String] $Currency = 'USD',                                                                                                     # USD / CHF
+    [Parameter(Mandatory=$false)][String] $Locale = 'en-US',                                                                                                     # en-US / de-CH
+    [Parameter(Mandatory=$false)][String] $RegionInfo = 'US',                                                                                                    # US / CH
     [Parameter(Mandatory=$false)][String] $LogType = 'CostMonitoring',
-    [Parameter(Mandatory=$false)][String] $OmsWorkspaceId = '50fe59b9-89d0-4951-b2c7-333eb8f62a7d',
-    [Parameter(Mandatory=$false)][String] $OmsSharedKey = 'l8pwpNWA5yTbX3wuKP6mJW9Ppvzt9gDZX1vzB+OQGqzchOiTXA7zUCDMtbqI0BV8hXrhdUX1uXqQKGsjywz/Ng=='
+    [Parameter(Mandatory=$false)][String] $OmsWorkspaceId = '<OmsWorkSpaceId>',
+    [Parameter(Mandatory=$false)][String] $OmsSharedKey = '<OmsSharedKey>'
   )
 
   $VerbosePreference ='Continue'
-
-  TEC0005-SetAzureContext
+  #############################################################################################################################################################
+  #  
+  # Import modules prior to Verbose setting to avoid clutter in Azure Automation log
+  #
+  #############################################################################################################################################################
+  InlineScript
+  {
+    $VerbosePreference = 'SilentlyContinue'
+    $Result = Import-Module AzureRM.profile, AzureRM.Resources, AzureRM.UsageAggregates
+    $VerbosePreference = 'Continue'
+  }
+  TEC0005-AzureContextSet
   
   $Credentials = Get-AutomationPSCredential -Name 'CRE-AUTO-AutomationUser'
   
@@ -65,20 +73,21 @@ workflow TEC0009-CostControl
     Write-Verbose -Message ('TEC0009-OmsSharedKey: ' + $OmsSharedKey)
 
 
-    ###############################################################################################################################################################
+    ###########################################################################################################################################################
     #
     # Get usage data
     #
-    ###############################################################################################################################################################
+    ###########################################################################################################################################################
     # Set usage parameters
-    $Subscriptions = ('Production-pr', 'ae747229-5897-4d01-93bb-284e69893c47', 'MS-AZR-0003p'), ('Test-te', '27ec526f-2d48-46e0-9019-02fbf16c8c5d', 'MS-AZR-0003p') | `
-                      ForEach-Object {[pscustomobject]@{SubscriptionName = $_[0]; SubscriptionId = $_[1]; OfferDurableId = $_[2]}}
-    $Granularity = 'Hourly' # Can be Hourly or Daily
+    $Subscriptions = ('<SubscriptionName1', '<SubscriptionId1>', '<OfferId1>'), `
+                     ('<SubscriptionName2', '<SubscriptionId2>', '<OfferId2>') `
+                     | ForEach-Object {[pscustomobject]@{SubscriptionName = $_[0]; SubscriptionId = $_[1]; OfferDurableId = $_[2]}}                              # Must be entered manuall, OfferId can't be retrieved
+    $Granularity = 'Hourly'                                                                                                                                      # Can be Hourly or Daily
     $ShowDetails = $true
     $StartDateTime = [string](get-date -Format yyyy) + '-' + [string](get-date -Format MM) + '-01T00:00:00+00:00'
     $CurrentHour = Get-Date
     $CurrentHour = $CurrentHour.ToUniversalTime()
-    [string]$EndDateTime = [string](get-date -Format yyyy) + '-' + [string](get-date -Format MM) + '-' + [string](get-date -Format dd) + 'T' + `                    # UTC -1 hr to get latest records
+    [string]$EndDateTime = [string](get-date -Format yyyy) + '-' + [string](get-date -Format MM) + '-' + [string](get-date -Format dd) + 'T' + `                 # UTC -1 hr to get latest records
                            ($CurrentHour.Hour -3).ToString("00") + ':00:00+00:00'
     Write-Verbose -Message ('TEC0009-StartDateTime: ' + $StartDateTime)
     Write-Verbose -Message ('TEC0009-EndDateTime: ' + $EndDateTime)
@@ -139,14 +148,14 @@ workflow TEC0009-CostControl
     Write-Verbose -Message ('TEC0009-NumberOfRequiredRateCards: ' + $RateCardsRequired.Count)
 
 
-    ###############################################################################################################################################################
+    ###########################################################################################################################################################
     #
     # Get Rate Cards
     #
-    ###############################################################################################################################################################
+    ###########################################################################################################################################################
     # Acquire token
     $AccessToken = Get-ADALAccessToken -AuthorityName $AdTenant -ClientId $AadApplicationId -ResourceId 'https://management.core.windows.net/' `
-                                       -UserName $Credentials.UserName -Password $Credentials.GetNetworkCredential().password                                        # Requires password as string
+                                       -UserName $Credentials.UserName -Password $Credentials.GetNetworkCredential().password                                    # Requires password as string
  
     # Execute call to get Rate Cards - Select one of the subscriptions assume they all use the same Currency/Locale/RegionInfo ???
     $Filter = "OfferDurableId eq '$OfferDurableId' and Currency eq '$Currency' and Locale eq '$Locale' and RegionInfo eq '$RegionInfo'"
@@ -169,14 +178,14 @@ workflow TEC0009-CostControl
     Write-Verbose -Message ('TEC0009-RateCardsUsed: ' + $RateCardsMeters.Count) 
 
 
-    ###############################################################################################################################################################
+    ###########################################################################################################################################################
     #
     # Combine Usage and Metrics data from rate cards into a single table
     #
-    ###############################################################################################################################################################
+    ###########################################################################################################################################################
     $Combined = foreach ($Usage in $UsageData.Properties)
     {
-      if ($Usage.MeterId -ne '00000000-0000-0000-0000-000000000000'-and $Usage.MeterName -ne $null)                                                                 # Discard usage records without rate card
+      if ($Usage.MeterId -ne '00000000-0000-0000-0000-000000000000'-and $Usage.MeterName -ne $null)                                                              # Discard usage records without rate card
       {
         $TagValue = (($Usage.InstanceData -split '{"Monatliche-Kosten":"')[1] -split '"')[0]
         $Uri = (($Usage.InstanceData -split '{"Microsoft.Resources":{"resourceUri":"') -split '","location"')[1]
@@ -194,11 +203,11 @@ workflow TEC0009-CostControl
     Write-Verbose -Message ('TEC0009-CombinedUsageAndRateCardRecords: ' + $Combined.Count) 
 
 
-    ###############################################################################################################################################################
+    ###########################################################################################################################################################
     #
     # Summarize usage across all days/hours and combine with above table
     #
-    ###############################################################################################################################################################
+    ###########################################################################################################################################################
     # Summarize the Usage for each Resource/Metric touple - necessary because there is an entry for each hour
     $UsageTotals = $Combined | Sort-Object Grouping | Group-Object -Property Grouping | `
     Select-Object -Property name,@{n="UsageTotal";e={$_.group | ForEach-Object -begin {$i=0} -process {$i+=$_.UsageQuantity} -end {$i}}} 
@@ -216,11 +225,11 @@ workflow TEC0009-CostControl
     Write-Verbose -Message ('TEC0009-CombinedSummarizedUsageAndRateCardRecords: ' + $CombinedUsageTotals.Count) 
 
 
-    ###############################################################################################################################################################
+    ###########################################################################################################################################################
     #
     # Calculate cost in CHF and combine with above table
     #
-    ###############################################################################################################################################################
+    ###########################################################################################################################################################
     # Calculate the usage in CHF
     $CombinedUsageTotalsChf = foreach ($CombinedUsageTotal in $CombinedUsageTotals)
     {
@@ -255,11 +264,11 @@ workflow TEC0009-CostControl
     Write-Verbose -Message ('TEC0009-CombinedSummarizedUsageAndRateCardRecordsChf: ' + $CombinedUsageTotalsChf.Count) 
 
 
-    ###############################################################################################################################################################
+    ###########################################################################################################################################################
     #
     # Summarize cost for each Resource - for some Resource Types (e.g. Storage Accounts) cost is listed for individual items
     #
-    ###############################################################################################################################################################
+    ###########################################################################################################################################################
     $SumCombinedUsageTotalsChf = $CombinedUsageTotalsChf | Sort-Object Grouping | Group-Object -Property ResourceName | `
     Select-Object -Property name,@{n="SumCost";e={$_.group | ForEach-Object -begin {$i=0} -process {$i+=$_.Cost} -end {$i}}} 
 
@@ -274,11 +283,11 @@ workflow TEC0009-CostControl
     Write-Verbose -Message ('TEC0009-RecordsToBeWrittenToLogAnalytics: ' + $FinalResult.Count) 
 
 
-    ###############################################################################################################################################################
+    ###########################################################################################################################################################
     #
     # Write data to Log Analytics
     #
-    ###############################################################################################################################################################
+    ###########################################################################################################################################################
     # Variables
     $Resource = '/api/logs'
     $Json = ''
