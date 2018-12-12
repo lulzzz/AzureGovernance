@@ -24,13 +24,11 @@ workflow TEC0009-CostControl
   (
     [Parameter(Mandatory=$false)][String] $AdTenant = 'felix.bodmer.name',
     [Parameter(Mandatory=$false)][String] $AadApplicationId = '<AadApplicationId>',
-    [Parameter(Mandatory=$false)][String] $OfferDurableId = 'MS-AZR-0017P',                                                                                      # https://azure.microsoft.com/en-us/support/legal/offer-details/
+    [Parameter(Mandatory=$false)][String] $OfferDurableId = 'MS-AZR-0017P',                                                                                      # https://azure.microsoft.com/en-us/support/legal/offer-details/, can't be retrieved by PowerShell
     [Parameter(Mandatory=$false)][String] $Currency = 'USD',                                                                                                     # USD / CHF
     [Parameter(Mandatory=$false)][String] $Locale = 'en-US',                                                                                                     # en-US / de-CH
     [Parameter(Mandatory=$false)][String] $RegionInfo = 'US',                                                                                                    # US / CH
-    [Parameter(Mandatory=$false)][String] $LogType = 'CostMonitoring',
-    [Parameter(Mandatory=$false)][String] $OmsWorkspaceId = '<OmsWorkSpaceId>',
-    [Parameter(Mandatory=$false)][String] $OmsSharedKey = '<OmsSharedKey>'
+    [Parameter(Mandatory=$false)][String] $LogType = 'CostMonitoring1'
   )
 
   $VerbosePreference ='Continue'
@@ -47,7 +45,9 @@ workflow TEC0009-CostControl
   }
   TEC0005-AzureContextSet
   
-  $Credentials = Get-AutomationPSCredential -Name 'CRE-AUTO-AutomationUser'
+  $Credentials = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser
+  $CoreWorkspaceId = Get-AutomationVariable -Name VAR-AUTO-CoreWorkspaceId
+  $CoreWorkspaceKey = Get-AutomationVariable -Name VAR-AUTO-CoreWorkspaceKey
   
   InlineScript
   {
@@ -58,8 +58,8 @@ workflow TEC0009-CostControl
     $Locale = $Using:Locale
     $RegionInfo = $Using:RegionInfo
     $LogType = $Using:LogType
-    $OmsWorkspaceId = $Using:OmsWorkspaceId
-    $OmsSharedKey = $Using:OmsSharedKey
+    $CoreWorkspaceId = $Using:CoreWorkspaceId
+    $CoreWorkspaceKey = $Using:CoreWorkspaceKey
     $Credentials = $Using:Credentials
 
     Write-Verbose -Message ('TEC0009-AdTenant: ' + $AdTenant)
@@ -69,8 +69,8 @@ workflow TEC0009-CostControl
     Write-Verbose -Message ('TEC0009-Locale: ' + $Locale)
     Write-Verbose -Message ('TEC0009-RegionInfo: ' + $RegionInfo)
     Write-Verbose -Message ('TEC0009-LogType: ' + $LogType)
-    Write-Verbose -Message ('TEC0009-OmsWorkspaceId: ' + $OmsWorkspaceId)
-    Write-Verbose -Message ('TEC0009-OmsSharedKey: ' + $OmsSharedKey)
+    Write-Verbose -Message ('TEC0009-CoreWorkspaceId: ' + $CoreWorkspaceId)
+    Write-Verbose -Message ('TEC0009-CoreWorkspaceKey: ' + $CoreWorkspaceKey)
 
 
     ###########################################################################################################################################################
@@ -79,9 +79,7 @@ workflow TEC0009-CostControl
     #
     ###########################################################################################################################################################
     # Set usage parameters
-    $Subscriptions = ('<SubscriptionName1', '<SubscriptionId1>', '<OfferId1>'), `
-                     ('<SubscriptionName2', '<SubscriptionId2>', '<OfferId2>') `
-                     | ForEach-Object {[pscustomobject]@{SubscriptionName = $_[0]; SubscriptionId = $_[1]; OfferDurableId = $_[2]}}                              # Must be entered manuall, OfferId can't be retrieved
+    $Subscriptions = Get-AzureRmSubscription
     $Granularity = 'Hourly'                                                                                                                                      # Can be Hourly or Daily
     $ShowDetails = $true
     $StartDateTime = [string](get-date -Format yyyy) + '-' + [string](get-date -Format MM) + '-01T00:00:00+00:00'
@@ -95,7 +93,7 @@ workflow TEC0009-CostControl
     # Get usage records
     foreach ($Subscription in $Subscriptions)
     {
-      $Result = Add-AzureRmAccount -Credential $Credentials -Subscription $Subscription.SubscriptionName
+      $Result = Add-AzureRmAccount -Credential $Credentials -Subscription $Subscription.Name
       Write-Verbose -Message ('TEC0009-RetrieveUsageForSubscription: ' + ($Result | Out-String))
        
       # Get first 10000 records, try for 2 x 15 minutes and then abort
@@ -305,7 +303,7 @@ workflow TEC0009-CostControl
     # Add Resource Groups to body - required as Tag for budget is on RG level and RG are no supplied with billing data
     foreach ($Subscription in $Subscriptions)
     {
-      $Result = Add-AzureRmAccount -Credential $Credentials -Subscription $Subscription.SubscriptionName
+      $Result = Add-AzureRmAccount -Credential $Credentials -Subscription $Subscription.Name
       Write-Verbose -Message ('TEC0009-RetrieveResourceGroupsForSubscription: ' + ($Result | Out-String))
       $ResourceGroups = Get-AzureRmResourceGroup
     
@@ -325,15 +323,15 @@ workflow TEC0009-CostControl
     $XHeaders = 'x-ms-date:' + $Rfc1123Date 
     $StringToHash = $Method + "`n" + $ContentLength + "`n" + $ContentType + "`n" + $XHeaders + "`n" + $Resource
     $BytesToHash = [Text.Encoding]::UTF8.GetBytes($StringToHash)
-    $KeyBytes = [Convert]::FromBase64String($OmsSharedKey)
+    $KeyBytes = [Convert]::FromBase64String($CoreWorkspaceKey)
     $Sha256 = New-Object System.Security.Cryptography.HMACSHA256
     $Sha256.Key = $KeyBytes
     $CalculatedHash = $Sha256.ComputeHash($BytesToHash)
     $EncodedHash = [Convert]::ToBase64String($CalculatedHash)
-    $Authorization = 'SharedKey {0}:{1}' -f $OmsWorkspaceId,$EncodedHash
+    $Authorization = 'SharedKey {0}:{1}' -f $CoreWorkspaceId,$EncodedHash
 
     # Post the request
-    $Uri = 'https://' + $OmsWorkspaceId + '.ods.opinsights.azure.com' + $Resource + '?api-version=2016-04-01'
+    $Uri = 'https://' + $CoreWorkspaceId + '.ods.opinsights.azure.com' + $Resource + '?api-version=2016-04-01'
     $Headers = @{'Authorization' = $Authorization;
                  'Log-Type' = $LogType;
                  'x-ms-date' = $Rfc1123Date;
