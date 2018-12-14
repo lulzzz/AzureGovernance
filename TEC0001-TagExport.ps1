@@ -1,7 +1,6 @@
 ﻿###############################################################################################################################################################
 # Exporting tags to an Excel document. 
 #
-# Error Handling: There is no error handling available in this pattern. 
 # 
 # Output:         None
 #
@@ -14,7 +13,7 @@
 # 1.0             Initial version 
 #
 ###############################################################################################################################################################
-workflow TEC0002-TagExport
+workflow TEC0001-TagExport
 {
   $VerbosePreference ='Continue'
 
