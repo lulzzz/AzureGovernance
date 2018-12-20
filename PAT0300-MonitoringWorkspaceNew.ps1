@@ -65,7 +65,7 @@ workflow PAT0300-MonitoringWorkspaceNew
     # Parameters
     #
     ###########################################################################################################################################################
-    $AzureAutomationCredential = Get-AutomationPSCredential -Name 'CRE-AUTO-AutomationUser' -Verbose:$false
+    $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
 
     # Log Analytics is available in certain Azure Regions only
     $RegionNameTechnical = switch ($RegionName) 

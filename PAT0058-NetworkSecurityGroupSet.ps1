@@ -48,7 +48,7 @@ workflow PAT0058-NetworkSecurityGroupSet
     # Parameters
     #
     ###########################################################################################################################################################
-    $AzureAutomationCredential = Get-AutomationPSCredential -Name 'CRE-AUTO-AutomationUser' -Verbose:$false
+    $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
     
     Write-Verbose -Message ('PAT0058-NsgName: ' + ($NsgName))    
     Write-Verbose -Message ('PAT0058-SubscriptionCode: ' + ($SubscriptionCode))
@@ -60,7 +60,7 @@ workflow PAT0058-NetworkSecurityGroupSet
     # Get Rule Set - must occur prior to context switch to target Subscription
     #
     ###########################################################################################################################################################
-    $StorageAccountName = Get-AutomationVariable -Name 'VAR-AUTO-StorageAccountName' -Verbose:$false
+    $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName -Verbose:$false
     $StorageAccount = Get-AzureRmResource | Where-Object {$_.Name -eq $StorageAccountName}
     $StorageAccountKey = Get-AzureRMStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccountName
     $StorageContext = New-AzureStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey.Value[0] 
@@ -160,8 +160,8 @@ workflow PAT0058-NetworkSecurityGroupSet
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUIyoAtJ4/1CQVwCRbuJ7W10GX
-# Ys2gggMmMIIDIjCCAgqgAwIBAgIQVIJucZNUEZlNFZMEf+jSajANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUSYKdFm7yhHkc7HTdoEps4vLU
+# DregggMmMIIDIjCCAgqgAwIBAgIQVIJucZNUEZlNFZMEf+jSajANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5yb2NoZWdyb3VwdGVzdC5vbm1pY3Jvc29mdC5jb20w
 # HhcNMTgwNzMxMDYyODI1WhcNMTkwNzMxMDY0ODI1WjApMScwJQYDVQQDDB5yb2No
 # ZWdyb3VwdGVzdC5vbm1pY3Jvc29mdC5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -181,11 +181,11 @@ workflow PAT0058-NetworkSecurityGroupSet
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHnJvY2hlZ3JvdXB0ZXN0Lm9ubWljcm9zb2Z0
 # LmNvbQIQVIJucZNUEZlNFZMEf+jSajAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU6HB2VIqKMJM9
-# W0q/GncKvagpuccwDQYJKoZIhvcNAQEBBQAEggEAmJYSRO/qrGrbZsvCUzJ4N7Zm
-# FfguUoYYaoXsq6+r6oxIfUJ4QNo8ctPgSAgO3+RWJ1Gu9osFHZK6aZQl0H3660pt
-# ZrTaTM3bsUp4dGR5W8pIrDMBErHYE6w+5Bpj5Sttavz27qXZFILedbS1bbaPv8UC
-# nmNitdBtdPB8dWGBXoq5KIQCuCbE8NPZaZ7SlWqh5kpiQ0fjypKRrHhA5jdYSFbU
-# UTpeioAsQwx7+mHyzVAINlZvOGLP6JdOwgvf6ReMiPoF2ElSllOzLVvWUlkKK1Op
-# VO7X9VJP29w+HT55PqWGNeZChCDT2eYiTRZ7If1A9DRLHQ021AWQQFRNwGGD6Q==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUwHoOk4PPx7Tj
+# dFN6lHyzXo4IBIswDQYJKoZIhvcNAQEBBQAEggEAr8YeV32RzIxPVVpwKdT+v/bI
+# SsWSrViD4DylOwlr/WQB+mBpXGUb5hySYSOkR5u+P5YeGnmJoXTPxZDaZ43092xU
+# Yy72hCL+mnH4FGOCpiSE0u5CtBxPqamn/b14UVOzXEsKL8qPNAMdXOz9gS9OIKrF
+# m24oBdf0kUsuX3gtGEOteejh6g64gPom3ti1MpApdMu4ZY101srvfHuKgSA9aeKt
+# mcNQwiAFyFBSOgOX3YfPf9N41BfLNvLBGMKrhvzeADCEK65jAzlzwAqLAqj/5Ab9
+# MP0n3vfF4Q0tBqjKdELQ/8I0O6SFy3oEXPtul5jl3yLbeJ/TWXsoUVjvUK30xg==
 # SIG # End signature block

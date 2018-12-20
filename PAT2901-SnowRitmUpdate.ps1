@@ -90,7 +90,7 @@ workflow PAT2901-SnowRitmUpdate
 "@
 
     # SOAP call to SNOW
-    $Credentials = Get-AutomationPSCredential -Name 'CRE-AUTO-SnowTecUser' 
+    $Credentials = Get-AutomationPSCredential -Name CRE-AUTO-SnowTecUser
     $Uri = 'https://' + $Uri + '/AzureUpdateRITM.do?SOAP'
     $Return = Invoke-WebRequest -Uri $Uri -Method post -ContentType 'text/xml' -Body $Xml -Headers $Headers -Credential $Credentials
     

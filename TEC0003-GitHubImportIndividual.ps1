@@ -59,7 +59,7 @@ workflow TEC0003-GitHubImportIndividual
     #  
     ###########################################################################################################################################################
     $RgName = 'weu-co-rsg-automation-01'
-    $AutomationAccountName = Get-AutomationVariable -Name 'VAR-AUTO-AutomationAccountName'
+    $AutomationAccountName = Get-AutomationVariable -Name VAR-AUTO-AutomationAccountName
     $Result = Import-AzureRmAutomationRunbook -ResourceGroupName $RgName `
                                     -AutomationAccountName $AutomationAccountName `
                                     -Type PowerShellWorkflow `

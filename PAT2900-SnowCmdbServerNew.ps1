@@ -51,8 +51,8 @@ workflow PAT2900-SnowCmdbServerNew
   # Intialize parameters
   #
   #############################################################################################################################################################
-  $CredentialsAutomationUser = Get-AutomationPSCredential -Name 'CRE-AUTO-AutomationUser'
-  $CredentialsSnowUser = Get-AutomationPSCredential -Name 'CRE-AUTO-SnowTecUser'
+  $CredentialsAutomationUser = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser
+  $CredentialsSnowUser = Get-AutomationPSCredential -Name CRE-AUTO-SnowTecUser
   
   $ServerName = $ServerName.ToUpper()
   $AvailabilitySetName = $AvailabilitySetName.ToUpper()
@@ -60,7 +60,7 @@ workflow PAT2900-SnowCmdbServerNew
   $AssignmentGroup = 'Server Team'
   $Manufacturer = 'Microsoft Corporation'
   $ModelId = 'Virtual Machine'
-  $DeploymentMethod = Get-AutomationVariable -Name 'VAR-AUTO-HaoVersion'
+  $DeploymentMethod = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion
   $ResourceGroupName = (Get-AzureRmResource | Where-Object {$_.Name -eq $ServerName}).ResourceGroupName
 
   # Determine if Windows or Linux server

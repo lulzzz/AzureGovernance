@@ -112,7 +112,7 @@ workflow TEC0001-TagExport
     Write-Verbose -Message ("TEC0002-ResourceGroupTagsRetrieved: " + ($Table | Out-String))
     
     # Map drive to save Tags in Excel
-    $StorageAccountName = Get-AutomationVariable -Name 'VAR-AUTO-StorageAccountName' -Verbose:$false
+    $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName -Verbose:$false
     $StorageAccount = Get-AzureRmResource | Where-Object {$_.Name -eq $StorageAccountName}
     $StorageAccountKey = (Get-AzureRMStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
     $StorageAccountKey = ConvertTo-SecureString -String $StorageAccountKey -AsPlainText -Force

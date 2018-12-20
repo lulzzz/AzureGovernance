@@ -65,7 +65,7 @@ workflow PAT0100-StorageAccountNew
     # Parameters
     #
     ###########################################################################################################################################################
-    $AzureAutomationCredential = Get-AutomationPSCredential -Name 'CRE-AUTO-AutomationUser' -Verbose:$false
+    $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
 
     Write-Verbose -Message ('PAT0100-StorageAccountNameIndividual: ' + ($StorageAccountNameIndividual))
     Write-Verbose -Message ('PAT0100-ResourceGroupName: ' + ($ResourceGroupName))

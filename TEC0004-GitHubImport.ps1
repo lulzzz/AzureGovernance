@@ -46,9 +46,9 @@ workflow TEC0004-GitHubImport
     # Parameters
     #
     ###########################################################################################################################################################
-    $RgName = Get-AutomationVariable -Name 'VAR-AUTO-CoreResourceGroup' -Verbose:$false
-    $AutomationAccountName = Get-AutomationVariable -Name 'VAR-AUTO-AutomationAccountName' -Verbose:$false
-    $GitHubCredentials = Get-AutomationPSCredential -Name 'CRE-AUTO-GitHubUser' -Verbose:$false
+    $RgName = Get-AutomationVariable -Name VAR-AUTO-CoreResourceGroup -Verbose:$false
+    $AutomationAccountName = Get-AutomationVariable -Name VAR-AUTO-AutomationAccountName -Verbose:$false
+    $GitHubCredentials = Get-AutomationPSCredential -Name CRE-AUTO-GitHubUser -Verbose:$false
 
     # Convert to plain text and then to Base64, e.g. for use with non-Windows systems
     $Username = $GitHubCredentials.GetNetworkCredential().username
@@ -144,8 +144,8 @@ workflow TEC0004-GitHubImport
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUt390RsO0uY8aQm8WGG8lACxd
-# jMagggMmMIIDIjCCAgqgAwIBAgIQVIJucZNUEZlNFZMEf+jSajANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUMZw2vmDoRWSRczGtFYLR3bOx
+# hoqgggMmMIIDIjCCAgqgAwIBAgIQVIJucZNUEZlNFZMEf+jSajANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5yb2NoZWdyb3VwdGVzdC5vbm1pY3Jvc29mdC5jb20w
 # HhcNMTgwNzMxMDYyODI1WhcNMTkwNzMxMDY0ODI1WjApMScwJQYDVQQDDB5yb2No
 # ZWdyb3VwdGVzdC5vbm1pY3Jvc29mdC5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -165,11 +165,11 @@ workflow TEC0004-GitHubImport
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHnJvY2hlZ3JvdXB0ZXN0Lm9ubWljcm9zb2Z0
 # LmNvbQIQVIJucZNUEZlNFZMEf+jSajAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUPExUkiFb/afl
-# i6Bjb/QdpeKwjr0wDQYJKoZIhvcNAQEBBQAEggEAqZjdXbbR+z3dn2652DkO4Pav
-# 2h2xOM5mGn2D1DwOlcr1lnrnqwJ8NiBTK7ztGwhCmhTkYp1xL0rEiA8WCA+UBBQM
-# nELS4K+vOWxK1Q4a/ZslPsZKtqnYYgvEfGh5wQFmNrSZkoaj6Tj4KDh0TQOqcK8g
-# jbCIuAR9ocQ/uEpt5KRU3IbtcpFssCw1NdErk44577ByD6lxgAdgaJhzMbnyE1zt
-# ktsP73KLMe4tKu8hkqoR2dbDSdKzv2zKbpceoze0zomtu0dogoSxPxhR0EsjKnza
-# o3ko3l0Yuf3rpHkjNXieQ3Nre5WhYw3SEZfv5draeV/5mkE+X0dGR9RnYXX58w==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU2CJO9QPSFzRE
+# ZzoebrcL4tLI+TYwDQYJKoZIhvcNAQEBBQAEggEAcgqd/5XOMPHLl7EoI/xiAC+b
+# dZ54MSJvoRheaYAq6FqDVVZ5ChXj3/wNMAWfI1oo5uETMVPTY6EBD3O39tRvSsCr
+# bHbwKS1vQzb36i2jnj+ZWm2tLirrp8+NdC4yRL/qm3eKNNqgPyG0EV9sBWrjXUSs
+# yL+zU3ZrbRVmnr5Khy/3gNGH1wwxo2UeZF6DgxPA2M60ayeeUVEOQZhzzHYLjeri
+# fjJfMoM2KM3pb7D3x6IveBK9Tpva9xR7hDjRGTpp/5LiTXlClyE9LzjJbTb912aV
+# oUm6HCq0PGyRl8TJu2G0jI2SYVTgzs/FpSQ802v2+/ZMJoe3nhCEzOjLYwjZ8w==
 # SIG # End signature block

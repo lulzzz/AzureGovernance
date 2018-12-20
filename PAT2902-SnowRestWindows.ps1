@@ -89,7 +89,7 @@ workflow PAT2902-SnowRestWindows
 "@
 
 
-  $WebHook = Get-AutomationVariable -Name 'VAR-AUTO-SOL0001WebHook'   
+  $WebHook = Get-AutomationVariable -Name VAR-AUTO-SOL0001WebHook
 
   # Invokes using the Hybrid Runbook Worker 
   Invoke-RestMethod -Uri $WebHook `

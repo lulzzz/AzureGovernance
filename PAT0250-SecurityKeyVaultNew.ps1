@@ -64,7 +64,7 @@ workflow PAT0250-SecurityKeyVaultNew
     # Parameters
     #
     ###########################################################################################################################################################
-    $AzureAutomationCredential = Get-AutomationPSCredential -Name 'CRE-AUTO-AutomationUser' -Verbose:$false
+    $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
     
     # Log Analytic Workspace
     $LogAnalyticsWorkspaceName = ('swi' + $RegionCode + $SubscriptionCode + 'security01')                                                                        # e.g. swiweu0010security01

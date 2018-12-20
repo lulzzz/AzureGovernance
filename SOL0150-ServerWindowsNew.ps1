@@ -53,10 +53,10 @@ workflow SOL0150-ServerWindowsNew
   # Get variables in Subscription of Automation Account
   #
   #############################################################################################################################################################
-  $AzureAutomationCredential = Get-AutomationPSCredential -Name 'CRE-AUTO-AutomationUser' -Verbose:$false
+  $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
 
   # Credentials and groups for local non-domain joined Windows admin
-  $LocalAdminCredential = Get-AutomationPSCredential -Name 'CRE-AUTO-LocalAdminUser'
+  $LocalAdminCredential = Get-AutomationPSCredential -Name CRE-AUTO-LocalAdminUser
 
 
   #############################################################################################################################################################

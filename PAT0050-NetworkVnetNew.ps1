@@ -61,7 +61,7 @@ workflow PAT0050-NetworkVnetNew
     # Parameters
     #
     ###########################################################################################################################################################
-    $AzureAutomationCredential = Get-AutomationPSCredential -Name 'CRE-AUTO-AutomationUser' -Verbose:$false
+    $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
 
     $VnetName = $RegionCode + '-' + $SubscriptionCode + '-vnt-01'                                                                                                # e.g. weu-0010-vnt-01
     $ResourceGroupName = $RegionCode + '-' + $SubscriptionCode + '-rsg-network-01'                                                                               # e.g. weu-0010-rsg-network-01
@@ -239,8 +239,8 @@ workflow PAT0050-NetworkVnetNew
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU7L9vigBklzLMoluB5mloBTns
-# S02gggMmMIIDIjCCAgqgAwIBAgIQVIJucZNUEZlNFZMEf+jSajANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU5L40bhMJhySkLr9ovcUGGpA8
+# nnugggMmMIIDIjCCAgqgAwIBAgIQVIJucZNUEZlNFZMEf+jSajANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5yb2NoZWdyb3VwdGVzdC5vbm1pY3Jvc29mdC5jb20w
 # HhcNMTgwNzMxMDYyODI1WhcNMTkwNzMxMDY0ODI1WjApMScwJQYDVQQDDB5yb2No
 # ZWdyb3VwdGVzdC5vbm1pY3Jvc29mdC5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -260,11 +260,11 @@ workflow PAT0050-NetworkVnetNew
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHnJvY2hlZ3JvdXB0ZXN0Lm9ubWljcm9zb2Z0
 # LmNvbQIQVIJucZNUEZlNFZMEf+jSajAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUY0K8Q67BSAM6
-# qQeIqJ6uWmV8C3QwDQYJKoZIhvcNAQEBBQAEggEAZSQCU8+Q3k8zhADuhgvfvE0I
-# g/Asz06+NXs/g605McLk223a6YjrEKM31IR2ZD56Sfmcv5gsTiOsiCpAWcBOK82P
-# Mn3XFawhCWKk92I8jUXatqLA6JAVgolEGPTptgFWzR9PYbchAqH4OZstf4BgCv67
-# lR6GPz2F6b5/2/Xuu8/LcGKaH8CYi6lYmSmr76PFiBu9+XFHzWZmrK/3mbKf8UnJ
-# g0AK4x+BQwp8MNeinVD+W+SCXIARvYJbEFF+N351ONNoKfnLP+Qj2XC4WQTmwoVn
-# wUfE/nKx51GzEJ3FQfu6va+eI8dKEG3awhaYuBI0ZDIvpzzDRNvPwDadYr9w/Q==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUwB+/yFpUFlcr
+# d+BaEDoje/xLMCUwDQYJKoZIhvcNAQEBBQAEggEATTw7u0jiIx7sSitWcBuYqtdB
+# DtvlW2x6I5dmPALwxpDdKs8pylpxDSHqT2Ux2adBCwytOBsNHG72l7osLVRhH5VA
+# /egj1BXvmFr2Mtxbl1na2V+gPru+Vhzp8n4arLd9IyB9UeM/W2E67mvWhsWGNqvF
+# AsQJqJyIKHBsVhWiWpVTOiJsqROz7/0cH3ZR4AkSQ9tCxUtBf4sDE3DA2CfeejnE
+# cmYeCyQyTxgMHrsigxFJY5IZulMrEsAxHrPSN4kq/ImjD9hNV7vwiRydmq0Yjw2c
+# q/gYYa01q+B9Iwria2igXuiOXNRyDLtt0vLju8QSKJmgCF1yVNGjoMhhExIb6w==
 # SIG # End signature block

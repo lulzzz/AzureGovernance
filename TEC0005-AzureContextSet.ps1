@@ -35,9 +35,9 @@ workflow TEC0005-AzureContextSet
   {
     try
     {
-      $SubscriptionName = Get-AutomationVariable -Name 'VAR-AUTO-SubscriptionName'
-      $StorageAccountName = Get-AutomationVariable -Name 'VAR-AUTO-StorageAccountName'
-      $AzureAutomationCredential = Get-AutomationPSCredential -Name 'CRE-AUTO-AutomationUser'
+      $SubscriptionName = Get-AutomationVariable -Name VAR-AUTO-SubscriptionName
+      $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName
+      $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser
       $Result = Disconnect-AzureRmAccount -ErrorAction SilentlyContinue
       $AzureAccount = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $SubscriptionName -Force
       $StorageAccount = Get-AzureRmStorageAccount | Where-Object -FilterScript {$_.StorageAccountName -eq "$StorageAccountName"}

@@ -60,7 +60,7 @@ workflow PAT0056-NetworkSecurityGroupNew
     # Parameters
     #
     ###########################################################################################################################################################
-    $AzureAutomationCredential = Get-AutomationPSCredential -Name 'CRE-AUTO-AutomationUser' -Verbose:$false
+    $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
 
     $ResourceGroupName = $RegionCode + '-' + $SubscriptionCode + '-rsg-security-01'                                                                              # e.g. weu-0010-rsg-security-01
     

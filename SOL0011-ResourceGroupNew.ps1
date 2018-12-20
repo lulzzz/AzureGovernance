@@ -51,7 +51,7 @@ workflow SOL0011-ResourceGroupNew
   # Parameters
   #
   #############################################################################################################################################################
-  $AzureAutomationCredential = Get-AutomationPSCredential -Name 'CRE-AUTO-AutomationUser' -Verbose:$false
+  $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
   $SubscriptionCode = $SubscriptionName.Split('-')[1]
   Write-Verbose -Message ('SOL0011-SubscriptionCode: ' + ($SubscriptionCode))
 

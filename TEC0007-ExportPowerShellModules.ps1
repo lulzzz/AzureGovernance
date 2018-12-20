@@ -58,7 +58,7 @@ workflow TEC0007-ExportPowerShellModules
     # Register the PowerShell Repository on the Azure File Share in the core storage account - need to connect New-PSDrive to enable access
     #
     ###########################################################################################################################################################
-    $StorageAccountName = Get-AutomationVariable -Name 'VAR-AUTO-StorageAccountName' -Verbose:$false
+    $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName -Verbose:$false
     $StorageAccount = Get-AzureRmResource | Where-Object {$_.Name -eq $StorageAccountName}
     $StorageAccountKey = (Get-AzureRMStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
     $StorageAccountKey = ConvertTo-SecureString -String $StorageAccountKey -AsPlainText -Force

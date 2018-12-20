@@ -39,7 +39,7 @@ workflow ResetTestBed
   # Parameters
   #
   ###########################################################################################################################################################
-  $AzureAutomationCredential = Get-AutomationPSCredential -Name 'CRE-AUTO-AutomationUser' -Verbose:$false
+  $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
 
 
   ###########################################################################################################################################################

@@ -54,7 +54,7 @@ workflow TEC0008-ImportPowerShellModules
     # Parameters
     #
     ###########################################################################################################################################################
-    $AzureAutomationCredential = Get-AutomationPSCredential -Name 'CRE-AUTO-AutomationUser' -Verbose:$false
+    $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
     $RepositoryPath = '\\rocweu0005core01s.file.core.windows.net\powershell-module-repository\PublishedModules'
     $RepositoryName = 'PublishedModules'
 
@@ -64,7 +64,7 @@ workflow TEC0008-ImportPowerShellModules
     # Register the PowerShell Repository on the Azure File Share in the core storage account - need to connect New-PSDrive to enable access
     #
     ###########################################################################################################################################################
-    $StorageAccountName = Get-AutomationVariable -Name 'VAR-AUTO-StorageAccountName' -Verbose:$false
+    $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName -Verbose:$false
     $StorageAccount = Get-AzureRmResource | Where-Object {$_.Name -eq $StorageAccountName}
     $StorageAccountKey = (Get-AzureRMStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
     $StorageAccountKey = ConvertTo-SecureString -String $StorageAccountKey -AsPlainText -Force

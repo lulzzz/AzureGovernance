@@ -65,7 +65,7 @@ workflow PAT0010-AzureResourceGroupNew
     # Parameters
     #
     ###########################################################################################################################################################
-    $AzureAutomationCredential = Get-AutomationPSCredential -Name 'CRE-AUTO-AutomationUser' -Verbose:$false
+    $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
     $TenantId = ((Get-AzureRmContext).Tenant).Id
 
     Write-Verbose -Message ('PAT0010-ResourceGroupNameIndividual: ' + ($ResourceGroupNameIndividual))
@@ -199,8 +199,8 @@ workflow PAT0010-AzureResourceGroupNew
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUYxvF9S0FjIg2dT9VKX0rtRsE
-# IkSgggMmMIIDIjCCAgqgAwIBAgIQVIJucZNUEZlNFZMEf+jSajANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUCX1VqErgenQnWCXjkDB3reD5
+# EFCgggMmMIIDIjCCAgqgAwIBAgIQVIJucZNUEZlNFZMEf+jSajANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5yb2NoZWdyb3VwdGVzdC5vbm1pY3Jvc29mdC5jb20w
 # HhcNMTgwNzMxMDYyODI1WhcNMTkwNzMxMDY0ODI1WjApMScwJQYDVQQDDB5yb2No
 # ZWdyb3VwdGVzdC5vbm1pY3Jvc29mdC5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -220,11 +220,11 @@ workflow PAT0010-AzureResourceGroupNew
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHnJvY2hlZ3JvdXB0ZXN0Lm9ubWljcm9zb2Z0
 # LmNvbQIQVIJucZNUEZlNFZMEf+jSajAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU7Uok3dp5w0vP
-# qjjSYYi1Nk7g8A0wDQYJKoZIhvcNAQEBBQAEggEAyJJ/EfQ1SG2kfzWHAJ1yNXfd
-# e1ewbUkwr2wXP3Httxe28R28AC7nCHZetTlVLkUb1JALj9zsFHS05N6b59xa3VeA
-# gxeZV7uNJhzyO0l4hLONAOR1DNLlzrgnfH/M70hyPx/ioC6WeQn3GzowGvax3kZk
-# PEhE10aRHLLZaieP/M/68aJkWZ+w0XvdP+456AE5H0dlTccXdDrE7oTsphQCJ2ps
-# y0rwN0TzYDDHTuLSwylLpUCNOPxrxB3RoguvJoosHgAgx15Tie4/MxQaEnPPUdS5
-# CdDYQS+NiYDHhLs7RbFOO29SMwD8vbTOKIBOmQtv4mSpxThOhJcFZxkLlo/irA==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUzU9oObHssoAv
+# c+v5Qd8xtOkYCDswDQYJKoZIhvcNAQEBBQAEggEAE2etiTx/iCAcvKwvJRtrHXCQ
+# f2y2J2UaLxzHAws3fa3zWEP8y7cMJbHrk7nfRJtFUpeU4K67ELiK+xqqeTPxHh6J
+# riy4pEVvIfaDYDEF02q+f63vW+y1LhcdUUg5fjPsqM0s+C2Ji3/3m7JcQuCDlFjD
+# hwTuxRN9cLKglqqYwqo6amCMTo+fetSuV09s3QZqKON++4p3DzKWQBKytoe4DjzS
+# 60m+KYPLB/QbhiQHJzqeJHRhk8CN+mgnrFdaSCGqFOMzvUGCqgZXaw2MU+X6p3pa
+# fqEIYgd05dcfrMTt1ASCkjT6KMwpFppaip2COC7hBbl3GIy98Nwsam+UySugvA==
 # SIG # End signature block

@@ -47,7 +47,7 @@ workflow PAT0053-NetworkVnetPeeringNew
     # Parameters
     #
     ###########################################################################################################################################################
-    $AzureAutomationCredential = Get-AutomationPSCredential -Name 'CRE-AUTO-AutomationUser' -Verbose:$false
+    $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
 
     # Vnet1
     $Vnet1SubscriptionName = $Vnet1Name.Split('-')[1]
