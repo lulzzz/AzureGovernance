@@ -8,7 +8,7 @@
 #
 # Requirements:   See Import-Module in code below / '-rsg-network-01' Resource Group, NSGs
 #
-# Template:       PAT0050-NetworkVnetNew -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode `#                                        -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact -Automation $Automation
+# Template:       PAT0050-NetworkVnetNew -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode -Contact $Contact
 #
 # Change log:
 # 1.0             Initial version 
@@ -23,11 +23,7 @@ workflow PAT0050-NetworkVnetNew
     [Parameter(Mandatory=$false)][String] $SubscriptionCode = '0010',
     [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
     [Parameter(Mandatory=$false)][String] $RegionCode = 'weu',
-    [Parameter(Mandatory=$false)][String] $ApplicationId = 'Application-001',                                                                                    # Tagging
-    [Parameter(Mandatory=$false)][String] $CostCenter = 'A99.2345.34-f',                                                                                         # Tagging
-    [Parameter(Mandatory=$false)][String] $Budget = '100',                                                                                                       # Tagging
-    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com',                                                                                     # Tagging
-    [Parameter(Mandatory=$false)][String] $Automation = 'v1.0'                                                                                                   # Tagging
+    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com'                                                                                     # Tagging
   )
 
   #############################################################################################################################################################
@@ -49,11 +45,7 @@ workflow PAT0050-NetworkVnetNew
     $SubscriptionCode = $Using:SubscriptionCode
     $RegionName = $Using:RegionName
     $RegionCode = $Using:RegionCode
-    $ApplicationId = $Using:ApplicationId 
-    $CostCenter = $Using:CostCenter 
-    $Budget = $Using:Budget 
     $Contact = $Using:Contact 
-    $Automation = $Using:Automation
 
 
     ###########################################################################################################################################################
@@ -62,9 +54,10 @@ workflow PAT0050-NetworkVnetNew
     #
     ###########################################################################################################################################################
     $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
+    $Automation = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion -Verbose:$false
 
     $VnetName = $RegionCode + '-' + $SubscriptionCode + '-vnt-01'                                                                                                # e.g. weu-0010-vnt-01
-    $ResourceGroupName = $RegionCode + '-' + $SubscriptionCode + '-rsg-network-01'                                                                               # e.g. weu-0010-rsg-network-01
+    $ResourceGroupName = 'aaa-' + $SubscriptionCode + '-rsg-network-01'                                                                               # e.g. weu-0010-rsg-network-01
     
     # Subnets
     $FrontendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-sub-vnt01-fe'                                                                                # e.g. weu-0010-sub-vnt01-fe
@@ -76,13 +69,10 @@ workflow PAT0050-NetworkVnetNew
     # Network Security Groups
     $NsgFrontendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-nsg-vnt01fe'                                                                              # e.g. weu-0010-nsg-vnt01fe
     $NsgBackendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-nsg-vnt01be'                                                                               # e.g. weu-0010-nsg-vnt01be
-    $ResourceGroupNameNsg = $RegionCode + '-' + $SubscriptionCode + '-rsg-security-01'                                                                           # e.g. weu-0010-rsg-security-01
+    $ResourceGroupNameNsg = 'aaa-' + $SubscriptionCode + '-rsg-security-01'                                                                           # e.g. weu-0010-rsg-security-01
 
     Write-Verbose -Message ('PAT0050-SubscriptionCode: ' + ($SubscriptionCode))
     Write-Verbose -Message ('PAT0050-RegionName: ' + ($RegionName))
-    Write-Verbose -Message ('PAT0050-ApplicationId: ' + ($ApplicationId))
-    Write-Verbose -Message ('PAT0050-CostCenter: ' + ($CostCenter))
-    Write-Verbose -Message ('PAT0050-Budget: ' + ($Budget))
     Write-Verbose -Message ('PAT0050-Contact: ' + ($Contact))
     Write-Verbose -Message ('PAT0050-Automation: ' + ($Automation))
     Write-Verbose -Message ('PAT0050-RegionCode: ' + ($RegionCode))
@@ -188,7 +178,7 @@ workflow PAT0050-NetworkVnetNew
     #
     ###########################################################################################################################################################
     $Tags = $null
-    $Tags = @{ApplicationId  = $ApplicationId; CostCenter = $CostCenter; Budget = $Budget; Contact = $Contact; Automation = $Automation}
+    $Tags = @{Contact = $Contact; Automation = $Automation}
     Write-Verbose -Message ('PAT0050-TagsToWrite: ' + ($Tags | Out-String))
 
     # VNET

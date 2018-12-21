@@ -7,8 +7,7 @@
 #
 # Requirements:   See Import-Module in code below / Resource Group
 #
-# Template:       PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual $WorkspaceNameIndividual -ResourceGroupName $ResourceGroupName `#                                                -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode `#                                                -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
-#                                                -Automation $Automation
+# Template:       PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual $WorkspaceNameIndividual -ResourceGroupName $ResourceGroupName `#                                                -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode `#                                                -Contact $Contact -Automation $Automation
 #                                                     
 # Change log:
 # 1.0             Initial version
@@ -21,15 +20,11 @@ workflow PAT0300-MonitoringWorkspaceNew
   param
   (
     [Parameter(Mandatory=$false)][String] $WorkspaceNameIndividual = 'core',
-    [Parameter(Mandatory=$false)][String] $ResourceGroupName = 'weu-co-rsg-core-01',
-    [Parameter(Mandatory=$false)][String] $SubscriptionCode = 'de',
-    [Parameter(Mandatory=$false)][String] $RegionName = 'North Europe',
+    [Parameter(Mandatory=$false)][String] $ResourceGroupName = 'aaa-co-rsg-core-01',
+    [Parameter(Mandatory=$false)][String] $SubscriptionCode = 'co',
+    [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
     [Parameter(Mandatory=$false)][String] $RegionCode = 'weu',
-    [Parameter(Mandatory=$false)][String] $ApplicationId = 'Application-001',                                                                                    # Tagging
-    [Parameter(Mandatory=$false)][String] $CostCenter = 'A99.2345.34-f',                                                                                         # Tagging
-    [Parameter(Mandatory=$false)][String] $Budget = '100',                                                                                                       # Tagging
-    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com',                                                                                     # Tagging
-    [Parameter(Mandatory=$false)][String] $Automation = 'v1.0'                                                                                                   # Tagging
+    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com'
   )
   
   #############################################################################################################################################################
@@ -53,11 +48,7 @@ workflow PAT0300-MonitoringWorkspaceNew
     $SubscriptionCode = $Using:SubscriptionCode
     $RegionName = $Using:RegionName
     $RegionCode = $Using:RegionCode
-    $ApplicationId = $Using:ApplicationId 
-    $CostCenter = $Using:CostCenter 
-    $Budget = $Using:Budget 
     $Contact = $Using:Contact 
-    $Automation = $Using:Automation
     
 
     ###########################################################################################################################################################
@@ -66,6 +57,8 @@ workflow PAT0300-MonitoringWorkspaceNew
     #
     ###########################################################################################################################################################
     $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
+    $Automation = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion -Verbose:$false
+    $CustomerShortCode = Get-AutomationVariable -Name VAR-AUTO-CustomerShortCode -Verbose:$false
 
     # Log Analytics is available in certain Azure Regions only
     $RegionNameTechnical = switch ($RegionName) 
@@ -84,11 +77,9 @@ workflow PAT0300-MonitoringWorkspaceNew
     Write-Verbose -Message ('PAT0300-RegionName: ' + ($RegionName))
     Write-Verbose -Message ('PAT0300-RegionCode: ' + ($RegionCode))
     Write-Verbose -Message ('PAT0300-RegionNameTechnical: ' + ($RegionNameTechnical))
-    Write-Verbose -Message ('PAT0300-ApplicationId : ' + ($ApplicationId ))
-    Write-Verbose -Message ('PAT0300-CostCenter : ' + ($CostCenter))
-    Write-Verbose -Message ('PAT0300-Budget : ' + ($Budget))
     Write-Verbose -Message ('PAT0300-Contact: ' + ($Contact))
     Write-Verbose -Message ('PAT0300-Automation: ' + ($Automation))
+    Write-Verbose -Message ('PAT0300-CustomerShortCode: ' + ($CustomerShortCode))
 
 
     ###########################################################################################################################################################
@@ -107,7 +98,7 @@ workflow PAT0300-MonitoringWorkspaceNew
     # Configure Workspace name
     #
     ###########################################################################################################################################################
-    $WorkspaceName = ('swi' + $RegionCode + $SubscriptionCode + $WorkspaceNameIndividual)                                                                        # e.g. swiweu0010core01
+    $WorkspaceName = ($CustomerShortCode + $RegionCode + $SubscriptionCode + $WorkspaceNameIndividual)                                                                        # e.g. swiweu0010core01
     $WorkspaceExisting = Get-AzureRmOperationalInsightsWorkspace `
     |                        Where-Object {$_.Name -like "$WorkspaceName*"} `
     |                        Sort-Object Name -Descending | Select-Object -First $True
@@ -159,12 +150,12 @@ workflow PAT0300-MonitoringWorkspaceNew
     # Write tags
     #
     ###########################################################################################################################################################
-    $Tags = @{ApplicationId  = $ApplicationId; CostCenter = $CostCenter; Budget = $Budget; Contact = $Contact; Automation = $Automation}
+    $Tags = @{Contact = $Contact; Automation = $Automation}
 
     Write-Verbose -Message ('PAT0300-TagsToWrite: ' + ($Tags | Out-String))
 
     $Result = Set-AzureRmOperationalInsightsWorkspace -Name $WorkspaceName -ResourceGroupName $ResourceGroupName  -Tag $Tags
-    Write-Verbose -Message ('PAT0300-ResourceGroupTagged: ' + ($ResourceGroupName))
+    Write-Verbose -Message ('PAT0300-WorkspaceTagged: ' + ($ResourceGroupName))
 
 
     ###########################################################################################################################################################

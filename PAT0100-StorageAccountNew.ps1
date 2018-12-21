@@ -1,12 +1,12 @@
 ﻿###############################################################################################################################################################
-# Creates a Storage Account (e.g. swiweu0010diag01s) in an existing Resource Group. Tags the Storage Accounts.
+# Creates a Storage Account (e.g. felweu0010diag01s) in an existing Resource Group. Tags the Storage Accounts.
 # Configures Firewall - allow access from all Subnets in all VNETs as well as Azure Services.
 #
 # Output:         $StorageAccountName
 #
 # Requirements:   See Import-Module in code below / Resource Group
 #
-# Template:       PAT0100-StorageAccountNew -StorageAccountNameIndividual $StorageAccountNameIndividual -ResourceGroupName $ResourceGroupName `#                                           -StorageAccountType $StorageAccountType#                                           -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode `#                                           -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact -Automation $Automation
+# Template:       PAT0100-StorageAccountNew -StorageAccountNameIndividual $StorageAccountNameIndividual -ResourceGroupName $ResourceGroupName `#                                           -StorageAccountType $StorageAccountType#                                           -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode -Contact $Contact
 #
 # Change log:
 # 1.0             Initial version 
@@ -24,11 +24,7 @@ workflow PAT0100-StorageAccountNew
     [Parameter(Mandatory=$false)][String] $SubscriptionCode = '0010',
     [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
     [Parameter(Mandatory=$false)][String] $RegionCode = 'weu',
-    [Parameter(Mandatory=$false)][String] $ApplicationId = 'Application-001',                                                                                    # Tagging
-    [Parameter(Mandatory=$false)][String] $CostCenter = 'A99.2345.34-f',                                                                                         # Tagging
-    [Parameter(Mandatory=$false)][String] $Budget = '100',                                                                                                       # Tagging
-    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com',                                                                                     # Tagging
-    [Parameter(Mandatory=$false)][String] $Automation = 'v1.0'                                                                                                   # Tagging
+    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com'                                                                                      # Tagging
   )
 
   #############################################################################################################################################################
@@ -53,11 +49,7 @@ workflow PAT0100-StorageAccountNew
     $SubscriptionCode = $Using:SubscriptionCode
     $RegionName = $Using:RegionName
     $RegionCode = $Using:RegionCode
-    $ApplicationId = $Using:ApplicationId 
-    $CostCenter = $Using:CostCenter 
-    $Budget = $Using:Budget 
     $Contact = $Using:Contact 
-    $Automation = $Using:Automation
 
 
     ###########################################################################################################################################################
@@ -66,6 +58,8 @@ workflow PAT0100-StorageAccountNew
     #
     ###########################################################################################################################################################
     $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
+    $Automation = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion -Verbose:$false
+    $CustomerShortCode = Get-AutomationVariable -Name VAR-AUTO-CustomerShortCode -Verbose:$false
 
     Write-Verbose -Message ('PAT0100-StorageAccountNameIndividual: ' + ($StorageAccountNameIndividual))
     Write-Verbose -Message ('PAT0100-ResourceGroupName: ' + ($ResourceGroupName))
@@ -73,9 +67,6 @@ workflow PAT0100-StorageAccountNew
     Write-Verbose -Message ('PAT0100-SubscriptionCode: ' + ($SubscriptionCode))
     Write-Verbose -Message ('PAT0100-RegionName: ' + ($RegionName))
     Write-Verbose -Message ('PAT0100-RegionCode: ' + ($RegionCode))
-    Write-Verbose -Message ('PAT0100-ApplicationId: ' + ($ApplicationId))
-    Write-Verbose -Message ('PAT0100-CostCenter: ' + ($CostCenter))
-    Write-Verbose -Message ('PAT0100-Budget: ' + ($Budget))
     Write-Verbose -Message ('PAT0100-Contact: ' + ($Contact))
     Write-Verbose -Message ('PAT0100-Automation: ' + ($Automation))
 
@@ -96,7 +87,7 @@ workflow PAT0100-StorageAccountNew
     # Configure Storage Account name
     #
     ###########################################################################################################################################################
-    $StorageAccountName = 'swi' + $RegionCode + $SubscriptionCode + $StorageAccountNameIndividual                                                                # e.g. swiweu0010diag01s
+    $StorageAccountName = $CustomerShortCode + $RegionCode + $SubscriptionCode + $StorageAccountNameIndividual                                                   # e.g. felweu0010diag01s
   
     
     $StorageAccountExisting = Get-AzureRmStorageAccount | Where-Object {$_.StorageAccountName -like "$StorageAccountName*"} `
@@ -169,7 +160,7 @@ workflow PAT0100-StorageAccountNew
     # Write tags
     #
     ###########################################################################################################################################################
-    $Tags = @{ApplicationId  = $ApplicationId; CostCenter = $CostCenter; Budget = $Budget; Contact = $Contact; Automation = $Automation}
+    $Tags = @{Contact = $Contact; Automation = $Automation}
     Write-Verbose -Message ('PAT0100-TagsToWrite: ' + ($Tags | Out-String))
 
     $Result = Set-AzureRmResource -Name $StorageAccountName -ResourceGroupName $ResourceGroupName -ResourceType '/Microsoft.Storage/storageAccounts' `

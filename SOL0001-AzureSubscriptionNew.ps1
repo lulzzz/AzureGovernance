@@ -28,12 +28,11 @@ workflow SOL0001-AzureSubscriptionNew
     [Parameter(Mandatory=$false)][String] $IamContributorGroupNameNetwork = 'AzureNetwork-Contributor',                                                          # AD Group for Contributor role on Network RSG
     [Parameter(Mandatory=$false)][String] $IamContributorGroupNameCore = 'AzureCore-Contributor',                                                                # AD Group for Contributor role on Core RSG
     [Parameter(Mandatory=$false)][String] $IamContributorGroupNameSecurity = 'AzureSecurity-Contributor',                                                        # AD Group for Contributor role on Security RSG
-    [Parameter(Mandatory=$false)][String] $IamReaderGroupName = 'AzureSecurity-Contributor',                                                                     # AD Group for Reader on all RSG
+    [Parameter(Mandatory=$false)][String] $IamReaderGroupName = 'AzureReader-Reader',                                                                     # AD Group for Reader on all RSG
     [Parameter(Mandatory=$false)][String] $ApplicationId = 'Application-001',                                                                                    # Tagging
     [Parameter(Mandatory=$false)][String] $CostCenter = 'A99.2345.34-f',                                                                                         # Tagging
     [Parameter(Mandatory=$false)][String] $Budget = '100',                                                                                                       # Tagging
-    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com',                                                                                     # Tagging
-    [Parameter(Mandatory=$false)][String] $Automation = 'v1.0'                                                                                                   # Tagging
+    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com'                                                                                      # Tagging                                                                                               # Tagging
   )
 
   #############################################################################################################################################################
@@ -56,6 +55,7 @@ workflow SOL0001-AzureSubscriptionNew
   #
   #############################################################################################################################################################
   $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
+  $Automation = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion -Verbose:$false
   $SubscriptionCode = $SubscriptionName.Split('-')[1]
   Write-Verbose -Message ('SOL0001-SubscriptionCode: ' + ($SubscriptionCode))
 
@@ -125,8 +125,8 @@ workflow SOL0001-AzureSubscriptionNew
   # Create Networking Resource Group, e.g. weu-0005-rsg-network-01
   foreach ($Region in $RegionTable)
   {
-    $ResourceGroupNameNetwork = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual network -SubscriptionCode $SubscriptionCode `                                                              -IamContributorGroupName $IamContributorGroupNameNetwork -IamReaderGroupName $IamReaderGroupName `                                                              -RegionName (($Region -Split(','))[0]) -RegionCode (($Region -Split(','))[1]) `                                                              -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
-                                                              -Automation $Automation
+    $ResourceGroupNameNetwork = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual network -SubscriptionCode $SubscriptionCode `                                                              -IamContributorGroupName $IamContributorGroupNameNetwork -IamReaderGroupName $IamReaderGroupName `                                                              -RegionName (($Region -Split(','))[0]) -RegionCode aaa -Contact $Contact `
+                                                              -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget
 
     # Assign Policies
     InlineScript
@@ -153,8 +153,7 @@ workflow SOL0001-AzureSubscriptionNew
   # Create Core Resource Group, e.g. weu-0005-rsg-core-01
   foreach ($Region in $RegionTable)
   {
-    $ResourceGroupNameCore = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual core -SubscriptionCode $SubscriptionCode `                                                           -IamContributorGroupName $IamContributorGroupNameCore -IamReaderGroupName $IamReaderGroupName `                                                           -RegionName (($Region -Split(','))[0]) -RegionCode (($Region -Split(','))[1]) `                                                           -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
-                                                           -Automation $Automation
+    $ResourceGroupNameCore = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual core -SubscriptionCode $SubscriptionCode `                                                           -IamContributorGroupName $IamContributorGroupNameCore -IamReaderGroupName $IamReaderGroupName `                                                           -RegionName (($Region -Split(','))[0]) -RegionCode aaa `                                                           -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact 
 
     # Assign Policies - assign both Regions in a Geo Region due to unavailability of Log Analytics in all Regions
     InlineScript
@@ -195,8 +194,7 @@ workflow SOL0001-AzureSubscriptionNew
   # Create Security Resource Group, e.g. weu-0005-rsg-security-01
   foreach ($Region in $RegionTable)
   {
-    $ResourceGroupNameSecurity = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual security -SubscriptionCode $SubscriptionCode `                                                               -IamContributorGroupName $IamContributorGroupNameSecurity -IamReaderGroupName $IamReaderGroupName `                                                               -RegionName (($Region -Split(','))[0]) -RegionCode (($Region -Split(','))[1]) `                                                               -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
-                                                               -Automation $Automation
+    $ResourceGroupNameSecurity = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual security -SubscriptionCode $SubscriptionCode `                                                               -IamContributorGroupName $IamContributorGroupNameSecurity -IamReaderGroupName $IamReaderGroupName `                                                               -RegionName (($Region -Split(','))[0]) -RegionCode aaa `                                                               -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact
 
     # Assign Policies - assign both Regions in a Geo Region due to unavailability of Log Analytics in all Regions
     InlineScript
@@ -240,32 +238,29 @@ workflow SOL0001-AzureSubscriptionNew
   # Create default Log Analytics Workspaces
   #
   #############################################################################################################################################################
-  # Create the Core Workspace, e.g. swiweu0010refcore01
+  # Create the Core Workspace, e.g. felweu0010refcore01
   foreach ($Region in $RegionTable)
   {  
-    $ResourceGroupNameCore = (($Region -Split(','))[1]) + $ResourceGroupNameCore.Substring(3)    $WorkspaceName = PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual core -ResourceGroupName $ResourceGroupNameCore `                                                    -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                    -RegionCode (($Region -Split(','))[1]) `                                                    -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
-                                                    -Automation $Automation
+    $ResourceGroupNameCore = 'aaa' + $ResourceGroupNameCore.Substring(3)    $WorkspaceName = PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual core -ResourceGroupName $ResourceGroupNameCore `                                                    -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                    -RegionCode (($Region -Split(','))[1]) `                                                    -Contact $Contact
     Write-Verbose -Message ('SOL0001-LogAnalyticsCoreWorkspaceCreated: ' + ($WorkspaceName))
   }
 
-  # Create the Security Workspace, e.g. swiweu0010refsecurity01
+  # Create the Security Workspace, e.g. felweu0010refsecurity01
   foreach ($Region in $RegionTable)
   {  
-    $ResourceGroupNameSecurity = (($Region -Split(','))[1]) + $ResourceGroupNameSecurity.Substring(3)    $WorkspaceName = PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual security -ResourceGroupName $ResourceGroupNameSecurity `                                                    -SubscriptionCode $SubscriptionCode -RegionName  (($Region -Split(','))[0]) `                                                    -RegionCode (($Region -Split(','))[1]) `                                                    -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
-                                                    -Automation $Automation
+    $ResourceGroupNameSecurity = 'aaa' + $ResourceGroupNameSecurity.Substring(3)    $WorkspaceName = PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual security -ResourceGroupName $ResourceGroupNameSecurity `                                                    -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                    -RegionCode (($Region -Split(','))[1]) `                                                    -Contact $Contact
     Write-Verbose -Message ('SOL0001-LogAnalyticsSecuirtyWorkspaceCreated: ' + ($WorkspaceName))
   }
 
 
   #############################################################################################################################################################
   #  
-  # Create NSGs for Frontend and Backup Subnets in Security Resource Group, connects with Log Analytics Workspace
+  # Create NSGs for Frontend and Backend Subnets in Security Resource Group, connect with Log Analytics Workspace
   #
   #############################################################################################################################################################
   foreach ($Region in $RegionTable)
   {  
-    $NsgNames = PAT0056-NetworkSecurityGroupNew -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                -RegionCode (($Region -Split(','))[1]) `                                                -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
-                                                -Automation $Automation     Write-Verbose -Message ('SOL0001-NsgCreated: ' + ($NsgNames))
+    $NsgNames = PAT0056-NetworkSecurityGroupNew -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                -RegionCode (($Region -Split(','))[1]) -Contact $Contact    Write-Verbose -Message ('SOL0001-NsgCreated: ' + ($NsgNames))
   }
 
 
@@ -276,8 +271,7 @@ workflow SOL0001-AzureSubscriptionNew
   #############################################################################################################################################################
   foreach ($Region in $RegionTable)
   {  
-    $VnetName = PAT0050-NetworkVnetNew -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) -RegionCode (($Region -Split(','))[1]) `                                       -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
-                                       -Automation $Automation
+    $VnetName = PAT0050-NetworkVnetNew -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) -RegionCode (($Region -Split(','))[1]) `                                       -Contact $Contact
   }
 
 
@@ -300,9 +294,7 @@ workflow SOL0001-AzureSubscriptionNew
   #############################################################################################################################################################
   foreach ($Region in $RegionTable)
   {  
-     $KeyVaultName = PAT0250-SecurityKeyVaultNew -KeyVaultNameIndividual 'keyvault' `                                                 -ResourceGroupName ((($Region -Split(','))[1]) + "-$SubscriptionCode-rsg-security-01") `                                                 -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                 -RegionCode (($Region -Split(','))[1]) `
-                                                 -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
-                                                 -Automation $Automation  }
+     $KeyVaultName = PAT0250-SecurityKeyVaultNew -KeyVaultNameIndividual 'keyvault' `                                                 -ResourceGroupName ((($Region -Split(','))[1]) + "-$SubscriptionCode-rsg-security-01") `                                                 -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                 -RegionCode (($Region -Split(','))[1]) -Contact $Contact  }
 
 
   #############################################################################################################################################################
@@ -312,8 +304,7 @@ workflow SOL0001-AzureSubscriptionNew
   #############################################################################################################################################################
     foreach ($Region in $RegionTable)
   {  
-    $StorageAccountName = PAT0100-StorageAccountNew -StorageAccountNameIndividual $StorageAccountNameIndividual `                                                    -ResourceGroupName ((($Region -Split(','))[1]) + "-$SubscriptionCode-rsg-core-01") `                                                    -StorageAccountType $StorageAccountType `                                                    -SubscriptionCode $SubscriptionCode -RegionName  (($Region -Split(','))[0]) `                                                    -RegionCode (($Region -Split(','))[1]) `                                                    -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
-                                                    -Automation $Automation  }
+    $StorageAccountName = PAT0100-StorageAccountNew -StorageAccountNameIndividual $StorageAccountNameIndividual `                                                    -ResourceGroupName "aaa-$SubscriptionCode-rsg-core-01" `                                                    -StorageAccountType $StorageAccountType `                                                    -SubscriptionCode $SubscriptionCode -RegionName  (($Region -Split(','))[0]) `                                                    -RegionCode (($Region -Split(','))[1]) -Contact $Contact  }
 
 
   #############################################################################################################################################################

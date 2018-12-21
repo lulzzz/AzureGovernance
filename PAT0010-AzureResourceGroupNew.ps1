@@ -6,7 +6,7 @@
 #
 # Requirements:   See Import-Module in code below / AD Security Groups
 #
-# Template:       PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual $ResourceGroupNameIndividual `#                                               -SubscriptionCode $SubscriptionCode -IamContributorGroupName $IamContributorGroupName `#                                               -IamReaderGroupName $IamReaderGroupName -RegionName $RegionName -RegionCode $RegionCode `#                                               -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact -Automation $Automation
+# Template:       PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual $ResourceGroupNameIndividual `#                                               -SubscriptionCode $SubscriptionCode -IamContributorGroupName $IamContributorGroupName `#                                               -IamReaderGroupName $IamReaderGroupName -RegionName $RegionName -RegionCode $RegionCode `#                                               -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact
 #                                                     
 # Change log:
 # 1.0             Initial version
@@ -27,8 +27,7 @@ workflow PAT0010-AzureResourceGroupNew
     [Parameter(Mandatory=$false)][String] $ApplicationId = 'Application-001',                                                                                    # Tagging
     [Parameter(Mandatory=$false)][String] $CostCenter = 'A99.2345.34-f',                                                                                         # Tagging
     [Parameter(Mandatory=$false)][String] $Budget = '100',                                                                                                       # Tagging
-    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com',                                                                                     # Tagging
-    [Parameter(Mandatory=$false)][String] $Automation = 'v1.0'                                                                                                   # Tagging
+    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com'                                                                                     # Tagging
   )
   
   #############################################################################################################################################################
@@ -56,8 +55,7 @@ workflow PAT0010-AzureResourceGroupNew
     $ApplicationId = $Using:ApplicationId 
     $CostCenter = $Using:CostCenter 
     $Budget = $Using:Budget 
-    $Contact = $Using:Contact 
-    $Automation = $Using:Automation
+    $Contact = $Using:Contact
 
 
     ###########################################################################################################################################################
@@ -66,6 +64,7 @@ workflow PAT0010-AzureResourceGroupNew
     #
     ###########################################################################################################################################################
     $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
+    $Automation = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion -Verbose:$false
     $TenantId = ((Get-AzureRmContext).Tenant).Id
 
     Write-Verbose -Message ('PAT0010-ResourceGroupNameIndividual: ' + ($ResourceGroupNameIndividual))

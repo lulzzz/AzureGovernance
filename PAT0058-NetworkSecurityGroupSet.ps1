@@ -49,6 +49,7 @@ workflow PAT0058-NetworkSecurityGroupSet
     #
     ###########################################################################################################################################################
     $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
+    $Automation = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion -Verbose:$false
     
     Write-Verbose -Message ('PAT0058-NsgName: ' + ($NsgName))    
     Write-Verbose -Message ('PAT0058-SubscriptionCode: ' + ($SubscriptionCode))

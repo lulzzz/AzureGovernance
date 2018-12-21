@@ -23,11 +23,7 @@ workflow PAT0250-SecurityKeyVaultNew
     [Parameter(Mandatory=$false)][String] $SubscriptionCode = '0010',
     [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
     [Parameter(Mandatory=$false)][String] $RegionCode = 'weu',
-    [Parameter(Mandatory=$false)][String] $ApplicationId = 'Application-001',                                                                                    # Tagging
-    [Parameter(Mandatory=$false)][String] $CostCenter = 'A99.2345.34-f',                                                                                         # Tagging
-    [Parameter(Mandatory=$false)][String] $Budget = '100',                                                                                                       # Tagging
-    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com',                                                                                     # Tagging
-    [Parameter(Mandatory=$false)][String] $Automation = 'v1.0'                                                                                                   # Tagging
+    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com'                                                                                      # Tagging
   )
   
   #############################################################################################################################################################
@@ -52,11 +48,7 @@ workflow PAT0250-SecurityKeyVaultNew
     $SubscriptionCode = $Using:SubscriptionCode
     $RegionName = $Using:RegionName
     $RegionCode = $Using:RegionCode
-    $ApplicationId = $Using:ApplicationId 
-    $CostCenter = $Using:CostCenter 
-    $Budget = $Using:Budget 
     $Contact = $Using:Contact 
-    $Automation = $Using:Automation
 
 
     ###########################################################################################################################################################
@@ -65,7 +57,8 @@ workflow PAT0250-SecurityKeyVaultNew
     #
     ###########################################################################################################################################################
     $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
-    
+    $Automation = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion -Verbose:$false
+
     # Log Analytic Workspace
     $LogAnalyticsWorkspaceName = ('swi' + $RegionCode + $SubscriptionCode + 'security01')                                                                        # e.g. swiweu0010security01
     $ResourceGroupNameSecurity = ($RegionCode + "-$SubscriptionCode-rsg-security-01")                                                                            # e.g. weu-0010-rsg-security-01
@@ -75,9 +68,6 @@ workflow PAT0250-SecurityKeyVaultNew
     Write-Verbose -Message ('PAT0250-SubscriptionCode: ' + ($SubscriptionCode))
     Write-Verbose -Message ('PAT0250-RegionName: ' + ($RegionName))
     Write-Verbose -Message ('PAT0250-RegionCode: ' + ($RegionCode))
-    Write-Verbose -Message ('PAT0250-ApplicationId: ' + ($ApplicationId))
-    Write-Verbose -Message ('PAT0250-CostCenter: ' + ($CostCenter))
-    Write-Verbose -Message ('PAT0250-Budget: ' + ($Budget))
     Write-Verbose -Message ('PAT0250-Contact: ' + ($Contact))
     Write-Verbose -Message ('PAT0250-Automation: ' + ($Automation))
     Write-Verbose -Message ('PAT0250-LogAnalyticsWorkspaceName: ' + ($LogAnalyticsWorkspaceName))
@@ -156,7 +146,7 @@ workflow PAT0250-SecurityKeyVaultNew
     # Write tags
     #
     ###########################################################################################################################################################
-    $Tags = @{ApplicationId  = $ApplicationId; CostCenter = $CostCenter; Budget = $Budget; Contact = $Contact; Automation = $Automation}
+    $Tags = @{Contact = $Contact; Automation = $Automation}
     Write-Verbose -Message ('PAT0250-TagsToWrite: ' + ($Tags | Out-String))
 
     $Result = Set-AzureRmResource -Name $KeyVaultName -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.KeyVault/vaults' `

@@ -6,8 +6,7 @@
 #
 # Requirements:   See Import-Module in code below / Log Analytics Workspace, '-rsg-security-01' Resource Group
 #
-# Template:       PAT0056-NetworkSecurityGroupNew -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode `#                                                 -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
-#                                                 -Automation $Automation
+# Template:       PAT0056-NetworkSecurityGroupNew -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode -Contact $Contact 
 #
 # Change log:
 # 1.0             Initial version 
@@ -22,11 +21,7 @@ workflow PAT0056-NetworkSecurityGroupNew
     [Parameter(Mandatory=$false)][String] $SubscriptionCode = '0010',
     [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
     [Parameter(Mandatory=$false)][String] $RegionCode = 'weu',
-    [Parameter(Mandatory=$false)][String] $ApplicationId = 'Application-001',                                                                                    # Tagging
-    [Parameter(Mandatory=$false)][String] $CostCenter = 'A99.2345.34-f',                                                                                         # Tagging
-    [Parameter(Mandatory=$false)][String] $Budget = '100',                                                                                                       # Tagging
-    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com',                                                                                     # Tagging
-    [Parameter(Mandatory=$false)][String] $Automation = 'v1.0'                                                                                                   # Tagging
+    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com'                                                                                     # Tagging
   )
 
   #############################################################################################################################################################
@@ -48,11 +43,7 @@ workflow PAT0056-NetworkSecurityGroupNew
     $SubscriptionCode = $Using:SubscriptionCode
     $RegionName = $Using:RegionName
     $RegionCode = $Using:RegionCode
-    $ApplicationId = $Using:ApplicationId 
-    $CostCenter = $Using:CostCenter 
-    $Budget = $Using:Budget 
     $Contact = $Using:Contact 
-    $Automation = $Using:Automation
 
 
     ###########################################################################################################################################################
@@ -61,22 +52,21 @@ workflow PAT0056-NetworkSecurityGroupNew
     #
     ###########################################################################################################################################################
     $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
+    $Automation = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion -Verbose:$false
+    $CustomerShortCode = Get-AutomationVariable -Name VAR-AUTO-CustomerShortCode -Verbose:$false
 
-    $ResourceGroupName = $RegionCode + '-' + $SubscriptionCode + '-rsg-security-01'                                                                              # e.g. weu-0010-rsg-security-01
+    $ResourceGroupName = 'aaa-' + $SubscriptionCode + '-rsg-security-01'                                                                                         # e.g. aaa-0010-rsg-security-01
     
     # Network Security Groups
     $NsgFrontendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-nsg-vnt01fe'                                                                              # e.g. weu-0010-nsg-vnt01fe
     $NsgBackendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-nsg-vnt01be'                                                                               # e.g. weu-0010-nsg-vnt01be
 
     # Log Analytic Workspace
-    $LogAnalyticsWorkspaceName = ('swi' + $RegionCode + $SubscriptionCode + 'security01')                                                                        # e.g. swiweu0010security01
-    $ResourceGroupNameSecurity = ($RegionCode + "-$SubscriptionCode-rsg-security-01")                                                                            # e.g. weu-0010-rsg-security-01
+    $LogAnalyticsWorkspaceName = ($CustomerShortCode + $RegionCode + $SubscriptionCode + 'security01')                                                           # e.g. felweu0010security01
+    $ResourceGroupNameSecurity = "aaa-$SubscriptionCode-rsg-security-01"                                                                                         # e.g. aaa-0010-rsg-security-01
 
     Write-Verbose -Message ('PAT0056-SubscriptionCode: ' + ($SubscriptionCode))
     Write-Verbose -Message ('PAT0056-RegionName: ' + ($RegionName))
-    Write-Verbose -Message ('PAT0056-ApplicationId: ' + ($ApplicationId))
-    Write-Verbose -Message ('PAT0056-CostCenter: ' + ($CostCenter))
-    Write-Verbose -Message ('PAT0056-Budget: ' + ($Budget))
     Write-Verbose -Message ('PAT0056-Contact: ' + ($Contact))
     Write-Verbose -Message ('PAT0056-Automation: ' + ($Automation))
     Write-Verbose -Message ('PAT0056-RegionCode: ' + ($RegionCode))
@@ -157,7 +147,7 @@ workflow PAT0056-NetworkSecurityGroupNew
     #
     ###########################################################################################################################################################
     $Tags = $null
-    $Tags = @{ApplicationId  = $ApplicationId; CostCenter = $CostCenter; Budget = $Budget; Contact = $Contact; Automation = $Automation}
+    $Tags = @{Contact = $Contact; Automation = $Automation}
     Write-Verbose -Message ('PAT0056-TagsToWrite: ' + ($Tags | Out-String))
 
     # NSGs
