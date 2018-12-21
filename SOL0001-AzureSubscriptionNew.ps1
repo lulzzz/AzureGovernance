@@ -231,7 +231,17 @@ workflow SOL0001-AzureSubscriptionNew
       Write-Verbose -Message ('SOL0011-ResourceGroupPoliciesApplied: ' + ($ResourceGroupNameSecurity))
     }
   }
-  
+
+
+  #############################################################################################################################################################
+  #  
+  # Create Diagnostic Storage Account - used as a central collection point for diagnostic data in the Subscription
+  #
+  #############################################################################################################################################################
+    foreach ($Region in $RegionTable)
+  {  
+    $StorageAccountName = PAT0100-StorageAccountNew -StorageAccountNameIndividual $StorageAccountNameIndividual `                                                    -ResourceGroupName "aaa-$SubscriptionCode-rsg-core-01" `                                                    -StorageAccountType $StorageAccountType `                                                    -SubscriptionCode $SubscriptionCode -RegionName  (($Region -Split(','))[0]) `                                                    -RegionCode (($Region -Split(','))[1]) -Contact $Contact  }  
+
 
   #############################################################################################################################################################
   #
@@ -294,17 +304,7 @@ workflow SOL0001-AzureSubscriptionNew
   #############################################################################################################################################################
   foreach ($Region in $RegionTable)
   {  
-     $KeyVaultName = PAT0250-SecurityKeyVaultNew -KeyVaultNameIndividual 'keyvault' `                                                 -ResourceGroupName ((($Region -Split(','))[1]) + "-$SubscriptionCode-rsg-security-01") `                                                 -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                 -RegionCode (($Region -Split(','))[1]) -Contact $Contact  }
-
-
-  #############################################################################################################################################################
-  #  
-  # Create Diagnostic Storage Account - used as a central collection point for diagnostic data in the Subscription
-  #
-  #############################################################################################################################################################
-    foreach ($Region in $RegionTable)
-  {  
-    $StorageAccountName = PAT0100-StorageAccountNew -StorageAccountNameIndividual $StorageAccountNameIndividual `                                                    -ResourceGroupName "aaa-$SubscriptionCode-rsg-core-01" `                                                    -StorageAccountType $StorageAccountType `                                                    -SubscriptionCode $SubscriptionCode -RegionName  (($Region -Split(','))[0]) `                                                    -RegionCode (($Region -Split(','))[1]) -Contact $Contact  }
+     $KeyVaultName = PAT0250-SecurityKeyVaultNew -KeyVaultNameIndividual 'keyvault' `                                                 -ResourceGroupName "aaa-$SubscriptionCode-rsg-security-01" `                                                 -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                 -RegionCode (($Region -Split(','))[1]) -Contact $Contact  }
 
 
   #############################################################################################################################################################

@@ -6,7 +6,7 @@
 #
 # Requirements:   See Import-Module in code below / Resource Group
 #
-# Template:       PAT0250-SecurityKeyVaultNew -KeyVaultNameIndividual $KeyVaultNameIndividual -ResourceGroupName $ResourceGroupName `#                                             -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode `#                                             -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact -Automation $Automation
+# Template:       PAT0250-SecurityKeyVaultNew -KeyVaultNameIndividual $KeyVaultNameIndividual -ResourceGroupName $ResourceGroupName `#                                             -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode -Contact $Contact
 #
 # Change log:
 # 1.0             Initial version 
@@ -19,8 +19,8 @@ workflow PAT0250-SecurityKeyVaultNew
   param
   (
     [Parameter(Mandatory=$false)][String] $KeyVaultNameIndividual = 'keyvault',
-    [Parameter(Mandatory=$false)][String] $ResourceGroupName = 'weu-0010-rsg-security-01',
-    [Parameter(Mandatory=$false)][String] $SubscriptionCode = '0010',
+    [Parameter(Mandatory=$false)][String] $ResourceGroupName = 'aaa-co-rsg-security-01',
+    [Parameter(Mandatory=$false)][String] $SubscriptionCode = 'co',
     [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
     [Parameter(Mandatory=$false)][String] $RegionCode = 'weu',
     [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com'                                                                                      # Tagging
@@ -44,7 +44,6 @@ workflow PAT0250-SecurityKeyVaultNew
   {
     $KeyVaultNameIndividual = $Using:KeyVaultNameIndividual
     $ResourceGroupName = $Using:ResourceGroupName
-    $StorageAccountType = $Using:StorageAccountType
     $SubscriptionCode = $Using:SubscriptionCode
     $RegionName = $Using:RegionName
     $RegionCode = $Using:RegionCode
@@ -58,10 +57,11 @@ workflow PAT0250-SecurityKeyVaultNew
     ###########################################################################################################################################################
     $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
     $Automation = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion -Verbose:$false
+    $CustomerShortCode = Get-AutomationVariable -Name VAR-AUTO-CustomerShortCode -Verbose:$false
 
     # Log Analytic Workspace
-    $LogAnalyticsWorkspaceName = ('swi' + $RegionCode + $SubscriptionCode + 'security01')                                                                        # e.g. swiweu0010security01
-    $ResourceGroupNameSecurity = ($RegionCode + "-$SubscriptionCode-rsg-security-01")                                                                            # e.g. weu-0010-rsg-security-01
+    $LogAnalyticsWorkspaceName = ($CustomerShortCode + $RegionCode + $SubscriptionCode + 'security01')                                                                        # e.g. swiweu0010security01
+    $ResourceGroupNameSecurity = ("aaa-$SubscriptionCode-rsg-security-01")                                                                                       # e.g. weu-0010-rsg-security-01
 
     Write-Verbose -Message ('PAT0250-KeyVaultNameIndividual: ' + ($KeyVaultNameIndividual))
     Write-Verbose -Message ('PAT0250-ResourceGroupName: ' + ($ResourceGroupName))
@@ -113,8 +113,8 @@ workflow PAT0250-SecurityKeyVaultNew
     # Check if Key Vault exists and create if not
     #
     ###########################################################################################################################################################
-    $Result = Get-AzureRmKeyVault -VaultName $KeyVaultName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
-    if ($Result.Length -gt 0)
+    $KeyVault = Get-AzureRmKeyVault -VaultName $KeyVaultName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+    if ($KeyVault.Length -gt 0)
     {
       Write-Verbose -Message ('PAT0250-KeyVaultExisting: ' + ($KeyVaultName))
       Return
