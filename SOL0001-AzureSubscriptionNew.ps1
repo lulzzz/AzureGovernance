@@ -376,7 +376,7 @@ workflow SOL0001-AzureSubscriptionNew
   #############################################################################################################################################################
   if($SubscriptionCode -eq 'co')
   { 
-    $WorkspaceCore = Get-AzureRmOperationalInsightsWorkspace -Name $WorkspaceNameSecurity -ResourceGroupName $ResourceGroupNameCore
+    $WorkspaceCore = Get-AzureRmOperationalInsightsWorkspace -Name $WorkspaceNameSecurity -ResourceGroupName $ResourceGroupNameSecurity
     #$Result = Set-AzureRmDiagnosticSetting -ResourceId $Subscription.Id -WorkspaceId $WorkspaceCore.ResourceId -Enabled $true
 
     Write-Verbose -Message ('PAT0056-AzureAdLogsAddedToSecurityLogAnalyticsWorkspace: ' + ($Result | Out-String))
