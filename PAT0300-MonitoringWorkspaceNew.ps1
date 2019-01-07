@@ -1,5 +1,5 @@
 ﻿###############################################################################################################################################################
-# Creates a Log Analytics Workspace (e.g. swiweu0010core01) in an existing Resource Group. Tags the created Workspace. 
+# Creates a Log Analytics Workspace (e.g. felweutecore01) in an existing Resource Group. Tags the created Workspace. 
 # Since Log Analytics is not available in all Regions there is a naming violations in certain regions. The name reflects in what region the Log Analytics
 # Workspace should be deployed, not where it actually is deployed. 
 # 
@@ -98,7 +98,7 @@ workflow PAT0300-MonitoringWorkspaceNew
     # Configure Workspace name
     #
     ###########################################################################################################################################################
-    $WorkspaceName = ($CustomerShortCode + $RegionCode + $SubscriptionCode + $WorkspaceNameIndividual)                                                                        # e.g. swiweu0010core01
+    $WorkspaceName = ($CustomerShortCode + $RegionCode + $SubscriptionCode + $WorkspaceNameIndividual)                                                           # e.g. felweutecore01
     $WorkspaceExisting = Get-AzureRmOperationalInsightsWorkspace `
     |                        Where-Object {$_.Name -like "$WorkspaceName*"} `
     |                        Sort-Object Name -Descending | Select-Object -First $True

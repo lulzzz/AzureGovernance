@@ -1,6 +1,6 @@
 ﻿###############################################################################################################################################################
-# Creates a Key Vault (e.g. weu-0010-key-keyvault-01) in an existing Resource Group. Tags the Key Vault. 
-# Adds Key Vault to the corresponding Log Analytics Workspace (e.g. swiweu0010security01).
+# Creates a Key Vault (e.g. weu-te-key-felkeyvault-01) in an existing Resource Group. Tags the Key Vault. 
+# Adds Key Vault to the corresponding Log Analytics Workspace (e.g. felweutesecurity01).
 # 
 # Output:         $KeyVaultName
 #
@@ -60,8 +60,8 @@ workflow PAT0250-SecurityKeyVaultNew
     $CustomerShortCode = Get-AutomationVariable -Name VAR-AUTO-CustomerShortCode -Verbose:$false
 
     # Log Analytic Workspace
-    $LogAnalyticsWorkspaceName = ($CustomerShortCode + $RegionCode + $SubscriptionCode + 'security01')                                                                        # e.g. swiweu0010security01
-    $ResourceGroupNameSecurity = ("aaa-$SubscriptionCode-rsg-security-01")                                                                                       # e.g. weu-0010-rsg-security-01
+    $LogAnalyticsWorkspaceName = ($CustomerShortCode + $RegionCode + $SubscriptionCode + 'security01')                                                           # e.g. felweutesecurity01
+    $ResourceGroupNameSecurity = ("aaa-$SubscriptionCode-rsg-security-01")                                                                                       # e.g. weu-te-rsg-security-01
 
     Write-Verbose -Message ('PAT0250-KeyVaultNameIndividual: ' + ($KeyVaultNameIndividual))
     Write-Verbose -Message ('PAT0250-ResourceGroupName: ' + ($ResourceGroupName))
@@ -90,7 +90,7 @@ workflow PAT0250-SecurityKeyVaultNew
     # Configure Key Vault name
     #
     ###########################################################################################################################################################
-    $KeyVaultName = $RegionCode + '-' + $SubscriptionCode + '-' + 'key' + '-' + $KeyVaultNameIndividual                                                          # e.g. weu-0010-key-keyvault-01
+    $KeyVaultName = $RegionCode + '-' + $SubscriptionCode + '-' + 'key' + '-' + $CustomerShortCode + $KeyVaultNameIndividual                                     # e.g. weu-te-key-keyvault-01
     $KeyVaultExisting = Get-AzureRmKeyVault | Where-Object {$_.VaultName -like "$KeyVaultName*"} `
                                             | Sort-Object Name -Descending | Select-Object -First $True
     if ($KeyVaultExisting.Count -gt 0)                                                                                                                           # Skip if first Key Vault with this name
@@ -133,7 +133,7 @@ workflow PAT0250-SecurityKeyVaultNew
 
     ###########################################################################################################################################################
     #
-    # Add Key Vault to Log Analytics Workspace e.g. swiweu0010security01
+    # Add Key Vault to Log Analytics Workspace e.g. felweutesecurity01
     #
     ###########################################################################################################################################################
     $LogAnalyticsWorkspace = Get-AzureRmOperationalInsightsWorkspace -Name $LogAnalyticsWorkspaceName -ResourceGroupName $ResourceGroupNameSecurity 

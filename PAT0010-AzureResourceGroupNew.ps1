@@ -1,5 +1,5 @@
 ﻿###############################################################################################################################################################
-# Creates a Resource Group (e.g. weu-0010-rsg-core-01) with Tags. The counter in the name is determined based on the existing Resource Groups.
+# Creates a Resource Group (e.g. weu-te-rsg-core-01) with Tags. The counter in the name is determined based on the existing Resource Groups.
 # Assigns Contributor and Reader roles to the provided AD Security Groups. 
 # 
 # Output:         $ResourceGroupName
@@ -19,7 +19,7 @@ workflow PAT0010-AzureResourceGroupNew
   param
   (
     [Parameter(Mandatory=$false)][String] $ResourceGroupNameIndividual = 'felixtest',
-    [Parameter(Mandatory=$false)][String] $SubscriptionCode = '0010',
+    [Parameter(Mandatory=$false)][String] $SubscriptionCode = 'te',
     [Parameter(Mandatory=$false)][String] $IamContributorGroupName = 'AzureNetwork-Contributor',
     [Parameter(Mandatory=$false)][String] $IamReaderGroupName = 'Azure-Reader',
     [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
@@ -97,7 +97,7 @@ workflow PAT0010-AzureResourceGroupNew
     # Configure Resource Group name
     #
     ###########################################################################################################################################################
-    $ResourceGroupName = $RegionCode + '-' + $SubscriptionCode + '-' + 'rsg' + '-' + $ResourceGroupNameIndividual                                                # e.g. weu-0010-rsg-core
+    $ResourceGroupName = $RegionCode + '-' + $SubscriptionCode + '-' + 'rsg' + '-' + $ResourceGroupNameIndividual                                                # e.g. weu-te-rsg-core
     $ResourceGroupExisting = Get-AzureRmResourceGroup `
     |                        Where-Object {$_.ResourceGroupName -like "$ResourceGroupName*"} `
     |                        Sort-Object Name -Descending | Select-Object -First $True
@@ -142,7 +142,7 @@ workflow PAT0010-AzureResourceGroupNew
 
     ###########################################################################################################################################################
     #
-    # Configure AD Group as Owner of the Resource Group - only required if different owner from first user
+    # Configure AD Groups as Contributor and Reader of the Resource Group
     #
     ###########################################################################################################################################################
     $Result = Connect-AzureAD -TenantId $TenantId -Credential $AzureAutomationCredential

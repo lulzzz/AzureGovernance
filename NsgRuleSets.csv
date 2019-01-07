@@ -1,5 +1,5 @@
 RuleSet,Name,Description,Protocol,SourcePortRange,SourceAddressPrefix,DestinationPortRange,DestinationAddressPrefix,Access,Priority,Direction
-Default,DenyBackendInbound-01,Deny traffic from Backend,*,*,$BackendSubnetAddressPrefix,*,*,Deny,123,Inbound
+Default,DenyBackendInbound-01,Deny traffic from Backend,*,*,*,*,$BackendSubnetAddressPrefix,Deny,123,Inbound
 Default,DenyAllInternetInbound-01,Block access from the internet,*,*,*,*,Internet,Deny,125,Inbound
-Peering,DenyBackendInbound-01,Deny traffic from Backend,*,*,*,*,$BackendSubnetAddressPrefix,Deny,123,Inbound
-Peering,DenyAllInternetInbound-01,Block access from the internet,*,*,*,*,Internet,Deny,125,Inbound
+BcToBc,DenyBackendInbound-01,Deny traffic from Backend,*,*,*,*,$BackendSubnetAddressPrefix,Deny,123,Inbound
+BcToBc,DenyAllInternetInbound-01,Block access from the internet,*,*,*,*,Internet,Deny,125,Inbound

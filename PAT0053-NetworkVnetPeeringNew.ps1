@@ -1,5 +1,5 @@
 ﻿###############################################################################################################################################################
-# Creates a VNET peering between two VNETs. $Vnet1Name is the Shared Services VNET and $Vnet2Name is the Use Case VNET. This is important because the
+# Creates a VNET peering between two VNETs. $Vnet1Name is the Core VNET and $Vnet2Name is the Use Case VNET. This is important because the
 # Peering is configured accordingly: $Vnet1 = -AllowForwardedTraffic -AllowGatewayTransit / Vnet2 = -AllowForwardedTraffic -UseRemoteGateways
 # 
 # Output:         None
@@ -18,8 +18,8 @@ workflow PAT0053-NetworkVnetPeeringNew
 
   param
 	(
-    [Parameter(Mandatory=$false)][String] $Vnet1Name = 'weu-0005-vnt-01',                                                                                        # By default this is the Shared Services VNET
-    [Parameter(Mandatory=$false)][String] $Vnet2Name = 'weu-0010-vnt-01'
+    [Parameter(Mandatory=$false)][String] $Vnet1Name = 'weu-co-vnt-01',                                                                                          # By default this is the Core VNET
+    [Parameter(Mandatory=$false)][String] $Vnet2Name = 'weu-te-vnt-01'
   )
 
   #############################################################################################################################################################
@@ -77,7 +77,7 @@ workflow PAT0053-NetworkVnetPeeringNew
     # Configure VNET Peering - check if existing 
     #
     ###########################################################################################################################################################
-    # In Subscription of Vnet1 - by default this is the Shared Services VNET
+    # In Subscription of Vnet1 - by default this is the Core VNET
     if ($Vnet1.VirtualNetworkPeerings.Name -notcontains  $Vnet1NetworkPeeringName)
     {
       $AzureAccount = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Vnet1SubscriptionName -Force

@@ -18,18 +18,7 @@ workflow SOL0011-ResourceGroupNew
 
   param
   (
-    [Parameter(Mandatory=$false)][String] $ResourceGroupNameIndividual = 'felixtest',
-    [Parameter(Mandatory=$false)][String] $SubscriptionName = 'Development-de',
-    [Parameter(Mandatory=$false)][String] $IamContributorGroupName = 'AzureNetwork-Contributor',
-    [Parameter(Mandatory=$false)][String] $IamReaderGroupName = 'Azure-Reader',
-    [Parameter(Mandatory=$false)][String] $AllowedLocations = 'West Europe,North Europe',                                                                        # Allowed Locations policy 'West Europe,North Europe'
-    [Parameter(Mandatory=$false)][String] $Regions = 'West Europe',                                                                                              # Where RG instances will be created 'West Europe,North Europe'
-    [Parameter(Mandatory=$false)][String] $ApplicationId = 'Application-001',                                                                                    # Tagging
-    [Parameter(Mandatory=$false)][String] $CostCenter = 'A99.2345.34-f',                                                                                         # Tagging
-    [Parameter(Mandatory=$false)][String] $Budget = '100',                                                                                                       # Tagging
-    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com',                                                                                     # Tagging
-    [Parameter(Mandatory=$false)][String] $Automation = 'v1.0'                                                                                                   # Tagging
-
+    [object]$WebhookData 
   )
   
   #############################################################################################################################################################
@@ -45,15 +34,54 @@ workflow SOL0011-ResourceGroupNew
   }
   TEC0005-AzureContextSet
 
+
+  #############################################################################################################################################################
+  #
+  # Assign/map data received by REST call from SNOW, to PowerShell variables
+  #
+  #############################################################################################################################################################
+  $WebhookName = $WebhookData.WebhookName
+  $RequestHeader = $WebhookData.RequestHeader
+  $RequestBody = $WebhookData.RequestBody
+  Write-Verbose -Message ('SOL0011-WebhookName: ' + $WebhookName)
+  Write-Verbose -Message ('SOL0011-RequestHeader: ' + $RequestHeader)
+  Write-Verbose -Message ('SOL0011-RequestBody: ' + $RequestBody)
+  Write-Verbose -Message ('SOL0011-WebhookData: ' + $WebhookData)
+
+  $Attributes = ConvertFrom-Json -InputObject $RequestBody
+  Write-Verbose -Message ('SOL0011-Attributes: ' + $Attributes)
+
+  $Regions = $Attributes.Attribute01
+  $SubscriptionName = $Attributes.Attribute02
+  $ResourceGroupNameIndividual = $Attributes.Attribute03
+  $IamContributorGroupName = $Attributes.Attribute04
+  $ApplicationId = $Attributes.Attribute05
+  $CostCenter = $Attributes.Attribute06
+  $Budget = $Attributes.Attribute07
+  $Contact = $Attributes.Attribute08
+
+  Write-Verbose -Message ('SOL0011-Regions: ' + $Regions)
+  Write-Verbose -Message ('SOL0011-SubscriptionName: ' + $SubscriptionName)
+  Write-Verbose -Message ('SOL0011-ResourceGroupNameIndividual: ' + $ResourceGroupNameIndividual)
+  Write-Verbose -Message ('SOL0011-IamContributorGroupName: ' + $IamContributorGroupName)
+  Write-Verbose -Message ('SOL0011-ApplicationId: ' + $ApplicationId)
+  Write-Verbose -Message ('SOL0011-CostCenter: ' + $CostCenter)
+  Write-Verbose -Message ('SOL0011-Budget: ' + $Budget)
+  Write-Verbose -Message ('SOL0011-Contact: ' + $Contact)
+
       
   #############################################################################################################################################################
   #  
   # Parameters
   #
   #############################################################################################################################################################
+  $Automation = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion -Verbose:$false
   $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
   $SubscriptionCode = $SubscriptionName.Split('-')[1]
   Write-Verbose -Message ('SOL0011-SubscriptionCode: ' + ($SubscriptionCode))
+
+  $IamReaderGroupName = 'AzureReader-Reader' 
+  $AllowedLocations = 'West Europe,North Europe'                                                                                                                 # Allowed Locations policy 'West Europe,North Europe'
 
   # Create a 'string table' with the required Regions, containing the name and shortcode (West Europe, weu)
   Write-Verbose -Message ('SOL0011-Regions: ' + ($Regions))
@@ -93,8 +121,7 @@ workflow SOL0011-ResourceGroupNew
     # Create Resource Groups
     #
     ###########################################################################################################################################################
-    $ResourceGroupName = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual $ResourceGroupNameIndividual `                                                       -IamContributorGroupName $IamContributorGroupName -IamReaderGroupName $IamReaderGroupName `                                                       -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                       -RegionCode (($Region -Split(','))[1]) `                                                       -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
-                                                       -Automation $Automation
+    $ResourceGroupName = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual $ResourceGroupNameIndividual `                                                       -IamContributorGroupName $IamContributorGroupName -IamReaderGroupName $IamReaderGroupName `                                                       -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                       -RegionCode (($Region -Split(','))[1]) `                                                       -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact
     Write-Verbose -Message ('SOL0011-ResourceGroupCreated: ' + ($ResourceGroupName))
 
     

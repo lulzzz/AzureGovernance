@@ -1,7 +1,7 @@
 ﻿###############################################################################################################################################################
-# Creates a default VNET (e.g. weu-0010-vnt-01) in the '-rsg-network-01' Resource Group, IP ranges are retrieved from the Azure Table Ipam
-# Creates an empty Route Table for the Frontend Subnet (e.g. weu-0010-rot-routetable-01). 
-# Connects the Subnets (weu-0010-sub-vnt01-fe / weu-0010-sub-vnt01-be) to the existing NSGs (weu-0010-nsg-vnt01fe / weu-0010-nsg-vnt01be).
+# Creates a default VNET (e.g. weu-te-vnt-01) in the '-rsg-network-01' Resource Group, IP ranges are retrieved from the Azure Table Ipam
+# Creates an empty Route Table for the Frontend Subnet (e.g. weu-te-rot-routetable-01). 
+# Connects the Subnets (weu-te-sub-vnt01-fe / weu-te-sub-vnt01-be) to the existing NSGs (weu-te-nsg-vnt01fe / weu-te-nsg-vnt01be).
 # Configures Service Endpoints for Microsoft.Storage to allow for Storage Account integration into VNET. Tags the VNET and Route Table.
 # 
 # Output:         $VnetName
@@ -20,7 +20,7 @@ workflow PAT0050-NetworkVnetNew
 
   param
 	(
-    [Parameter(Mandatory=$false)][String] $SubscriptionCode = '0010',
+    [Parameter(Mandatory=$false)][String] $SubscriptionCode = 'te',
     [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
     [Parameter(Mandatory=$false)][String] $RegionCode = 'weu',
     [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com'                                                                                     # Tagging
@@ -56,20 +56,20 @@ workflow PAT0050-NetworkVnetNew
     $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
     $Automation = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion -Verbose:$false
 
-    $VnetName = $RegionCode + '-' + $SubscriptionCode + '-vnt-01'                                                                                                # e.g. weu-0010-vnt-01
-    $ResourceGroupName = 'aaa-' + $SubscriptionCode + '-rsg-network-01'                                                                               # e.g. weu-0010-rsg-network-01
+    $VnetName = $RegionCode + '-' + $SubscriptionCode + '-vnt-01'                                                                                                # e.g. weu-te-vnt-01
+    $ResourceGroupName = 'aaa-' + $SubscriptionCode + '-rsg-network-01'                                                                                          # e.g. weu-te-rsg-network-01
     
     # Subnets
-    $FrontendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-sub-vnt01-fe'                                                                                # e.g. weu-0010-sub-vnt01-fe
-    $BackendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-sub-vnt01-be'                                                                                 # e.g. weu-0010-sub-vnt01-be
+    $FrontendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-sub-vnt01-fe'                                                                                # e.g. weu-te-sub-vnt01-fe
+    $BackendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-sub-vnt01-be'                                                                                 # e.g. weu-te-sub-vnt01-be
     
     # Route Table
-    $RouteTableName = $RegionCode + '-' + $SubscriptionCode + '-rot-routetable-01'                                                                               # e.g. weu-0010-rot-routetable-01
+    $RouteTableName = $RegionCode + '-' + $SubscriptionCode + '-rot-routetable-01'                                                                               # e.g. weu-te-rot-routetable-01
 
     # Network Security Groups
-    $NsgFrontendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-nsg-vnt01fe'                                                                              # e.g. weu-0010-nsg-vnt01fe
-    $NsgBackendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-nsg-vnt01be'                                                                               # e.g. weu-0010-nsg-vnt01be
-    $ResourceGroupNameNsg = 'aaa-' + $SubscriptionCode + '-rsg-security-01'                                                                           # e.g. weu-0010-rsg-security-01
+    $NsgFrontendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-nsg-vnt01fe'                                                                              # e.g. weu-te-nsg-vnt01fe
+    $NsgBackendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-nsg-vnt01be'                                                                               # e.g. weu-te-nsg-vnt01be
+    $ResourceGroupNameNsg = 'aaa-' + $SubscriptionCode + '-rsg-security-01'                                                                                      # e.g. weu-te-rsg-security-01
 
     Write-Verbose -Message ('PAT0050-SubscriptionCode: ' + ($SubscriptionCode))
     Write-Verbose -Message ('PAT0050-RegionName: ' + ($RegionName))

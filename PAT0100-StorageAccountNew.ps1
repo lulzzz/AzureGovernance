@@ -1,5 +1,5 @@
 ﻿###############################################################################################################################################################
-# Creates a Storage Account (e.g. felweu0010diag01s) in an existing Resource Group. Tags the Storage Accounts.
+# Creates a Storage Account (e.g. felweutediag01s) in an existing Resource Group. Tags the Storage Accounts.
 # Configures Firewall - allow access from all Subnets in all VNETs as well as Azure Services.
 #
 # Output:         $StorageAccountName
@@ -19,9 +19,9 @@ workflow PAT0100-StorageAccountNew
   param
 	(
     [Parameter(Mandatory=$false)][String] $StorageAccountNameIndividual = 'diag',
-    [Parameter(Mandatory=$false)][String] $ResourceGroupName = 'weu-0010-rsg-core-01',
+    [Parameter(Mandatory=$false)][String] $ResourceGroupName = 'weu-te-rsg-core-01',
     [Parameter(Mandatory=$false)][String] $StorageAccountType = 'standard',                                                                                      # 'standard' / 'premium'
-    [Parameter(Mandatory=$false)][String] $SubscriptionCode = '0010',
+    [Parameter(Mandatory=$false)][String] $SubscriptionCode = 'te',
     [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
     [Parameter(Mandatory=$false)][String] $RegionCode = 'weu',
     [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com'                                                                                      # Tagging
@@ -87,7 +87,7 @@ workflow PAT0100-StorageAccountNew
     # Configure Storage Account name
     #
     ###########################################################################################################################################################
-    $StorageAccountName = $CustomerShortCode + $RegionCode + $SubscriptionCode + $StorageAccountNameIndividual                                                   # e.g. felweu0010diag01s
+    $StorageAccountName = $CustomerShortCode + $RegionCode + $SubscriptionCode + $StorageAccountNameIndividual                                                   # e.g. felweutediag01s
   
     
     $StorageAccountExisting = Get-AzureRmStorageAccount | Where-Object {$_.StorageAccountName -like "$StorageAccountName*"} `
@@ -135,8 +135,11 @@ workflow PAT0100-StorageAccountNew
     ###########################################################################################################################################################
     #
     # Configure Firewall - allow access from all Subnets in all VNETs as well as Azure Services
+    # This is currently not implemented as Azure Automation is not Trusted Microsoft service:
+    # https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security#exceptions
     #
     ###########################################################################################################################################################
+    <#
     # Deny access by default but allow Azure Services to bypass the Firewall
     $Result = Update-AzureRMStorageAccountNetworkRuleSet -Name $StorageAccountName -ResourceGroupName $ResourceGroupName -DefaultAction Deny `
                                                          -Bypass AzureServices
@@ -153,8 +156,9 @@ workflow PAT0100-StorageAccountNew
       }
       Write-Verbose -Message ('PAT0100-FirewallConfiguredForVnet: ' + ($Result | Out-String))
     }
-
+    #>
   
+
     ###########################################################################################################################################################
     #
     # Write tags

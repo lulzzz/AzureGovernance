@@ -1,6 +1,6 @@
 ﻿###############################################################################################################################################################
-# Creates default NSGs for the Frontend (e.g. weu-0010-nsg-vnt01fe) and Backend (e.g. weu-0010-nsg-vnt01fe) Subnets in the '-rsg-security-01' Resource Group. 
-# Adds the NSG to the Security Log Analytics Workspace (e.g. swiweu0010security01). Tags the NSGs.
+# Creates default NSGs for the Frontend (e.g. weu-te-nsg-vnt01fe) and Backend (e.g. weu-te-nsg-vnt01fe) Subnets in the '-rsg-security-01' Resource Group. 
+# Adds the NSG to the Security Log Analytics Workspace (e.g. felweutesecurity01). Tags the NSGs.
 #
 # Output:         $NsgFrontendSubnetName, $NsgBackendSubnetName
 #
@@ -18,7 +18,7 @@ workflow PAT0056-NetworkSecurityGroupNew
 
   param
 	(
-    [Parameter(Mandatory=$false)][String] $SubscriptionCode = '0010',
+    [Parameter(Mandatory=$false)][String] $SubscriptionCode = 'te',
     [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
     [Parameter(Mandatory=$false)][String] $RegionCode = 'weu',
     [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com'                                                                                     # Tagging
@@ -55,15 +55,15 @@ workflow PAT0056-NetworkSecurityGroupNew
     $Automation = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion -Verbose:$false
     $CustomerShortCode = Get-AutomationVariable -Name VAR-AUTO-CustomerShortCode -Verbose:$false
 
-    $ResourceGroupName = 'aaa-' + $SubscriptionCode + '-rsg-security-01'                                                                                         # e.g. aaa-0010-rsg-security-01
+    $ResourceGroupName = 'aaa-' + $SubscriptionCode + '-rsg-security-01'                                                                                         # e.g. aaa-te-rsg-security-01
     
     # Network Security Groups
-    $NsgFrontendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-nsg-vnt01fe'                                                                              # e.g. weu-0010-nsg-vnt01fe
-    $NsgBackendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-nsg-vnt01be'                                                                               # e.g. weu-0010-nsg-vnt01be
+    $NsgFrontendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-nsg-vnt01fe'                                                                              # e.g. weu-te-nsg-vnt01fe
+    $NsgBackendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-nsg-vnt01be'                                                                               # e.g. weu-te-nsg-vnt01be
 
     # Log Analytic Workspace
-    $LogAnalyticsWorkspaceName = ($CustomerShortCode + $RegionCode + $SubscriptionCode + 'security01')                                                           # e.g. felweu0010security01
-    $ResourceGroupNameSecurity = "aaa-$SubscriptionCode-rsg-security-01"                                                                                         # e.g. aaa-0010-rsg-security-01
+    $LogAnalyticsWorkspaceName = ($CustomerShortCode + $RegionCode + $SubscriptionCode + 'security01')                                                           # e.g. felweutesecurity01
+    $ResourceGroupNameSecurity = "aaa-$SubscriptionCode-rsg-security-01"                                                                                         # e.g. aaa-te-rsg-security-01
 
     Write-Verbose -Message ('PAT0056-SubscriptionCode: ' + ($SubscriptionCode))
     Write-Verbose -Message ('PAT0056-RegionName: ' + ($RegionName))
@@ -113,18 +113,18 @@ workflow PAT0056-NetworkSecurityGroupNew
     # Create NSG for Frontend and Backend Subnets
     #
     ###########################################################################################################################################################
-    # Create Frontend Subnet e.g. weu-0010-sub-vnt01-fe
+    # Create Frontend Subnet e.g. weu-te-sub-vnt01-fe
     $NsgFrontendSubnet = New-AzureRmNetworkSecurityGroup -Name $NsgFrontendSubnetName -ResourceGroupName $ResourceGroupName -Location $RegionName
     Write-Verbose -Message ('PAT0056-NsgFrontSubnetCreated: ' + ($NsgFrontendSubnet | Out-String))
 
-    # Create Backend Subnet e.g. weu-0010-sub-vnt01-be
+    # Create Backend Subnet e.g. weu-te-sub-vnt01-be
     $NsgBackendSubnet = New-AzureRmNetworkSecurityGroup -Name $NsgBackendSubnetName -ResourceGroupName $ResourceGroupName -Location $RegionName
     Write-Verbose -Message ('PAT0056-NsgBackendSubnetCreated: ' + ($NsgBackendSubnet | Out-String))
 
 
     ###########################################################################################################################################################
     #
-    # Add NSG to Log Analytics Workspace e.g. swiweu0010security01
+    # Add NSG to Log Analytics Workspace e.g. felweutesecurity01
     #
     ###########################################################################################################################################################
     $LogAnalyticsWorkspace = Get-AzureRmOperationalInsightsWorkspace -Name $LogAnalyticsWorkspaceName -ResourceGroupName $ResourceGroupNameSecurity 

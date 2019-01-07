@@ -17,8 +17,8 @@ workflow PAT0058-NetworkSecurityGroupSet
 
   param
 	(
-    [Parameter(Mandatory=$false)][String] $NsgName = 'weu-0010-nsg-vnt01fe',
-    [Parameter(Mandatory=$false)][String] $SubscriptionCode = '0010',
+    [Parameter(Mandatory=$false)][String] $NsgName = 'weu-co-nsg-vnt01fe',
+    [Parameter(Mandatory=$false)][String] $SubscriptionCode = 'co',
     [Parameter(Mandatory=$false)][String] $RuleSetName = 'default'
   )
 
@@ -88,9 +88,9 @@ workflow PAT0058-NetworkSecurityGroupSet
     #
     ###########################################################################################################################################################
     $Nsg = Get-AzureRmResource | Where-Object {$_.name -eq $NsgName}
-    $ResourceGroupName = $Nsg.ResourceGroupName                                                                                                                  # e.g. weu-0010-rsg-network-01
+    $ResourceGroupName = $Nsg.ResourceGroupName                                                                                                                  # e.g. weu-te-rsg-network-01
     $Nsg = Get-AzureRmNetworkSecurityGroup -Name $NsgName -ResourceGroupName $ResourceGroupName                                                                  # Get-AzureRmResource not retrieving all parameters
-    Write-Verbose -Message ('PAT0058-ResourceGroupName: ' + ($ResourceGroupName))
+    Write-Verbose -Message ('PAT0058-Nsg: ' + ($Nsg | Out-String))
 
     if ($ResourceGroupName.Length -le '0')
     {
@@ -114,6 +114,10 @@ workflow PAT0058-NetworkSecurityGroupSet
 
     $BackendSubnetAddressPrefix = ($Vnet.Subnets | Where-Object {$_.Name -match '-be'}).AddressPrefix
     Write-Verbose -Message ('PAT0058-BackendSubnetAddressPrefix: ' + ($BackendSubnetAddressPrefix)) 
+
+    # Get the Address Prefix of the Subnet that is connected to the NSG
+    $NsgSubnetAddressPrefix = ($Vnet.Subnets | Where-Object {$_.Name -eq ($Nsg.Subnets[0].Id).Split('/')[10]}).AddressPrefix
+    Write-Verbose -Message ('PAT0058-NsgSubnetAddressPrefix: ' + ($NsgSubnetAddressPrefix))
 
 
     ###########################################################################################################################################################
@@ -139,20 +143,25 @@ workflow PAT0058-NetworkSecurityGroupSet
     ###########################################################################################################################################################
     foreach ($Rule in $NsgRuleSet)
     {
-      $Result = Remove-AzureRmNetworkSecurityRuleConfig -Name $Rule.Name -NetworkSecurityGroup $Nsg
-      $Result = Add-AzureRmNetworkSecurityRuleConfig -NetworkSecurityGroup $Nsg `
-                                                    -Name $Rule.Name `
-                                                    -Description $Rule.Description `
-                                                    -Protocol $Rule.Protocol `
-                                                    -SourcePortRange $Rule.SourcePortRange `
-                                                    -DestinationPortRange $Rule.DestinationPortRange `
-                                                    -SourceAddressPrefix $Rule.SourceAddressPrefix `
-                                                    -DestinationAddressPrefix $Rule.DestinationAddressPrefix `
-                                                    -Access $Rule.Access `
-                                                    -Priority $Rule.Priority `
-                                                    -Direction $Rule.Direction
-      $Result = Set-AzureRmNetworkSecurityGroup -NetworkSecurityGroup $Nsg
-      Write-Verbose -Message ('PAT0058-SecurityRuleApplied: ' + ($Rule.Name))
+      $Result = Remove-AzureRmNetworkSecurityRuleConfig -Name $Rule.Name -NetworkSecurityGroup $Nsg                                                              # Remove existing rule before re-creating it
+      
+      # Only apply rule if the IP ranges are not the same as the one of Subnet to which they should be applied
+      if ($NsgSubnetAddressPrefix -ne $Rule.SourceAddressPrefix -and $NsgSubnetAddressPrefix -ne $Rule.DestinationAddressPrefix) 
+      {
+        $Result = Add-AzureRmNetworkSecurityRuleConfig -NetworkSecurityGroup $Nsg `
+                                                       -Name $Rule.Name `
+                                                       -Description $Rule.Description `
+                                                       -Protocol $Rule.Protocol `
+                                                       -SourcePortRange $Rule.SourcePortRange `
+                                                       -DestinationPortRange $Rule.DestinationPortRange `
+                                                       -SourceAddressPrefix $Rule.SourceAddressPrefix `
+                                                       -DestinationAddressPrefix $Rule.DestinationAddressPrefix `
+                                                       -Access $Rule.Access `
+                                                       -Priority $Rule.Priority `
+                                                       -Direction $Rule.Direction
+        $Result = Set-AzureRmNetworkSecurityGroup -NetworkSecurityGroup $Nsg
+        Write-Verbose -Message ('PAT0058-SecurityRuleApplied: ' + ($Rule.Name))
+      }
     }
     Return 'Success'
   }
