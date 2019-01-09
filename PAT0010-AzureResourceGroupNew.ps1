@@ -27,7 +27,7 @@ workflow PAT0010-AzureResourceGroupNew
     [Parameter(Mandatory=$false)][String] $ApplicationId = 'Application-001',                                                                                    # Tagging
     [Parameter(Mandatory=$false)][String] $CostCenter = 'A99.2345.34-f',                                                                                         # Tagging
     [Parameter(Mandatory=$false)][String] $Budget = '100',                                                                                                       # Tagging
-    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com'                                                                                     # Tagging
+    [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com'                                                                                      # Tagging
   )
   
   #############################################################################################################################################################

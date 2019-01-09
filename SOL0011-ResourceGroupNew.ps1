@@ -77,11 +77,11 @@ workflow SOL0011-ResourceGroupNew
   #############################################################################################################################################################
   $Automation = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion -Verbose:$false
   $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
+  $MailCredentials = Get-AutomationPSCredential -Name CRE-AUTO-MailUser -Verbose:$false                                                                          # Needs to use app password due to two-factor authentication
   $SubscriptionCode = $SubscriptionName.Split('-')[1]
   Write-Verbose -Message ('SOL0011-SubscriptionCode: ' + ($SubscriptionCode))
 
   $IamReaderGroupName = 'AzureReader-Reader' 
-  $AllowedLocations = 'West Europe,North Europe'                                                                                                                 # Allowed Locations policy 'West Europe,North Europe'
 
   # Create a 'string table' with the required Regions, containing the name and shortcode (West Europe, weu)
   Write-Verbose -Message ('SOL0011-Regions: ' + ($Regions))
@@ -107,7 +107,7 @@ workflow SOL0011-ResourceGroupNew
       }
       else
       {
-        $Table = $Table,$Entry
+        $Table = $Table, $Entry
       }
     }
     Return $Table
@@ -133,21 +133,59 @@ workflow SOL0011-ResourceGroupNew
     InlineScript
     { 
       $ResourceGroupName = $Using:ResourceGroupName
-      $AllowedLocations = $Using:AllowedLocations
+      $Region = $Using:Region
 
       # Get Policy
       $Policy = Get-AzureRmPolicyDefinition | Where-Object {$_.Properties.DisplayName -eq 'Allowed locations'}
 
       # Requires nested Hashtable with Region in 'westeurope' format
-      $Locations = @((($AllowedLocations -Split(',')) -replace '\s','').ToLower())
+      if ($Region -match 'Europe')
+      {
+        $Locations = @()
+        $Locations = 'northeurope', 'westeurope'
+      }
+      elseif ($Region -match 'US')
+      {
+        $Locations = @()
+        $Locations = 'eastus', 'westus'
+      }
+      elseif ($Region -match 'Asia')
+      {
+        $Locations = @()
+        $Locations = 'southeastasia', 'eastasia'
+      }
       $Locations = @{"listOfAllowedLocations"=$Locations}
       Write-Verbose -Message ('SOL0011-AllowedLocation: ' + ($Locations | Out-String))
-      
+
       # Assign Policy
       $Result = New-AzureRmPolicyAssignment -Name $Policy.Properties.Displayname -PolicyDefinition $Policy `
                                             -Scope ((Get-AzureRmResourceGroup -Name $ResourceGroupName).ResourceId) `
                                             -PolicyParameterObject $Locations
       Write-Verbose -Message ('SOL0011-ResourceGroupPoliciesApplied: ' + ($ResourceGroupName))
     }
+
+
+    #############################################################################################################################################################
+    #
+    # Send Mail confirmation
+    #
+    #############################################################################################################################################################
+    $RequestBody = $RequestBody -Replace('","', "`r`n  ")
+    $RequestBody = $RequestBody -Replace('@', '')
+    $RequestBody = $RequestBody -Replace('{"', '')
+    $RequestBody = $RequestBody -Replace('"}', '')
+    $RequestBody = $RequestBody -Replace('":"', ' = ')
+    $RequestBody = $RequestBody -Replace('  Attribute', 'Attribtue')
+ 
+    try
+    {
+      Send-MailMessage -To $Contact -From felix.bodmer@outlook.com -Subject "Resource Group $ResourceGroupName has been provisioned" `
+                                    -Body $RequestBody -SmtpServer smtp.office365.com  -Credential $MailCredentials -UseSsl -Port 587
+      Write-Verbose -Message ('SOL0007-ConfirmationMailSent')
+    }
+    catch
+    {
+      Write-Error -Message ('SOL0007-ConfirmationMailNotSent')
+    }    
   }
 }

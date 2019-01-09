@@ -33,7 +33,7 @@ workflow SOL0001-AzureSubscriptionNew
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.profile, AzureRM.Resources
+    $Result = Import-Module Azure.Storage, AzureRM.OperationalInsights, AzureRM.Profile, AzureRM.Resources, AzureRmStorageTable
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -88,8 +88,9 @@ workflow SOL0001-AzureSubscriptionNew
   # Parameters
   #
   #############################################################################################################################################################
-  $Automation = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion -Verbose:$false
-  $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
+  $AzureAutomationCredential =  Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
+  $MailCredentials = Get-AutomationPSCredential -Name CRE-AUTO-MailUser -Verbose:$false                                                                          # Needs to use app password due to two-factor authentication
+  $WorkspaceNameCore = Get-AutomationVariable -Name VAR-AUTO-WorkspaceCoreName                                                                                   # For non-Core Subscriptions
   $SubscriptionCode = $SubscriptionName.Split('-')[1]
   Write-Verbose -Message ('SOL0001-SubscriptionCode: ' + ($SubscriptionCode))
 
@@ -220,7 +221,7 @@ workflow SOL0001-AzureSubscriptionNew
       # Assign Policy
       $Result = New-AzureRmPolicyAssignment -Name $Policy.Properties.Displayname -PolicyDefinition $Policy `
                                             -Scope ((Get-AzureRmResourceGroup -Name $ResourceGroupNameCore).ResourceId) `
-                                                                              -PolicyParameterObject $Locations
+                                            -PolicyParameterObject $Locations
       Write-Verbose -Message ('SOL0001-ResourceGroupPoliciesApplied: ' + ($ResourceGroupNameCore))
     }
   }
@@ -302,7 +303,7 @@ workflow SOL0001-AzureSubscriptionNew
       $NsgRuleSets = Invoke-WebRequest -Uri "https://api.github.com/repos$GitHubRepo/contents/NsgRuleSets.csv" -UseBasicParsing
       $NsgRuleSetsContent = $NsgRuleSets.Content | ConvertFrom-Json
       $NsgRuleSetsContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::` 
-                            FromBase64String($NsgRuleSetsContent.content))
+      FromBase64String($NsgRuleSetsContent.content))
       $Result = Out-File -InputObject $NsgRuleSetsContent -FilePath D:\NsgRuleSets.csv -Force
       Write-Verbose -Message ('TEC0003-NsgRuleSetsDownloadedFromGit: ' + ($NsgRuleSetsContent | Out-String))
 
@@ -326,13 +327,13 @@ workflow SOL0001-AzureSubscriptionNew
       {
         $Result = Add-StorageTableRow -table $Table -partitionKey $Entity.PartitionKey -rowKey $Entity.RowKey `
                                       -property @{
-                                                  "IpAddress"=$Entity.IpAddress
-                                                  "IpAddressAssignment"=$Entity.IpAddressAssignment
-                                                  "SubnetIpRange"=$Entity.SubnetIpRange
-                                                  "SubnetName"=$Entity.SubnetName
-                                                  "VnetIpRange"=$Entity.VnetIpRange
-                                                  "VnetName"=$Entity.VnetName
-                                                 }
+                                                    "IpAddress"=$Entity.IpAddress
+                                                    "IpAddressAssignment"=$Entity.IpAddressAssignment
+                                                    "SubnetIpRange"=$Entity.SubnetIpRange
+                                                    "SubnetName"=$Entity.SubnetName
+                                                    "VnetIpRange"=$Entity.VnetIpRange
+                                                    "VnetName"=$Entity.VnetName
+                                                  }
       }
     }
   
@@ -355,6 +356,12 @@ workflow SOL0001-AzureSubscriptionNew
       $ResourceGroupNameSecurity = 'aaa' + $ResourceGroupNameSecurity.Substring(3)      $WorkspaceNameSecurity = PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual security -ResourceGroupName $ResourceGroupNameSecurity `                                                              -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                              -RegionCode (($Region -Split(','))[1]) `                                                              -Contact $Contact
       Write-Verbose -Message ('SOL0001-LogAnalyticsSecuirtyWorkspaceCreated: ' + ($WorkspaceNameSecurity))
     }
+
+    # Connect the Azure AD diagnostics to the Security Log Analytics Workspace - applies to Core Subscriptions only ???
+    $WorkspaceCore = Get-AzureRmOperationalInsightsWorkspace -Name $WorkspaceNameSecurity -ResourceGroupName $ResourceGroupNameSecurity
+    #$Result = Set-AzureRmDiagnosticSetting -ResourceId $Subscription.Id -WorkspaceId $WorkspaceCore.ResourceId -Enabled $true
+
+    Write-Verbose -Message ('PAT0056-AzureAdLogsAddedToSecurityLogAnalyticsWorkspace: ' + ($Result | Out-String))
   }
 
 
@@ -363,24 +370,22 @@ workflow SOL0001-AzureSubscriptionNew
   # Connect the Subscription to the Core Log Analytics Workspace - for logging of Subscription Activities
   #
   #############################################################################################################################################################
-  New-AzureRmOperationalInsightsAzureActivityLogDataSource -WorkspaceName $WorkspaceNameCore -ResourceGroupName $ResourceGroupNameCore `
-                                                           -SubscriptionId $Subscription.Id -Name $SubscriptionName
+  # Change context to Core Subscription
+  $CoreSubscription = Get-AzureRmSubscription | Where-Object {$_.Name -match 'co'}
+  $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $CoreSubscription.Name -Force
+  Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))
+
+  # Connect to Workspace
+  $WorkspaceCore = Get-AzureRmOperationalInsightsWorkspace | Where-Object {$_.Name -match $WorkspaceNameCore}
+  $Result = New-AzureRmOperationalInsightsAzureActivityLogDataSource -WorkspaceName $WorkspaceNameCore -ResourceGroupName $WorkspaceCore.ResourceGroupName `
+  -SubscriptionId $Subscription.Id -Name $SubscriptionName
 
   Write-Verbose -Message ('PAT0056-AzureActivityLogsAddedToCoreLogAnalyticsWorkspace: ' + ($Result | Out-String))
 
-  
-  #############################################################################################################################################################
-  #
-  # Connect the Azure AD diagnostics to the Security Log Analytics Workspace - applies to Core Subscriptions only ???
-  #
-  #############################################################################################################################################################
-  if($SubscriptionCode -eq 'co')
-  { 
-    $WorkspaceCore = Get-AzureRmOperationalInsightsWorkspace -Name $WorkspaceNameSecurity -ResourceGroupName $ResourceGroupNameSecurity
-    #$Result = Set-AzureRmDiagnosticSetting -ResourceId $Subscription.Id -WorkspaceId $WorkspaceCore.ResourceId -Enabled $true
-
-    Write-Verbose -Message ('PAT0056-AzureAdLogsAddedToSecurityLogAnalyticsWorkspace: ' + ($Result | Out-String))
-  }
+  # Change context back to Subscription to be built
+  $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionCode}
+  $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+  Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))
 
 
   #############################################################################################################################################################
@@ -457,11 +462,25 @@ workflow SOL0001-AzureSubscriptionNew
 
     #############################################################################################################################################################
     #
-    # Update Service Request
+    # Send Mail confirmation
     #
     #############################################################################################################################################################
-    # This has to be added based on the chosen Service Request portal implementation
-
-
+    $RequestBody = $RequestBody -Replace('","', "`r`n  ")
+    $RequestBody = $RequestBody -Replace('@', '')
+    $RequestBody = $RequestBody -Replace('{"', '')
+    $RequestBody = $RequestBody -Replace('"}', '')
+    $RequestBody = $RequestBody -Replace('":"', ' = ')
+    $RequestBody = $RequestBody -Replace('  Attribute', 'Attribtue')
+ 
+    try
+    {
+      Send-MailMessage -To $SubscriptionOwner -From felix.bodmer@outlook.com -Subject "Subscription $SubscriptionName has been provisioned" `
+                                              -Body $RequestBody -SmtpServer smtp.office365.com  -Credential $MailCredentials -UseSsl -Port 587
+      Write-Verbose -Message ('SOL0007-ConfirmationMailSent')
+    }
+    catch
+    {
+      Write-Error -Message ('SOL0007-ConfirmationMailNotSent')
+    }
   }
 }

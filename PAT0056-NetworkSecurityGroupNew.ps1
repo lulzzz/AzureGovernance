@@ -61,9 +61,9 @@ workflow PAT0056-NetworkSecurityGroupNew
     $NsgFrontendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-nsg-vnt01fe'                                                                              # e.g. weu-te-nsg-vnt01fe
     $NsgBackendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-nsg-vnt01be'                                                                               # e.g. weu-te-nsg-vnt01be
 
-    # Log Analytic Workspace
-    $LogAnalyticsWorkspaceName = ($CustomerShortCode + $RegionCode + $SubscriptionCode + 'security01')                                                           # e.g. felweutesecurity01
-    $ResourceGroupNameSecurity = "aaa-$SubscriptionCode-rsg-security-01"                                                                                         # e.g. aaa-te-rsg-security-01
+    # Security Log Analytic Workspace in Core Subscription
+    $LogAnalyticsWorkspaceName = Get-AutomationVariable -Name VAR-AUTO-WorkspaceSecurityName                                                                     # e.g. felweutesecurity01
+    $ResourceGroupNameSecurity = 'aaa-co-rsg-security-01'                                                                                                        # e.g. aaa-te-rsg-security-01
 
     Write-Verbose -Message ('PAT0056-SubscriptionCode: ' + ($SubscriptionCode))
     Write-Verbose -Message ('PAT0056-RegionName: ' + ($RegionName))
@@ -124,14 +124,26 @@ workflow PAT0056-NetworkSecurityGroupNew
 
     ###########################################################################################################################################################
     #
-    # Add NSG to Log Analytics Workspace e.g. felweutesecurity01
+    # Add NSG to Log Analytics Workspace in Core Subscription e.g. felweutesecurity01
     #
     ###########################################################################################################################################################
+    # Change context to Core Subscription
+    $CoreSubscription = Get-AzureRmSubscription | Where-Object {$_.Name -match 'co'}
+    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $CoreSubscription.Name -Force
+    Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))    
+    
+    # Get Workspace in Core Subscription
     $LogAnalyticsWorkspace = Get-AzureRmOperationalInsightsWorkspace -Name $LogAnalyticsWorkspaceName -ResourceGroupName $ResourceGroupNameSecurity 
     Write-Verbose -Message ('PAT0056-LogAnalyticsWorkspace: ' + ($LogAnalyticsWorkspace | Out-String))
     Write-Verbose -Message ('PAT0056-NsgFrontendSubnet: ' + ($NsgFrontendSubnet | Out-String))
     Write-Verbose -Message ('PAT0056-NsgBackendSubnet: ' + ($NsgBackendSubnet | Out-String))
 
+    # Change context back to Subscription to be built
+    $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionCode}
+    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))
+
+    # Connect NSG to Log Analytics Workspace
     $Result = Set-AzureRmDiagnosticSetting -ResourceId $NsgFrontendSubnet.Id -WorkspaceId $LogAnalyticsWorkspace.ResourceId -Enabled $true `
                                            -Categories 'NetworkSecurityGroupEvent','NetworkSecurityGroupRuleCounter'
     Write-Verbose -Message ('PAT0056-NsgFrontendSubnetAddedToLogAnalyticsWorkspace: ' + ($Result | Out-String))
