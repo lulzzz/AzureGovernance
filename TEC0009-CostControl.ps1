@@ -23,12 +23,12 @@ workflow TEC0009-CostControl
   param
   (
     [Parameter(Mandatory=$false)][String] $AdTenant = 'felix.bodmer.name',
-    [Parameter(Mandatory=$false)][String] $AadApplicationId = '<AadApplicationId>',
+    [Parameter(Mandatory=$false)][String] $AadApplicationId = '0dad1d52-4c4a-4a69-9ed7-13af0e9d806f',
     [Parameter(Mandatory=$false)][String] $OfferDurableId = 'MS-AZR-0017P',                                                                                      # https://azure.microsoft.com/en-us/support/legal/offer-details/, can't be retrieved by PowerShell
-    [Parameter(Mandatory=$false)][String] $Currency = 'USD',                                                                                                     # USD / CHF
-    [Parameter(Mandatory=$false)][String] $Locale = 'en-US',                                                                                                     # en-US / de-CH
-    [Parameter(Mandatory=$false)][String] $RegionInfo = 'US',                                                                                                    # US / CH
-    [Parameter(Mandatory=$false)][String] $LogType = 'CostMonitoring1'
+    [Parameter(Mandatory=$false)][String] $Currency = 'CHF',                                                                                                     # USD / CHF
+    [Parameter(Mandatory=$false)][String] $Locale = 'de-CH',                                                                                                     # en-US / de-CH
+    [Parameter(Mandatory=$false)][String] $RegionInfo = 'CH',                                                                                                    # US / CH
+    [Parameter(Mandatory=$false)][String] $LogType = 'CostMonitoring'
   )
 
   $VerbosePreference ='Continue'
@@ -40,7 +40,7 @@ workflow TEC0009-CostControl
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.profile, AzureRM.Resources, AzureRM.UsageAggregates
+    $Result = Import-Module AzureRM.profile, AzureRM.Resources, AzureRM.UsageAggregates, Microsoft.ADAL.PowerShell
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet

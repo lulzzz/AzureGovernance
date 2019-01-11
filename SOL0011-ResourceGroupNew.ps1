@@ -170,22 +170,25 @@ workflow SOL0011-ResourceGroupNew
     # Send Mail confirmation
     #
     #############################################################################################################################################################
-    $RequestBody = $RequestBody -Replace('","', "`r`n  ")
-    $RequestBody = $RequestBody -Replace('@', '')
-    $RequestBody = $RequestBody -Replace('{"', '')
-    $RequestBody = $RequestBody -Replace('"}', '')
-    $RequestBody = $RequestBody -Replace('":"', ' = ')
-    $RequestBody = $RequestBody -Replace('  Attribute', 'Attribtue')
- 
+    $Body = "
+              Azure Region: $Regions
+              SubscriptionName: $SubscriptionName
+              ResourceGroupName: $ResourceGroupName
+              Owner (Access): $IamContributorGroupName
+              Application ID: $ApplicationId
+              Cost Center: $CostCenter
+              Budget:$Budget
+              Owner (Tag): $Contact
+            "
     try
     {
-      Send-MailMessage -To $Contact -From felix.bodmer@outlook.com -Subject "Resource Group $ResourceGroupName has been provisioned" `
-                                    -Body $RequestBody -SmtpServer smtp.office365.com  -Credential $MailCredentials -UseSsl -Port 587
+      Send-MailMessage -To $Contact -From felix.bodmer@outlook.com -Subject "The Resource Group $ResourceGroupName has been provisioned" `
+                                    -Body $Body -SmtpServer smtp.office365.com  -Credential $MailCredentials -UseSsl -Port 587
       Write-Verbose -Message ('SOL0007-ConfirmationMailSent')
     }
     catch
     {
       Write-Error -Message ('SOL0007-ConfirmationMailNotSent')
-    }    
+    }   
   }
 }

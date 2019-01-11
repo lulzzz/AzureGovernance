@@ -1,11 +1,12 @@
 ﻿###############################################################################################################################################################
-# Exporting tags to an Excel document. 
+# Exporting tags to an Excel document on the Core Storage Account. 
 #
 # 
 # Output:         None
 #
 # Requirements:   This is not working if the same tag is used with different cases, e.g. Test/test. This is because PowerShell is not case sensitive. 
 #                 Some Resource Types don't allow changes on the Tags if they are not running, this might block the execution of this script.                
+#                 Only runs on a Hybrid Runbook Worker with Excel installed
 #
 # Template:       None
 #
@@ -141,27 +142,33 @@ workflow TEC0001-TagExport
     $Connector = $worksheet.QueryTables.add($TxtConnector,$worksheet.Range('A1'))
     $query = $worksheet.QueryTables.item($Connector.name)
     Write-Verbose '4'
+    
     # Set the delimiter (, or ;) according to your regional settings
     $query.TextFileOtherDelimiter = ',' #$Excel.Application.International(5)
     Write-Verbose '5'
+    
     # Set the format to delimited and text for every column - A trick to create an array of 2s is used with the preceding comma
     $query.TextFileParseType  = 1
     $query.TextFileColumnDataTypes = ,2 * $worksheet.Cells.Columns.Count
     $query.AdjustColumnWidth = 1
     Write-Verbose '6'
+    
     # Execute & delete the import query
     $query.Refresh()
     Write-Verbose '7'
     $query.Delete()
     Write-Verbose '8'
-    # Save & close the Workbook as XLSX. Change the output extension for Excel 2003
+    
+    # Save & close the Workbook as XLSX
     $Workbook.SaveAs($outputXLSX)
     Write-Verbose '9'
     $excel.Quit()
     Write-Verbose -Message ("TEC0002-TagsExportedToExcel")
     
     # Clean up
-    #Remove-Item T:\Tags.csv
+    Remove-Item T:\Tags.csv
     Remove-PSDrive -Name T -Force
+    
+    
   }
 }

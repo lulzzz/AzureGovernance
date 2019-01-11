@@ -6,7 +6,7 @@
 #
 # Requirements:   See Import-Module in code below
 #
-# Template:       PAT0053-NetworkVnetPeeringNew -Vnet1Name $Vnet1Name -Vnet2Name $Vnet2Name
+# Template:       PAT0053-NetworkVnetPeeringNew -Vnet1Name $Vnet1Name -Vnet2Name $Vnet2Name -Gateway $Gateway
 #
 # Change log:
 # 1.0             Initial version 
@@ -19,7 +19,8 @@ workflow PAT0053-NetworkVnetPeeringNew
   param
 	(
     [Parameter(Mandatory=$false)][String] $Vnet1Name = 'weu-co-vnt-01',                                                                                          # By default this is the Core VNET
-    [Parameter(Mandatory=$false)][String] $Vnet2Name = 'weu-te-vnt-01'
+    [Parameter(Mandatory=$false)][String] $Vnet2Name = 'weu-te-vnt-01',
+    [Parameter(Mandatory=$false)][String] $Gateway = 'no'                                                                                                        # Use of Gateway in Core Subscription
   )
 
   #############################################################################################################################################################
@@ -40,6 +41,7 @@ workflow PAT0053-NetworkVnetPeeringNew
   {
     $Vnet1Name = $Using:Vnet1Name
     $Vnet2Name = $Using:Vnet2Name
+    $Gateway = $Using:Gateway
 
 
     ###########################################################################################################################################################
@@ -50,15 +52,15 @@ workflow PAT0053-NetworkVnetPeeringNew
     $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
 
     # Vnet1
-    $Vnet1SubscriptionName = $Vnet1Name.Split('-')[1]
-    $Vnet1SubscriptionName = (Get-AzureRmSubscription | Where-Object {$_.Name -match ('_S' + $Vnet1SubscriptionName + '_')}).Name
+    $Vnet1SubscriptionCode = $Vnet1Name.Split('-')[1]
+    $Vnet1SubscriptionName = (Get-AzureRmSubscription | Where-Object {$_.Name -match $Vnet1SubscriptionCode}).Name
     $AzureAccount = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Vnet1SubscriptionName -Force
     $Vnet1 = Get-AzureRmVirtualNetwork | Where-Object {$_.Name -eq $Vnet1Name}
     Write-Verbose -Message ('PAT0053-Vnet1: ' + ($Vnet1 | Out-String)) 
 
     # Vnet2
-    $Vnet2SubscriptionName = $Vnet2Name.Split('-')[1]
-    $Vnet2SubscriptionName = (Get-AzureRmSubscription | Where-Object {$_.Name -match ('_S' + $Vnet2SubscriptionName + '_')}).Name
+    $Vnet2SubscriptionCode = $Vnet2Name.Split('-')[1]
+    $Vnet2SubscriptionName = (Get-AzureRmSubscription | Where-Object {$_.Name -match $Vnet2SubscriptionCode}).Name
     $AzureAccount = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Vnet2SubscriptionName -Force
     $Vnet2 = Get-AzureRmVirtualNetwork | Where-Object {$_.Name -eq $Vnet2Name}
     Write-Verbose -Message ('PAT0053-Vnet2: ' + ($Vnet2 | Out-String)) 
@@ -81,8 +83,17 @@ workflow PAT0053-NetworkVnetPeeringNew
     if ($Vnet1.VirtualNetworkPeerings.Name -notcontains  $Vnet1NetworkPeeringName)
     {
       $AzureAccount = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Vnet1SubscriptionName -Force
-      $Vnet1Peering = Add-AzureRmVirtualNetworkPeering -Name $Vnet1NetworkPeeringName -VirtualNetwork $Vnet1 -RemoteVirtualNetworkId $Vnet2.Id `
-                                                       -AllowForwardedTraffic -AllowGatewayTransit
+      if ($Gateway -eq 'yes')
+      {
+        $Vnet1Peering = Add-AzureRmVirtualNetworkPeering -Name $Vnet1NetworkPeeringName -VirtualNetwork $Vnet1 -RemoteVirtualNetworkId $Vnet2.Id `
+                                                         -AllowForwardedTraffic -AllowGatewayTransit
+      }
+      else
+      {
+        $Vnet1Peering = Add-AzureRmVirtualNetworkPeering -Name $Vnet1NetworkPeeringName -VirtualNetwork $Vnet1 -RemoteVirtualNetworkId $Vnet2.Id `
+                                                         -AllowForwardedTraffic
+      
+      }
       Write-Verbose -Message ('PAT0053-Vnet1PeeringCreated: ' + ($VNet1Peering| Out-String))
     }
     else
@@ -94,8 +105,16 @@ workflow PAT0053-NetworkVnetPeeringNew
     if ($Vnet2.VirtualNetworkPeerings.Name -notcontains  $Vnet2NetworkPeeringName)
     {
       $AzureAccount = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Vnet2SubscriptionName -Force
-      $Vnet2Peering = Add-AzureRmVirtualNetworkPeering -Name $Vnet2NetworkPeeringName -VirtualNetwork $Vnet2 -RemoteVirtualNetworkId $Vnet1.Id `
-                                                       -AllowForwardedTraffic -UseRemoteGateways
+      if ($Gateway -eq 'yes')
+      {
+        $Vnet2Peering = Add-AzureRmVirtualNetworkPeering -Name $Vnet2NetworkPeeringName -VirtualNetwork $Vnet2 -RemoteVirtualNetworkId $Vnet1.Id `
+                                                         -AllowForwardedTraffic -UseRemoteGateways
+      }
+      else
+      {
+        $Vnet2Peering = Add-AzureRmVirtualNetworkPeering -Name $Vnet2NetworkPeeringName -VirtualNetwork $Vnet2 -RemoteVirtualNetworkId $Vnet1.Id `
+                                                       -AllowForwardedTraffic
+      }
       Write-Verbose -Message ('PAT0053-Vnet2PeeringCreated: ' + ($VNet2Peering| Out-String))
     }
     else

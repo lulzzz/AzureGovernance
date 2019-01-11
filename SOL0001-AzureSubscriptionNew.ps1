@@ -450,37 +450,36 @@ workflow SOL0001-AzureSubscriptionNew
     $Result = New-AzureRmPolicyAssignment -Name $Policy.Properties.Displayname -PolicyDefinition $Policy -Scope ('/subscriptions/' + $SubscriptionId) `
                                           -PolicyParameterObject $Locations
     Write-Verbose -Message ('SOL0001-SubscriptionPoliciesApplied: ' + ($SubscriptionId))
+  }
+
+  #############################################################################################################################################################
+  #
+  # Update CMDB
+  #
+  #############################################################################################################################################################
+  # This has to be added based on the chosen CMDB implementation
 
 
-    #############################################################################################################################################################
-    #
-    # Update CMDB
-    #
-    #############################################################################################################################################################
-    # This has to be added based on the chosen CMDB implementation
-
-
-    #############################################################################################################################################################
-    #
-    # Send Mail confirmation
-    #
-    #############################################################################################################################################################
-    $RequestBody = $RequestBody -Replace('","', "`r`n  ")
-    $RequestBody = $RequestBody -Replace('@', '')
-    $RequestBody = $RequestBody -Replace('{"', '')
-    $RequestBody = $RequestBody -Replace('"}', '')
-    $RequestBody = $RequestBody -Replace('":"', ' = ')
-    $RequestBody = $RequestBody -Replace('  Attribute', 'Attribtue')
+  #############################################################################################################################################################
+  #
+  # Send Mail confirmation
+  #
+  #############################################################################################################################################################
+  $RequestBody = $RequestBody -Replace('","', "`r`n  ")
+  $RequestBody = $RequestBody -Replace('@', '')
+  $RequestBody = $RequestBody -Replace('{"', '')
+  $RequestBody = $RequestBody -Replace('"}', '')
+  $RequestBody = $RequestBody -Replace('":"', ' = ')
+  $RequestBody = $RequestBody -Replace('  Attribute', 'Attribtue')
  
-    try
-    {
-      Send-MailMessage -To $SubscriptionOwner -From felix.bodmer@outlook.com -Subject "Subscription $SubscriptionName has been provisioned" `
-                                              -Body $RequestBody -SmtpServer smtp.office365.com  -Credential $MailCredentials -UseSsl -Port 587
-      Write-Verbose -Message ('SOL0007-ConfirmationMailSent')
-    }
-    catch
-    {
-      Write-Error -Message ('SOL0007-ConfirmationMailNotSent')
-    }
+  try
+  {
+    Send-MailMessage -To $SubscriptionOwner -From felix.bodmer@outlook.com -Subject "Subscription $SubscriptionName has been provisioned" `
+                                            -Body $RequestBody -SmtpServer smtp.office365.com  -Credential $MailCredentials -UseSsl -Port 587
+    Write-Verbose -Message ('SOL0007-ConfirmationMailSent')
+  }
+  catch
+  {
+    Write-Error -Message ('SOL0007-ConfirmationMailNotSent')
   }
 }

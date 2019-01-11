@@ -60,10 +60,12 @@ workflow SOL0055-NetworkVnetPeeringNew
 
   $Vnet1Name = $Attributes.Attribute01
   $Vnet2Name = $Attributes.Attribute02
-  $Contact = $Attributes.Attribute03
+  $Gateway = $Attributes.Attribute03
+  $Contact = $Attributes.Attribute04
 
   Write-Verbose -Message ('SOL0055-Vnet1Name: ' + $Vnet1Name)
   Write-Verbose -Message ('SOL0055-Vnet2Name: ' + $Vnet2Name)
+  Write-Verbose -Message ('SOL0055-Contact: ' + $Gateway)
   Write-Verbose -Message ('SOL0055-Contact: ' + $Contact)
 
 
@@ -72,7 +74,7 @@ workflow SOL0055-NetworkVnetPeeringNew
   # Create VNET Peering
   #
   ###########################################################################################################################################################
-  PAT0053-NetworkVnetPeeringNew -Vnet1Name $Vnet1Name -Vnet2Name $Vnet2Name
+  PAT0053-NetworkVnetPeeringNew -Vnet1Name $Vnet1Name -Vnet2Name $Vnet2Name -Gateway $Gateway
 
 
   #############################################################################################################################################################
@@ -80,17 +82,16 @@ workflow SOL0055-NetworkVnetPeeringNew
   # Send Mail confirmation
   #
   #############################################################################################################################################################
-  $RequestBody = $RequestBody -Replace('","', "`r`n  ")
-  $RequestBody = $RequestBody -Replace('@', '')
-  $RequestBody = $RequestBody -Replace('{"', '')
-  $RequestBody = $RequestBody -Replace('"}', '')
-  $RequestBody = $RequestBody -Replace('":"', ' = ')
-  $RequestBody = $RequestBody -Replace('  Attribute', 'Attribtue')
- 
+  $Body = "
+            Vnet1: $Vnet1Name
+            Vnet2: $Vnet2Name
+            On-premise Gateway: $Gateway
+            Contact: $Contact
+          "
   try
   {
     Send-MailMessage -To $Contact -From felix.bodmer@outlook.com -Subject "Peering between $Vnet1Name and $Vnet1Name has been provisioned" `
-                                  -Body $RequestBody -SmtpServer smtp.office365.com  -Credential $MailCredentials -UseSsl -Port 587
+                                  -Body $Body -SmtpServer smtp.office365.com  -Credential $MailCredentials -UseSsl -Port 587
     Write-Verbose -Message ('SOL0007-ConfirmationMailSent')
   }
   catch

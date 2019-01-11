@@ -33,22 +33,29 @@ workflow TEC0010-ExportUsageData
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
-  
-  $Credentials = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser
-  $CoreWorkspaceId = Get-AutomationVariable -Name VAR-AUTO-CoreWorkspaceId
-  $CoreWorkspaceKey = Get-AutomationVariable -Name VAR-AUTO-CoreWorkspaceKey
 
+
+  #############################################################################################################################################################
+  #  
+  # Parameters
+  #
+  #############################################################################################################################################################
+  $Credentials = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser
+  $WorkspaceCoreName = Get-AutomationVariable -Name VAR-AUTO-WorkspaceCoreName
+  $WorkspaceCore = Get-AzureRmOperationalInsightsWorkspace | Where-Object {$_.Name -eq $WorkspaceCoreName}
+  $WorkspaceCoreKey = (Get-AzureRmOperationalInsightsWorkspaceSharedKeys -ResourceGroupName $WorkspaceCore.ResourceGroupName -Name $WorkspaceCore.Name).PrimarySharedKey
+  $WorkspaceCoreId = $WorkspaceCore.CustomerId
   
   InlineScript
   {
     $LogType = $Using:LogType
-    $CoreWorkspaceId = $Using:CoreWorkspaceId
-    $CoreWorkspaceKey = $Using:CoreWorkspaceKey
+    $WorkspaceCoreId = $Using:WorkspaceCoreId
+    $WorkspaceCoreKey = $Using:WorkspaceCoreKey
     $Credentials = $Using:Credentials
 
     Write-Verbose -Message ('TEC0009-LogType: ' + $LogType)
-    Write-Verbose -Message ('TEC0009-CoreWorkspaceId: ' + $CoreWorkspaceId)
-    Write-Verbose -Message ('TEC0009-CoreWorkspaceKey: ' + $CoreWorkspaceKey)
+    Write-Verbose -Message ('TEC0009-WorkspaceCoreId: ' + $WorkspaceCoreId)
+    Write-Verbose -Message ('TEC0009-WorkspaceCoreKey: ' + $WorkspaceCoreKey)
 
 
     ###########################################################################################################################################################
@@ -77,7 +84,7 @@ workflow TEC0010-ExportUsageData
       do
       {
         if ($UsageDataSet = Get-AzureRmConsumptionUsageDetail -IncludeMeterDetails -IncludeAdditionalProperties -StartDate $StartDateTime `
-                                                -EndDate $EndDateTime -ErrorAction SilentlyContinue)
+                                                           -EndDate $EndDateTime -ErrorAction SilentlyContinue)
         {
           Break
         }
@@ -95,21 +102,28 @@ workflow TEC0010-ExportUsageData
         Write-Error -Message ('TEC0009-NoDataAvailable: Tried retrieving data for 45 minutes')
         Return
       }
-      $UsageData = $UsageData + $UsageDataSet.UsageAggregations
+      $UsageData = $UsageData + $UsageDataSet
       Write-Verbose -Message ('TEC0009-NumberOfRetrievedUsageRecords: ' + $UsageData.Count)
 
       # Get additional records using Continuation Token and NextLink
-      do
+      if (($UsageDataSet.ContinuationToken).length -ne 0)
       {
-        $UsageDataSet = Get-AzureRmConsumptionUsageDetail -IncludeMeterDetails -IncludeAdditionalProperties -StartDate $StartDateTime `
-                                                -EndDate $EndDateTime -ErrorAction SilentlyContinue -ContinuationToken $UsageDataSet.ContinuationToken
+        do
+        {
+          $UsageDataSet = Get-AzureRmConsumptionUsageDetail -IncludeMeterDetails -IncludeAdditionalProperties -StartDate $StartDateTime `
+                                                            -EndDate $EndDateTime -ErrorAction SilentlyContinue `
+                                                            -ContinuationToken $UsageDataSet.ContinuationToken
 
-        $UsageData = $UsageData + $UsageDataSet.UsageAggregations
-        Write-Verbose -Message ('TEC0009-NumberOfRetrievedUsageRecords: ' + $UsageData.Count)
+          $UsageData = $UsageData + $UsageDataSet
+          Write-Verbose -Message ('TEC0009-NumberOfRetrievedUsageRecords: ' + $UsageData.Count)
+        }
+        while ($UsageDataSet.NextLink)
       }
-      while ($UsageDataSet.NextLink)
     }
-    Write-Verbose -Message ('TEC0009-TotalNumberOfRetrievedUsageRecords: ' + $UsageData.Count)
+    Write-Verbose -Message ('TEC0009-RetrieveUsageForSubscription: ' + ($Result | Out-String))
+
+    # Set context back to Core Subscription
+    $Result = Connect-AzureRmAccount -Credential $Credentials -Subscription ($Subscriptions | Where-Object {$_.Name -match '-co'}).Name
 
 
     ###########################################################################################################################################################
@@ -139,15 +153,15 @@ workflow TEC0010-ExportUsageData
     $XHeaders = 'x-ms-date:' + $Rfc1123Date 
     $StringToHash = $Method + "`n" + $ContentLength + "`n" + $ContentType + "`n" + $XHeaders + "`n" + $Resource
     $BytesToHash = [Text.Encoding]::UTF8.GetBytes($StringToHash)
-    $KeyBytes = [Convert]::FromBase64String($CoreWorkspaceKey)
+    $KeyBytes = [Convert]::FromBase64String($WorkspaceCoreKey)
     $Sha256 = New-Object System.Security.Cryptography.HMACSHA256
     $Sha256.Key = $KeyBytes
     $CalculatedHash = $Sha256.ComputeHash($BytesToHash)
     $EncodedHash = [Convert]::ToBase64String($CalculatedHash)
-    $Authorization = 'SharedKey {0}:{1}' -f $CoreWorkspaceId,$EncodedHash
+    $Authorization = 'SharedKey {0}:{1}' -f $WorkspaceCoreId,$EncodedHash
 
     # Post the request
-    $Uri = 'https://' + $CoreWorkspaceId + '.ods.opinsights.azure.com' + $Resource + '?api-version=2016-04-01'
+    $Uri = 'https://' + $WorkspaceCoreId + '.ods.opinsights.azure.com' + $Resource + '?api-version=2016-04-01'
     $Headers = @{'Authorization' = $Authorization;
                  'Log-Type' = $LogType;
                  'x-ms-date' = $Rfc1123Date;
@@ -155,6 +169,5 @@ workflow TEC0010-ExportUsageData
     $Result = Invoke-WebRequest -Uri $Uri -Method $Method -ContentType $ContentType -Headers $Headers -Body $Json -UseBasicParsing
     
     Write-Verbose -Message ('TEC0009-DataWritenToOms: End of process')  
-
   }  
 }
