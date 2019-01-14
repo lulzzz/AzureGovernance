@@ -33,11 +33,11 @@
     "IamReaderGroupName": "AzureReader-Reader",
     "SubscriptionCode": "[split(parameters('SubscriptionName'),'-')]",
     "RegionCode": {
-      "weu": {
-        "Region": "westeurope"
+      "westeurope": {
+        "Region": "weu"
       },
-      "neu": {
-        "Region": "northeurope"
+      "northeurope": {
+        "Region": "neu"
       }
     },
     "ResourceGroupName": "[variables('RegionCode')[parameters('Regions')].Region]"
