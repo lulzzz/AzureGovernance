@@ -61,7 +61,16 @@
       }
     }
   ],
-  "outputs": {}
+  "outputs": {
+    "SubscriptionCode": {
+      "type": "array",
+      "value": "[variables('SubscriptionCode')]"
+    },
+    "ResourceGroupName": {
+      "type": "array",
+      "value": "[variables('ResourceGroupName')]"
+    }
+  }
 }
 
 
