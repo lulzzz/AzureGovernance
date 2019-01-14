@@ -11,8 +11,8 @@
     "Regions": {
       "type": "string",
       "allowedValues": [
-        "weu",
-        "neu"
+        "westeurope",
+        "northeurope"
       ]
     },
     "ApplicationId": {
