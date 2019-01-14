@@ -40,7 +40,7 @@
         "RegionCode": "neu"
       }
     },
-    "ResourceGroupName": "[variables('RegionCodes')[parameters('Region')].RegionCode]"
+    "ResourceGroupName": "[concat(variables('RegionCodes')[parameters('Region')].RegionCode, '-', variables('SubscriptionCode'), '-rsg-', parameters('ResourceGroupNameIndividual'), '-99')]"
   },
 
   "resources": [
