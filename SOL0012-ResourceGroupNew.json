@@ -8,7 +8,7 @@
     "SubscriptionName": {
       "type": "string"
     },
-    "Location": {
+    "Regions": {
       "type": "string"
     },
     "ApplicationId": {
@@ -43,7 +43,7 @@
     {
       "type": "Microsoft.Resources/resourceGroups",
       "apiVersion": "2018-05-01",
-      "location": "[parameters('Location')]",
+      "location": "[parameters('Regions')]",
       "name": "[variables('ResourceGroupName')]",
       "properties": {},
       "tags": {
