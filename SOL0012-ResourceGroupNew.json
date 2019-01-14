@@ -67,7 +67,7 @@
       "value": "[variables('SubscriptionCode')]"
     },
     "ResourceGroupName": {
-      "type": "array",
+      "type": "string",
       "value": "[variables('ResourceGroupName')]"
     }
   }
