@@ -36,7 +36,7 @@
       "Southeast Asia": "sea",
       "East Asia": "eas"
     },
-    "ResourceGroupName":  "[concat(variables('SubscriptionCode'), parameters('ResourceGroupNameIndividual'))]"
+    "ResourceGroupName":  "[concat('weu', parameters('ResourceGroupNameIndividual'))]"
   },
 
   "resources": [
