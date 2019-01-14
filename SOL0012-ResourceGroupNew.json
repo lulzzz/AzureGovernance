@@ -42,7 +42,7 @@
         "RegionCode": "neu"
       }
     },
-    "ResourceGroupName": "[concat(variables('RegionCodes')[parameters('Region')].RegionCode, '-', '-rsg-', parameters('ResourceGroupNameIndividual'), '-99')]"
+    "ResourceGroupName": "[concat(variables('RegionCodes')[parameters('Region')].RegionCode, '-', last(variables('SubscriptionCode')), '-rsg-', parameters('ResourceGroupNameIndividual'), '-99')]"
   },
 
   "resources": [
@@ -67,7 +67,7 @@
       "value": "[variables('SubscriptionCode')]"
     },
     "ResourceGroupName": {
-      "type": "string",
+      "type": "array",
       "value": "[variables('ResourceGroupName')]"
     }
   }
