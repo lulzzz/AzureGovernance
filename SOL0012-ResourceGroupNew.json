@@ -8,7 +8,7 @@
     "SubscriptionName": {
       "type": "string"
     },
-    "Regions": {
+    "Region": {
       "type": "string",
       "allowedValues": [
         "westeurope",
@@ -32,22 +32,22 @@
   "variables": {
     "IamReaderGroupName": "AzureReader-Reader",
     "SubscriptionCode": "[split(parameters('SubscriptionName'),'-')]",
-    "RegionCode": {
+    "RegionCodes": {
       "westeurope": {
-        "Region": "weu"
+        "RegionCode": "weu"
       },
       "northeurope": {
-        "Region": "neu"
+        "RegionCode": "neu"
       }
     },
-    "ResourceGroupName": "[variables('RegionCode')[parameters('Regions')].Region]"
+    "ResourceGroupName": "[variables('RegionCodes')[parameters('Region')].RegionCode]"
   },
 
   "resources": [
     {
       "type": "Microsoft.Resources/resourceGroups",
       "apiVersion": "2018-05-01",
-      "location": "[parameters('Regions')]",
+      "location": "[parameters('Region')]",
       "name": "[variables('ResourceGroupName')]",
       "properties": {},
       "tags": {
