@@ -30,7 +30,7 @@
     "SubscriptionCode": "[split(parameters('SubscriptionName'),'-')]",
     "RegionCode": {
       "weu": {
-        "Regions": "West Europe"
+        "Regions": "westeurope"
       }
     },
     "ResourceGroupName": "[variables('RegionCode')[parameters('Regions')].Regions]"
