@@ -48,6 +48,14 @@ workflow SOL0012-ResourceGroupNew
   # Deploy Template
   #
   #############################################################################################################################################################
-  New-AzureRmDeployment -Location $Location -rgLocation $Location -rgName $rgName `
-                        -TemplateUri https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/SOL0012-ResourceGroupNew.json
+  New-AzureRmDeployment -Location westeurope -ResourceGroupNameIndividual test -Regions westeurope -SubscriptionName Core-co -ApplicationId App-1 -CostCenter 24-1234 -Budget 222 `
+                        -Contact felix.bodmer@outlook.com -TemplateUri https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/SOL0012-ResourceGroupNew.json 
+
+
+
+
+
+
+
+
 }
