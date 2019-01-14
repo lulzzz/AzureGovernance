@@ -32,7 +32,7 @@
       "weu": {
         "Regions": "West Europe"
       }
-    }
+    },
     "ResourceGroupName": "[variables('RegionCode')[parameters('Regions')].Regions]"
   },
 
