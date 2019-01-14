@@ -1,6 +1,6 @@
 ﻿###############################################################################################################################################################
 # Used to import an individual Runbook from GitHub into the Azure Automation Account in which TEC0003 is executed. 
-# The import overwrite existing Runbooks in the Azure Automation Account.
+# The import overwrites existing Runbooks in the Azure Automation Account.
 # Runbooks are imported with verbose logging on, a description 'Imported from GitHub' and in a published state.
 # 
 # Output:         None
@@ -20,7 +20,7 @@ workflow TEC0003-GitHubImportIndividual
   param
 	(
     [Parameter(Mandatory=$false)][String] $GitHubRepo = '/fbodmer/AzureGovernance',
-    [Parameter(Mandatory=$false)][String] $RunbookName = 'PAT0300-MonitoringWorkspaceNew.ps1'
+    [Parameter(Mandatory=$false)][String] $RunbookName = 'TEC0005-AzureContextSet.ps1'
   )
   #############################################################################################################################################################
   #  
