@@ -42,7 +42,8 @@
         "RegionCode": "neu"
       }
     },
-    "ResourceGroupName": "[concat(variables('RegionCodes')[parameters('Region')].RegionCode, '-', last(variables('SubscriptionCode')), '-rsg-', parameters('ResourceGroupNameIndividual'), '-99')]"
+    "ResourceGroupName": "[concat(variables('RegionCodes')[parameters('Region')].RegionCode, '-', last(variables('SubscriptionCode')), '-rsg-', parameters('ResourceGroupNameIndividual'), '-99')]",
+    "Contributor": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]"
   },
 
   "resources": [
@@ -59,8 +60,19 @@
         "Contact": "Contact",
         "Automation": "ontentVersion"
       }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2017-05-01",
+      "name": "11111111-1111-1111-1111-111111111111",
+      "properties": {
+        "roleDefinitionId": "Reader",
+        "principalId": "ffea2e1f-0679-454f-8820-65a0186028b8",
+        "scope": "[resourceGroup().id]"
+      }
     }
-  ],
+      ],
+
   "outputs": {
     "SubscriptionCode": {
       "type": "array",
