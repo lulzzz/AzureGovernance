@@ -2,22 +2,67 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "rgName": {
+    "ResourceGroupNameIndividual": {
       "type": "string"
     },
-    "rgLocation": {
+    "SubscriptionName": {
+      "type": "string"
+    },
+    "Regions": {
+      "type": "string"
+    },
+    "ApplicationId": {
+      "type": "string"
+    },
+    "CostCenter": {
+      "type": "string"
+    },
+    "Budget": {
+      "type": "string"
+    },
+    "Contact": {
+      "type": "string"
+    },
+    "MailCredentials": {
       "type": "string"
     }
   },
-  "variables": {},
+
+  "variables": {
+    "IamReaderGroupName": "AzureReader-Reader",
+    "SubscriptionCode": "[split(parameters('SubscriptionName'),'-')]",
+    "RegionTable": {
+      "West Europe": "weu",
+      "North Europe": "neu",
+      "West US": "wus",
+      "East US": "eus",
+      "Southeast Asia": "sea",
+      "East Asia": "eas"
+    },
+    "ResourceGroupName": [ "concat(variables('RegionTable')", "-", "concat(variables(SubscriptionCode))", "-rsg-", "concat(variables(ResourceGroupNameIndividual))", "-99" ],
+  },
+
   "resources": [
     {
       "type": "Microsoft.Resources/resourceGroups",
       "apiVersion": "2018-05-01",
-      "location": "[parameters('rgLocation')]",
-      "name": "[parameters('rgName')]",
-      "properties": {}
+      "location": "[parameters('Regions')]",
+      "name": "[variables('ResourceGroupName')]",
+      "properties": {},
+      "tags": {
+        "ApplicationId": "ApplicationId",
+        "CostCenter": "CostCenter",
+        "Budget": "Budget",
+        "Contact": "Contact",
+        "Automation": "ontentVersion"
+      }
     }
   ],
   "outputs": {}
 }
+
+
+
+
+
+
