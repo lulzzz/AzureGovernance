@@ -34,13 +34,15 @@
     "SubscriptionCode": "[split(parameters('SubscriptionName'),'-')]",
     "RegionCodes": {
       "westeurope": {
+        "type": "string",
         "RegionCode": "weu"
       },
       "northeurope": {
+        "type": "string",
         "RegionCode": "neu"
       }
     },
-    "ResourceGroupName": "[concat(variables('RegionCodes')[parameters('Region')].RegionCode, '-', variables('SubscriptionCode'), '-rsg-', parameters('ResourceGroupNameIndividual'), '-99')]"
+    "ResourceGroupName": "[concat(variables('RegionCodes')[parameters('Region')].RegionCode, '-', '-rsg-', parameters('ResourceGroupNameIndividual'), '-99')]"
   },
 
   "resources": [
