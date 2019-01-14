@@ -28,15 +28,12 @@
   "variables": {
     "IamReaderGroupName": "AzureReader-Reader",
     "SubscriptionCode": "[split(parameters('SubscriptionName'),'-')]",
-    "RegionTable": {
-      "West Europe": "weu",
-      "North Europe": "neu",
-      "West US": "wus",
-      "East US": "eus",
-      "Southeast Asia": "sea",
-      "East Asia": "eas"
-    },
-    "ResourceGroupName": "[parameters('ResourceGroupNameIndividual')]"
+    "RegionCode": {
+      "weu": {
+        "Regions": "West Europe"
+      }
+    }
+    "ResourceGroupName": "[variables('RegionCode')[parameters('Regions')].Regions]"
   },
 
   "resources": [
