@@ -24,6 +24,12 @@
       "metadata": {
         "description": "A new GUID used to identify the role assignment"
       }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location"
+      }
     }
   },
   "variables": {
