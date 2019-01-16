@@ -2,6 +2,31 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "ResourceGroupNameIndividual": {
+      "type": "string"
+    },
+    "SubscriptionName": {
+      "type": "string"
+    },
+    "Region": {
+      "type": "string",
+      "allowedValues": [
+        "westeurope",
+        "northeurope"
+      ]
+    },
+    "ApplicationId": {
+      "type": "string"
+    },
+    "CostCenter": {
+      "type": "string"
+    },
+    "Budget": {
+      "type": "string"
+    },
+    "Contact": {
+      "type": "string"
+    }
   },
 
   "variables": {
@@ -20,13 +45,14 @@
           "uri": "https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/PAT0000-ResourceGroupNew.json"
         },
         "parameters": {
-          "ResourceGroupNameIndividual": { "value": "test" },
-          "SubscriptionName": { "value": "Core-co" },
-          "Region": { "value": "westeurope" },
-          "ApplicationId": { "value": "app1" },
-          "CostCenter": { "value": "1112-434334-4" },
-          "Budget": { "value": "222" },
-          "Contact": { "value": "felix.bodmer@outlook.com" }
+          "ResourceGroupNameIndividual": "[parameters('ResourceGroupNameIndividual')]",
+          "SubscriptionName": "[parameters('SubscriptionName')]",
+          "Region": "[parameters('Region')]",
+          "ApplicationId": "[parameters('ApplicationId')]",
+          "CostCenter": "[parameters('CostCenter')]",
+          "Budget": "[parameters('Budget')]",
+          "Contact": "[parameters('Contact')]",
+          "Automation": "1.0"
         }
       }
     }
