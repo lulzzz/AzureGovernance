@@ -13,6 +13,7 @@
       "name": "linkedTemplate",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
+      "location": "westeurope",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
