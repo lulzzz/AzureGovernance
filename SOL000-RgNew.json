@@ -26,6 +26,29 @@
     },
     "Contact": {
       "type": "string"
+    },
+    "AadId": {
+      "type": "string",
+      "metadata": {
+        "description": "AAD Group or user to which role is assigned. Example: ffea2e1f-0679-454f-8820-65a0186028b8"
+      }
+    },
+    "BuiltInRoleType": {
+      "type": "string",
+      "allowedValues": [
+        "Owner",
+        "Contributor",
+        "Reader"
+      ],
+      "metadata": {
+        "description": "Built-in role to assign. Example: Reader"
+      }
+    },
+    "RoleNameGuid": {
+      "type": "string",
+      "metadata": {
+        "description": "A new GUID used to identify the role assignment. Example: 11111111-1111-1111-1111-111111111111"
+      }
     }
   },
 
@@ -35,7 +58,7 @@
 
   "resources": [
     {
-      "name": "linkedTemplate",
+      "name": "linkedTemplate1",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
       "location": "westeurope",
@@ -52,6 +75,24 @@
           "CostCenter": { "value": "[parameters('CostCenter')]" },
           "Budget": { "value": "[parameters('Budget')]" },
           "Contact": { "value": "[parameters('Contact')]" }
+        }
+      }
+    },
+    {
+      "name": "linkedTemplate2",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
+      "location": "westeurope",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/PAT0000-AssignRbac.json"
+        },
+        "parameters": {
+          "AadId": { "value": "[parameters('AadId')]" },
+          "BuiltInRoleType": { "value": "[parameters('BuiltInRoleType')]" },
+          "RoleNameGuid": { "value": "[parameters('RoleNameGuid')]" },
+          "Location": { "value": "[parameters('Region')]" }
         }
       }
     }
