@@ -69,7 +69,7 @@ workflow SOL0011-ResourceGroupNew
   Write-Verbose -Message ('SOL0011-Budget: ' + $Budget)
   Write-Verbose -Message ('SOL0011-Contact: ' + $Contact)
 
-      
+   
   #############################################################################################################################################################
   #  
   # Parameters
@@ -78,6 +78,7 @@ workflow SOL0011-ResourceGroupNew
   $Automation = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion -Verbose:$false
   $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
   $MailCredentials = Get-AutomationPSCredential -Name CRE-AUTO-MailUser -Verbose:$false                                                                          # Needs to use app password due to two-factor authentication
+  $PortalUrl = Get-AutomationVariable -Name VAR-AUTO-PortalUrl -Verbose:$false
   $SubscriptionCode = $SubscriptionName.Split('-')[1]
   Write-Verbose -Message ('SOL0011-SubscriptionCode: ' + ($SubscriptionCode))
 
@@ -113,6 +114,23 @@ workflow SOL0011-ResourceGroupNew
     Return $Table
   }
   Write-Verbose -Message ('SOL0011-RegionTable: ' + ($RegionTable | Out-String))
+
+
+  #############################################################################################################################################################
+  #  
+  # Ensure request is received from portal
+  #
+  #############################################################################################################################################################
+  if ($WebhookData.RequestHeader -match $PortalUrl)
+  {
+    Write-Verbose -Message ('SOL0011-Header: Header has required information')
+  }
+  else
+  {
+    Write-Error -Message ('SOL0011-Header: Header does not contain required information')
+    return
+  }
+
 
   foreach ($Region in $RegionTable)
   {
@@ -182,7 +200,7 @@ workflow SOL0011-ResourceGroupNew
             "
     try
     {
-      Send-MailMessage -To $Contact -From felix.bodmer@outlook.com -Subject "The Resource Group $ResourceGroupName has been provisioned" `
+      Send-MailMessage -To $Contact -From $MailCredentials.UserName -Subject "The Resource Group $ResourceGroupName has been provisioned" `
                                     -Body $Body -SmtpServer smtp.office365.com  -Credential $MailCredentials -UseSsl -Port 587
       Write-Verbose -Message ('SOL0007-ConfirmationMailSent')
     }

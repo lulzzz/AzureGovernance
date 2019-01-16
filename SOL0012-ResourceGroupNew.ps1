@@ -53,6 +53,7 @@ workflow SOL0012-ResourceGroupNew
 
 
 
+  New-AzureRmDeployment -Location westeurope -principalId ffea2e1f-0679-454f-8820-65a0186028b8 -builtInRoleType Reader -roleNameGuid 11111111-1111-1111-1111-111111111111 -TemplateUri https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/SOL0012-ResourceGroupNewPolicy.json 
 
 
 

@@ -91,6 +91,7 @@ workflow SOL0001-AzureSubscriptionNew
   $AzureAutomationCredential =  Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
   $MailCredentials = Get-AutomationPSCredential -Name CRE-AUTO-MailUser -Verbose:$false                                                                          # Needs to use app password due to two-factor authentication
   $WorkspaceNameCore = Get-AutomationVariable -Name VAR-AUTO-WorkspaceCoreName                                                                                   # For non-Core Subscriptions
+  $PortalUrl = Get-AutomationVariable -Name VAR-AUTO-PortalUrl -Verbose:$false
   $SubscriptionCode = $SubscriptionName.Split('-')[1]
   Write-Verbose -Message ('SOL0001-SubscriptionCode: ' + ($SubscriptionCode))
 
@@ -131,6 +132,22 @@ workflow SOL0001-AzureSubscriptionNew
   Write-Verbose -Message ('SOL0001-StorageAccountNameIndividual: ' + ($StorageAccountNameIndividual))
   Write-Verbose -Message ('SOL0001-StorageAccountType: ' + ($StorageAccountType))
   Write-Verbose -Message ('SOL0001-RuleSetName: ' + ($RuleSetName))
+
+
+  #############################################################################################################################################################
+  #  
+  # Ensure request is received from portal
+  #
+  #############################################################################################################################################################
+  if ($WebhookData.RequestHeader -match $PortalUrl)
+  {
+    Write-Verbose -Message ('SOL0011-Header: Header has required information')
+  }
+  else
+  {
+    Write-Error -Message ('SOL0011-Header: Header does not contain required information')
+    return
+  }
 
 
   #############################################################################################################################################################
@@ -474,7 +491,7 @@ workflow SOL0001-AzureSubscriptionNew
  
   try
   {
-    Send-MailMessage -To $SubscriptionOwner -From felix.bodmer@outlook.com -Subject "Subscription $SubscriptionName has been provisioned" `
+    Send-MailMessage -To $SubscriptionOwner -From $MailCredentials.UserName -Subject "Subscription $SubscriptionName has been provisioned" `
                                             -Body $RequestBody -SmtpServer smtp.office365.com  -Credential $MailCredentials -UseSsl -Port 587
     Write-Verbose -Message ('SOL0007-ConfirmationMailSent')
   }

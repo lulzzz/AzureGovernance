@@ -35,14 +35,6 @@ workflow SOL0055-NetworkVnetPeeringNew
 
 
   #############################################################################################################################################################
-  #  
-  # Parameters
-  #
-  #############################################################################################################################################################
-  $MailCredentials = Get-AutomationPSCredential -Name CRE-AUTO-MailUser -Verbose:$false                                                                          # Needs to use app password due to two-factor authentication
-
-
-  #############################################################################################################################################################
   #
   # Assign/map data received by REST call from SNOW, to PowerShell variables
   #
@@ -69,6 +61,31 @@ workflow SOL0055-NetworkVnetPeeringNew
   Write-Verbose -Message ('SOL0055-Contact: ' + $Contact)
 
 
+  #############################################################################################################################################################
+  #  
+  # Parameters
+  #
+  #############################################################################################################################################################
+  $MailCredentials = Get-AutomationPSCredential -Name CRE-AUTO-MailUser -Verbose:$false                                                                          # Needs to use app password due to two-factor authentication
+  $PortalUrl = Get-AutomationVariable -Name VAR-AUTO-PortalUrl -Verbose:$false
+
+
+  #############################################################################################################################################################
+  #  
+  # Ensure request is received from portal
+  #
+  #############################################################################################################################################################
+  if ($WebhookData.RequestHeader -match $PortalUrl)
+  {
+    Write-Verbose -Message ('SOL0011-Header: Header has required information')
+  }
+  else
+  {
+    Write-Error -Message ('SOL0011-Header: Header does not contain required information')
+    return
+  }
+
+
   ###########################################################################################################################################################
   #
   # Create VNET Peering
@@ -90,7 +107,7 @@ workflow SOL0055-NetworkVnetPeeringNew
           "
   try
   {
-    Send-MailMessage -To $Contact -From felix.bodmer@outlook.com -Subject "Peering between $Vnet1Name and $Vnet1Name has been provisioned" `
+    Send-MailMessage -To $Contact -From $MailCredentials.UserName -Subject "Peering between $Vnet1Name and $Vnet1Name has been provisioned" `
                                   -Body $Body -SmtpServer smtp.office365.com  -Credential $MailCredentials -UseSsl -Port 587
     Write-Verbose -Message ('SOL0007-ConfirmationMailSent')
   }
