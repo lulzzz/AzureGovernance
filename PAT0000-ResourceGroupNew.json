@@ -54,11 +54,11 @@
       "name": "[variables('ResourceGroupName')]",
       "properties": {},
       "tags": {
-        "ApplicationId": "ApplicationId",
-        "CostCenter": "CostCenter",
-        "Budget": "Budget",
-        "Contact": "Contact",
-        "Automation": "ontentVersion"
+        "ApplicationId": "[parameters('ApplicationId')]",
+        "CostCenter": "[parameters('CostCenter')]",
+        "Budget": "[parameters('Budget')]",
+        "Contact": "[parameters('Contact')]",
+        "Automation": "1.0"
       }
     }
   ],
