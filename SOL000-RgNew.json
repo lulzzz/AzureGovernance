@@ -45,8 +45,6 @@
           "uri": "https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/PAT0000-ResourceGroupNew.json"
         },
         "parameters": {
-          "storageAccountName": { "value": "[variables('storageAccountName')]" },
-
           "ResourceGroupNameIndividual": { "value": "[parameters('ResourceGroupNameIndividual')]" },
           "SubscriptionName": { "value": "[parameters('SubscriptionName')]" },
           "Region": { "value": "[parameters('Region')]" },
