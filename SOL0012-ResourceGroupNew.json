@@ -65,6 +65,7 @@
       "name": "linkedTemplate",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
+      "location": "[parameters('Region')]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
