@@ -26,8 +26,7 @@
           "ApplicationId": { "value": "app1" },
           "CostCenter": { "value": "1112-434334-4" },
           "Budget": { "value": "222" },
-          "Contact": { "value": "felix.bodmer@outlook.com" },
-          "location": { "value": "westeurope" }
+          "Contact": { "value": "felix.bodmer@outlook.com" }
         }
       }
     }
