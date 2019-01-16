@@ -51,8 +51,7 @@
           "ApplicationId": { "value": "[parameters('ApplicationId')]" },
           "CostCenter": { "value": "[parameters('CostCenter')]" },
           "Budget": { "value": "[parameters('Budget')]" },
-          "Contact": { "value": "[parameters('Contact')]" },
-          "Automation": { "value": "1.0" }
+          "Contact": { "value": "[parameters('Contact')]" }
         }
       }
     }
