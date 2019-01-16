@@ -60,17 +60,6 @@
         "Contact": "Contact",
         "Automation": "ontentVersion"
       }
-    },
-    {
-      "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2017-05-01",
-      "location": "West Europe", //"[parameters('location')]",
-      "name": "11111111-1111-1111-1111-111111111111", //"[parameters('roleNameGuid')]",
-      "properties": {
-        "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]", //"[variables(parameters('builtInRoleType'))]",
-        "principalId": "ffea2e1f-0679-454f-8820-65a0186028b8", //"[parameters('principalId')]",
-        "scope": "[resourceGroup().id]" //"[variables('scope')]"
-      }
     }
   ],
 
