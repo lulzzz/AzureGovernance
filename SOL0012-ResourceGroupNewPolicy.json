@@ -5,7 +5,7 @@
     "principalId": {
       "type": "string",
       "metadata": {
-        "description": "The principal to assign the role to"
+        "description": "AD Group to which role is assigned"
       }
     },
     "builtInRoleType": {
