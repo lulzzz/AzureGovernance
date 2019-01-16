@@ -45,14 +45,16 @@
           "uri": "https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/PAT0000-ResourceGroupNew.json"
         },
         "parameters": {
-          "ResourceGroupNameIndividual": "[parameters('ResourceGroupNameIndividual')]",
-          "SubscriptionName": "[parameters('SubscriptionName')]",
-          "Region": "[parameters('Region')]",
-          "ApplicationId": "[parameters('ApplicationId')]",
-          "CostCenter": "[parameters('CostCenter')]",
-          "Budget": "[parameters('Budget')]",
-          "Contact": "[parameters('Contact')]",
-          "Automation": "1.0"
+          "storageAccountName": { "value": "[variables('storageAccountName')]" },
+
+          "ResourceGroupNameIndividual": { "value": "[parameters('ResourceGroupNameIndividual')]" },
+          "SubscriptionName": { "value": "[parameters('SubscriptionName')]" },
+          "Region": { "value": "[parameters('Region')]" },
+          "ApplicationId": { "value": "[parameters('ApplicationId')]" },
+          "CostCenter": { "value": "[parameters('CostCenter')]" },
+          "Budget": { "value": "[parameters('Budget')]" },
+          "Contact": { "value": "[parameters('Contact')]" },
+          "Automation": { "value": "1.0" }
         }
       }
     }
