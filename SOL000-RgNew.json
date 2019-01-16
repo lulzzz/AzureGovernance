@@ -92,7 +92,8 @@
           "AadId": { "value": "[parameters('AadId')]" },
           "BuiltInRoleType": { "value": "[parameters('BuiltInRoleType')]" },
           "RoleNameGuid": { "value": "[parameters('RoleNameGuid')]" },
-          "Location": { "value": "[parameters('Region')]" }
+          "Region": { "value": "[parameters('Region')]" },
+          "ResourceGroupName": { "value": "[reference('linkedTemplate1').outputs.ResourceGroupName.value]" }
         }
       }
     }
