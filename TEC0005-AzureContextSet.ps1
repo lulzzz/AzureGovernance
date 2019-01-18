@@ -2,9 +2,6 @@
 # Setting the Azure context including the storage context for the core storage account. The context setting is attempted in an endless loop of suspend/resume 
 # of this runbook.
 #
-# Error Handling: There is no error handling avaialble in this pattern. Errors only occur if there is a problem with the infrastructure.
-#                 These types of errors are automatically logged as errors in the runbooks log. 
-# 
 # Output:         None
 #
 # Requirements:   See Import-Module in code below
