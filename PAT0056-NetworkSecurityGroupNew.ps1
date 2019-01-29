@@ -130,7 +130,7 @@ workflow PAT0056-NetworkSecurityGroupNew
     # Change context to Core Subscription
     $CoreSubscription = Get-AzureRmSubscription | Where-Object {$_.Name -match 'co'}
     $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $CoreSubscription.Name -Force
-    Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))    
+    Write-Verbose -Message ('PAT0056-AzureContextChanged: ' + ($AzureContext | Out-String))    
     
     # Get Workspace in Core Subscription
     $LogAnalyticsWorkspace = Get-AzureRmOperationalInsightsWorkspace -Name $LogAnalyticsWorkspaceName -ResourceGroupName $ResourceGroupNameSecurity 
@@ -141,7 +141,7 @@ workflow PAT0056-NetworkSecurityGroupNew
     # Change context back to Subscription to be built
     $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionCode}
     $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
-    Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))
+    Write-Verbose -Message ('PAT0056-AzureContextChanged: ' + ($AzureContext | Out-String))
 
     # Connect NSG to Log Analytics Workspace
     $Result = Set-AzureRmDiagnosticSetting -ResourceId $NsgFrontendSubnet.Id -WorkspaceId $LogAnalyticsWorkspace.ResourceId -Enabled $true `

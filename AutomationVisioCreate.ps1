@@ -1,6 +1,6 @@
 ﻿# File Locations
-$PatternStencilLocation = 'D:\OneDrive\Documents\WindowsPowerShell\weu-co-rsg-automation-01\weu-co-aut-dev-01\AutomationVisioCreatePatternStencil.vssx'
-$RunbookLocation = 'D:\OneDrive\Documents\WindowsPowerShell\weu-co-rsg-automation-01\weu-co-aut-dev-01'
+$PatternStencilLocation = 'D:\OneDrive\Documents\WindowsPowerShell\Core-co - ae747229-5897-4d01-93bb-284e69893c47\weu-co-rsg-automation-01\weu-co-aut-prod-01\AutomationVisioCreatePatternStencil.vssx'
+$RunbookLocation = 'D:\OneDrive\Documents\WindowsPowerShell\Core-co - ae747229-5897-4d01-93bb-284e69893c47\weu-co-rsg-automation-01\weu-co-aut-prod-01'
 
 # Create Visio Object - open Visio
 $Visio = New-Object -ComObject Visio.Application 
