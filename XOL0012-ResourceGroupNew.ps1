@@ -18,7 +18,7 @@ workflow XOL0012-ResourceGroupNew
   param
   (
     [Parameter(Mandatory=$false)][String] $Location = 'westeurope',
-    [Parameter(Mandatory=$false)][String] $ResourceGroupNameIndividual = 'test',
+    [Parameter(Mandatory=$false)][String] $ResourceGroupNameIndividual = 'teqqqst',
     [Parameter(Mandatory=$false)][String] $Region = 'westeurope',
     [Parameter(Mandatory=$false)][String] $SubscriptionName = 'Core-co',
     [Parameter(Mandatory=$false)][String] $ApplicationId = 'App-1',
@@ -46,17 +46,18 @@ workflow XOL0012-ResourceGroupNew
   # Parameters
   #
   #############################################################################################################################################################
+  $RoleNameGuid = New-Guid
+  $TenantId = ((Get-AzureRmContext).Tenant).Id
   
-
-
+  # ffea2e1f-0679-454f-8820-65a0186028b8
   #############################################################################################################################################################
   #  
   # Deploy Template
   #
   #############################################################################################################################################################
-  New-AzureRmDeployment -Location $Location -ResourceGroupNameIndividual $ResourceGroupNameIndividual -Region $Region -SubscriptionName $SubscriptionName `
+  $Result = New-AzureRmDeployment -Location $Location -ResourceGroupNameIndividual $ResourceGroupNameIndividual -Region $Region -SubscriptionName $SubscriptionName `
                         -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
-                        -AadId ffea2e1f-0679-454f-8820-65a0186028b8 -BuiltInRoleType Reader `
-                        -RoleNameGuid 41111111-1111-1111-1111-111111111111 `
-                        -TemplateUri https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/SOL000-RgNew.json 
+                        -AadId $TenantId -BuiltInRoleType Reader `
+                        -RoleNameGuid $RoleNameGuid `
+                        -TemplateUri https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/XOL000-RgNew.json 
 }
