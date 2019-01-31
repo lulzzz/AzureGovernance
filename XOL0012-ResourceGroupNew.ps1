@@ -11,13 +11,20 @@
 # 1.0             Initial version
 #
 ###############################################################################################################################################################
-workflow SOL0012-ResourceGroupNew
+workflow XOL0012-ResourceGroupNew
 {
   [OutputType([object])] 	
 
   param
   (
-    [object]$WebhookData 
+    [Parameter(Mandatory=$false)][String] $Location = 'westeurope',
+    [Parameter(Mandatory=$false)][String] $ResourceGroupNameIndividual = 'test',
+    [Parameter(Mandatory=$false)][String] $Region = 'westeurope',
+    [Parameter(Mandatory=$false)][String] $SubscriptionName = 'Core-co',
+    [Parameter(Mandatory=$false)][String] $ApplicationId = 'App-1',
+    [Parameter(Mandatory=$false)][String] $CostCenter = '123-1234',
+    [Parameter(Mandatory=$false)][String] $Budget = '111',
+    [Parameter(Mandatory=$false)][String] $Contact = 'felix.bodmer@outlook.com'
   )
   
   #############################################################################################################################################################
@@ -39,8 +46,7 @@ workflow SOL0012-ResourceGroupNew
   # Parameters
   #
   #############################################################################################################################################################
-  $Location = 'westeurope'
-  $rgName = 'test'
+  
 
 
   #############################################################################################################################################################
@@ -48,26 +54,9 @@ workflow SOL0012-ResourceGroupNew
   # Deploy Template
   #
   #############################################################################################################################################################
-  New-AzureRmDeployment -Location westeurope -ResourceGroupNameIndividual aaa -Region westeurope -SubscriptionName Core-co -ApplicationId App-1 `
-                        -CostCenter 24-1234 -Budget 222 -Contact felix@outlook.com `
+  New-AzureRmDeployment -Location $Location -ResourceGroupNameIndividual $ResourceGroupNameIndividual -Region $Region -SubscriptionName $SubscriptionName `
+                        -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
                         -AadId ffea2e1f-0679-454f-8820-65a0186028b8 -BuiltInRoleType Reader `
-                                     -RoleNameGuid 41111111-1111-1111-1111-111111111111 `
+                        -RoleNameGuid 41111111-1111-1111-1111-111111111111 `
                         -TemplateUri https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/SOL000-RgNew.json 
-
-
-  # Create Resource Group
-  New-AzureRmDeployment -Location westeurope -ResourceGroupNameIndividual test -Region westeurope -SubscriptionName Core-co -ApplicationId App-1 `
-                        -CostCenter 24-1234 -Budget 222 -Contact felix@outlook.com `
-                        -TemplateUri https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/PAT0000-ResourceGroupNew.json 
-
-
-
-  # Assign RBAC
-  New-AzureRmDeployment -Location westeurope -ResourceGroupName weu-co-rsg-test-99 -AadId ffea2e1f-0679-454f-8820-65a0186028b8 -BuiltInRoleType Reader `
-                        -RoleNameGuid 21111111-1111-1111-1111-111111111111 -Region westeurope `
-                        -TemplateUri https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/PAT0000-ResourceGroupNew.json
-
-  New-AzureRmResourceGroupDeployment 
-
-
 }

@@ -97,7 +97,7 @@ workflow PAT0010-AzureResourceGroupNew
     # Configure Resource Group name
     #
     ###########################################################################################################################################################
-    $ResourceGroupName = $RegionCode + '-' + $SubscriptionCode + '-' + 'rsg' + '-' + $ResourceGroupNameIndividual                                                # e.g. weu-te-rsg-core
+    $ResourceGroupName = ($RegionCode + '-' + $SubscriptionCode + '-' + 'rsg' + '-' + $ResourceGroupNameIndividual).ToLower()                                    # e.g. weu-te-rsg-core
     $ResourceGroupExisting = Get-AzureRmResourceGroup `
     |                        Where-Object {$_.ResourceGroupName -like "$ResourceGroupName*"} `
     |                        Sort-Object Name -Descending | Select-Object -First $True

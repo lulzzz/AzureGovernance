@@ -202,11 +202,11 @@ workflow SOL0011-ResourceGroupNew
     {
       Send-MailMessage -To $Contact -From $MailCredentials.UserName -Subject "The Resource Group $ResourceGroupName has been provisioned" `
                                     -Body $Body -SmtpServer smtp.office365.com  -Credential $MailCredentials -UseSsl -Port 587
-      Write-Verbose -Message ('SOL0007-ConfirmationMailSent')
+      Write-Verbose -Message ('SOL0011-ConfirmationMailSent')
     }
     catch
     {
-      Write-Error -Message ('SOL0007-ConfirmationMailNotSent')
+      Write-Error -Message ('SOL0011-ConfirmationMailNotSent')
     }   
   }
 }

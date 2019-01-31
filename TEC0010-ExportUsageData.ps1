@@ -1,9 +1,10 @@
-﻿###############################################################################################################################################################
+﻿#requires -Version 3.0 -Modules AzureAutomationAuthoringToolkit, AzureRM.Consumption, AzureRM.OperationalInsights, AzureRM.profile
+###############################################################################################################################################################
 # Retrieving consumption details, formating the data and and writing to a Log Analytics instance
 # 
 # Output:         None
 #
-# Requirements:   AzureRM.profile, AzureRM.Resources, AzureRM.UsageAggregates, Microsoft.ADAL.PowerShell - this avoids loading the ADAL libraries
+# Requirements:   See Import-Module in code below
 #
 # Template:       None
 #   
@@ -29,7 +30,8 @@ workflow TEC0010-ExportUsageData
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.profile, AzureRM.Resources, AzureRM.UsageAggregates
+    $Result = Import-Module AzureRM.OperationalInsights, AzureRM.Consumption, AzureRM.profile, AzureRM.Resources, AzureRM.UsageAggregates, `
+                            Microsoft.ADAL.PowerShell                                                                                                           # This avoids loading the ADAL libraries
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -53,9 +55,9 @@ workflow TEC0010-ExportUsageData
     $WorkspaceCoreKey = $Using:WorkspaceCoreKey
     $Credentials = $Using:Credentials
 
-    Write-Verbose -Message ('TEC0009-LogType: ' + $LogType)
-    Write-Verbose -Message ('TEC0009-WorkspaceCoreId: ' + $WorkspaceCoreId)
-    Write-Verbose -Message ('TEC0009-WorkspaceCoreKey: ' + $WorkspaceCoreKey)
+    Write-Verbose -Message ('TEC0010-LogType: ' + $LogType)
+    Write-Verbose -Message ('TEC0010-WorkspaceCoreId: ' + $WorkspaceCoreId)
+    Write-Verbose -Message ('TEC0010-WorkspaceCoreKey: ' + $WorkspaceCoreKey)
 
 
     ###########################################################################################################################################################
@@ -70,14 +72,14 @@ workflow TEC0010-ExportUsageData
     $CurrentHour = $CurrentHour.ToUniversalTime()
     [string]$EndDateTime = [string](get-date -Format yyyy) + '-' + [string](get-date -Format MM) + '-' + [string](get-date -Format dd) + 'T' + `                 # UTC -1 hr to get latest records
                            ($CurrentHour.Hour -3).ToString("00") + ':00:00+00:00'
-    Write-Verbose -Message ('TEC0009-StartDateTime: ' + $StartDateTime)
-    Write-Verbose -Message ('TEC0009-EndDateTime: ' + $EndDateTime)
+    Write-Verbose -Message ('TEC0010-StartDateTime: ' + $StartDateTime)
+    Write-Verbose -Message ('TEC0010-EndDateTime: ' + $EndDateTime)
 
     # Get usage records
     foreach ($Subscription in $Subscriptions)
     {
       $Result = Connect-AzureRmAccount -Credential $Credentials -Subscription $Subscription.Name
-      Write-Verbose -Message ('TEC0009-RetrieveUsageForSubscription: ' + ($Result | Out-String))
+      Write-Verbose -Message ('TEC0010-RetrieveUsageForSubscription: ' + ($Result | Out-String))
        
       # Get first 10000 records, try for 2 x 15 minutes and then abort
       $Counter = 0
@@ -91,7 +93,7 @@ workflow TEC0010-ExportUsageData
         $Counter++
         if ($Counter -le '2') 
         {
-          Write-Verbose -Message ('TEC0009-DataNotYetAvailable: will retry in 15 minutes at ' + (Get-Date).AddMinutes(15))
+          Write-Verbose -Message ('TEC0010-DataNotYetAvailable: will retry in 15 minutes at ' + (Get-Date).AddMinutes(15))
           Start-Sleep -Seconds 900
         }
       }
@@ -99,11 +101,11 @@ workflow TEC0010-ExportUsageData
 
       if ($Counter -eq '2')
       {
-        Write-Error -Message ('TEC0009-NoDataAvailable: Tried retrieving data for 45 minutes')
+        Write-Error -Message ('TEC0010-NoDataAvailable: Tried retrieving data for 45 minutes')
         Return
       }
       $UsageData = $UsageData + $UsageDataSet
-      Write-Verbose -Message ('TEC0009-NumberOfRetrievedUsageRecords: ' + $UsageData.Count)
+      Write-Verbose -Message ('TEC0010-NumberOfRetrievedUsageRecords: ' + $UsageData.Count)
 
       # Get additional records using Continuation Token and NextLink
       if (($UsageDataSet.ContinuationToken).length -ne 0)
@@ -115,12 +117,12 @@ workflow TEC0010-ExportUsageData
                                                             -ContinuationToken $UsageDataSet.ContinuationToken
 
           $UsageData = $UsageData + $UsageDataSet
-          Write-Verbose -Message ('TEC0009-NumberOfRetrievedUsageRecords: ' + $UsageData.Count)
+          Write-Verbose -Message ('TEC0010-NumberOfRetrievedUsageRecords: ' + $UsageData.Count)
         }
         while ($UsageDataSet.NextLink)
       }
     }
-    Write-Verbose -Message ('TEC0009-RetrieveUsageForSubscription: ' + ($Result | Out-String))
+    Write-Verbose -Message ('TEC0010-RetrieveUsageForSubscription: ' + ($Result | Out-String))
 
     # Set context back to Core Subscription
     $Result = Connect-AzureRmAccount -Credential $Credentials -Subscription ($Subscriptions | Where-Object {$_.Name -match '-co'}).Name
@@ -168,6 +170,6 @@ workflow TEC0010-ExportUsageData
                 }
     $Result = Invoke-WebRequest -Uri $Uri -Method $Method -ContentType $ContentType -Headers $Headers -Body $Json -UseBasicParsing
     
-    Write-Verbose -Message ('TEC0009-DataWritenToOms: End of process')  
+    Write-Verbose -Message ('TEC0010-DataWritenToOms: End of process')  
   }  
 }
