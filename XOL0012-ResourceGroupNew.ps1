@@ -57,7 +57,7 @@ workflow XOL0012-ResourceGroupNew
   #############################################################################################################################################################
   $Result = New-AzureRmDeployment -Location $Location -ResourceGroupNameIndividual $ResourceGroupNameIndividual -Region $Region -SubscriptionName $SubscriptionName `
                         -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
-                        -AadId $TenantId -BuiltInRoleType Reader `
+                        -AadId ffea2e1f-0679-454f-8820-65a0186028b8 -BuiltInRoleType Reader `
                         -RoleNameGuid $RoleNameGuid `
                         -TemplateUri https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/XOL000-RgNew.json 
 }
