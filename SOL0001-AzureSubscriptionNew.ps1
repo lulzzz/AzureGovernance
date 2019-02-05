@@ -1,9 +1,7 @@
 ﻿###############################################################################################################################################################
-# Creates a new Spoke Subscription in it's most basic design. This baseline implementation can be enhanced by submitting additional Service Requests. 
-# The Azure Resources included in this basic design can be deployed to one or multiple regions. If a deployment to multiple regions is chosen
-# the same Resource Groups and their Resources are deployed to each Region. One exception are the Log Analytics Workspaces that need to be deployed to 
-# West Europe, East US or Southeast Asia as they are not available in the other Regions. They will however be deployed to the Resource Group in the respective 
-# Region.
+# Creates and configures a Subscription. Subscriptions with a shortcode 'co' are created as Hub Subscriptions, all other as Spoke Subscriptions.
+# A single Subscription can cover any of six Azure Regions. 
+# This baseline implementation can be enhanced by submitting additional Service Requests. 
 #
 # Output:         None
 #
@@ -13,6 +11,7 @@
 #
 # Change log:
 # 1.0             Initial version 
+# 1.1             Remove multi-region deployment
 #
 ###############################################################################################################################################################
 workflow SOL0001-AzureSubscriptionNew
@@ -58,7 +57,7 @@ workflow SOL0001-AzureSubscriptionNew
   $SubscriptionName = $Attributes.Attribute01
   $SubscriptionOwner = $Attributes.Attribute02
   $SubscriptionOfferType = $Attributes.Attribute03
-  $Regions = $Attributes.Attribute04
+  $RegionName = $Attributes.Attribute04
   $IamContributorGroupNameNetwork = $Attributes.Attribute05
   $IamContributorGroupNameCore = $Attributes.Attribute06
   $IamContributorGroupNameSecurity = $Attributes.Attribute07
@@ -67,12 +66,13 @@ workflow SOL0001-AzureSubscriptionNew
   $CostCenter = $Attributes.Attribute10
   $Budget = $Attributes.Attribute11
   $Contact = $Attributes.Attribute12
+  $FirstRegion = $Attributes.Attribute13
 
       
   Write-Verbose -Message ('SOL0001-SubscriptionName: ' + $SubscriptionName)
   Write-Verbose -Message ('SOL0001-SubscriptionOwner: ' + $SubscriptionOwner)
   Write-Verbose -Message ('SOL0001-SubscriptionOfferType: ' + $SubscriptionOfferType)
-  Write-Verbose -Message ('SOL0001-Regions: ' + $Regions)
+  Write-Verbose -Message ('SOL0001-Region: ' + $RegionName)
   Write-Verbose -Message ('SOL0001-IamContributorGroupNameNetwork: ' + $IamContributorGroupNameNetwork)
   Write-Verbose -Message ('SOL0001-IamContributorGroupNameCore: ' + $IamContributorGroupNameCore)
   Write-Verbose -Message ('SOL0001-IamContributorGroupNameSecurity: ' + $IamContributorGroupNameSecurity)
@@ -81,6 +81,7 @@ workflow SOL0001-AzureSubscriptionNew
   Write-Verbose -Message ('SOL0001-CostCenter: ' + $CostCenter)
   Write-Verbose -Message ('SOL0001-Budget: ' + $Budget)
   Write-Verbose -Message ('SOL0001-Contact: ' + $Contact)
+  Write-Verbose -Message ('SOL0001-FirstRegion: ' + $FirstRegion)
 
 
   #############################################################################################################################################################
@@ -93,42 +94,31 @@ workflow SOL0001-AzureSubscriptionNew
   $WorkspaceNameCore = Get-AutomationVariable -Name VAR-AUTO-WorkspaceCoreName                                                                                   # For non-Core Subscriptions
   $PortalUrl = Get-AutomationVariable -Name VAR-AUTO-PortalUrl -Verbose:$false
   $SubscriptionCode = $SubscriptionName.Split('-')[1]
-  Write-Verbose -Message ('SOL0001-SubscriptionCode: ' + ($SubscriptionCode))
-
-  # Create a 'string table' with the required Regions, containing the name and shortcode (West Europe,weu)
-  Write-Verbose -Message ('SOL0001-Regions: ' + ($Regions))
-  $RegionTable = InlineScript 
-  {
-    $Regions = $Using:Regions
-    $Regions = $Regions.Split(',')
-    foreach ($Region in $Regions)
-    { 
-      $RegionCode = switch ($Region) 
-      {   
-        'West Europe' {'weu'} 
-        'North Europe' {'neu'}
-        'West US' {'wus'}
-        'East US' {'eus'}
-        'Southeast Asia' {'sea'}
-        'East Asia' {'eas'}
-      }
-      $Entry = $Region + ',' + $RegionCode
-      if ($Table.Length -eq 0)
-      {
-        $Table = $Entry                                                                                                                                          # Ensure first line is not empty
-      }
-      else
-      {
-        $Table = $Table,$Entry
-      }
-    }
-    Return $Table
-  }
-  Write-Verbose -Message ('SOL0001-RegionTable: ' + ($RegionTable | Out-String))
- 
+  $ResourceGroupNameCore = "aaa-$SubscriptionCode-rsg-core-01"                                                                                                   # Required if $FirstRegion = 'no'
+  $ResourceGroupNameNetwork = "aaa-$SubscriptionCode-rsg-network-01"                                                                                             # Required if $FirstRegion = 'no'
+  $ResourceGroupNameSecurity = "aaa-$SubscriptionCode-rsg-security-01"                                                                                           # Required if $FirstRegion = 'no'
+  $ResourceGroupNames = @()
+  $ResourceGroupNames = $ResourceGroupNameNetwork, $ResourceGroupNameCore, $ResourceGroupNameSecurity
   $StorageAccountNameIndividual = 'diag'                                                                                                                         # For diagnostics Storage Account
   $StorageAccountType = 'standard'
   $RuleSetName = 'default'                                                                                                                                       # For NSG configuration
+
+  # Create the Region Code
+  $RegionCode = InlineScript 
+  {
+    switch ($Using:RegionName) 
+    {   
+      'West Europe' {'weu'} 
+      'North Europe' {'neu'}
+      'West US' {'wus'}
+      'East US' {'eus'}
+      'Southeast Asia' {'sea'}
+      'East Asia' {'eas'}
+     }
+  }
+  Write-Verbose -Message ('SOL0001-SubscriptionCode: ' + ($SubscriptionCode))
+  Write-Verbose -Message ('SOL0001-ResourceGroupNames: ' + ($ResourceGroupNames))
+  Write-Verbose -Message ('SOL0001-RegionTable: ' + ($RegionCode | Out-String))
   Write-Verbose -Message ('SOL0001-StorageAccountNameIndividual: ' + ($StorageAccountNameIndividual))
   Write-Verbose -Message ('SOL0001-StorageAccountType: ' + ($StorageAccountType))
   Write-Verbose -Message ('SOL0001-RuleSetName: ' + ($RuleSetName))
@@ -158,160 +148,114 @@ workflow SOL0001-AzureSubscriptionNew
   #New-AzureRmSubscription -OfferType $SubscriptionOfferType -Name $SubscriptionCode -EnrollmentAccountObjectId <enrollmentAccountId> `
   #                        -OwnerSignInName $SubscriptionOwner
 
-
+  
   #############################################################################################################################################################
   #
-  # Change context to the new Subscription
+  # Change context to the new Subscription and load Resource Providers
   #
   #############################################################################################################################################################
   $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionCode}
   $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
   Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))
 
+  # No Log Analytics instances deployed in Hub Subscriptions - which means the Resource Provider is not activiated but is required for registration
+  $Result = Register-AzureRmResourceProvider -ProviderNamespace microsoft.insights
+
 
   #############################################################################################################################################################
   #  
-  # Create Core Resource Groups with Contributor/Reader Groups and Policies in each Region
+  # Create Core Resource Groups with Contributor/Reader Groups and Policies - these are created once as they are used for all Regions
   #
   #############################################################################################################################################################
-  # Create Networking Resource Group, e.g. aaa-co-rsg-network-01
-  foreach ($Region in $RegionTable)
+  if ($FirstRegion -eq 'yes')
   {
-    $ResourceGroupNameNetwork = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual network -SubscriptionCode $SubscriptionCode `                                                              -IamContributorGroupName $IamContributorGroupNameNetwork `                                                              -IamReaderGroupName $IamReaderGroupName `                                                              -RegionName (($Region -Split(','))[0]) -RegionCode aaa -Contact $Contact `
+    # Create Networking Resource Group, e.g. aaa-co-rsg-network-01    $ResourceGroupNameNetwork = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual network -SubscriptionCode $SubscriptionCode `                                                              -IamContributorGroupName $IamContributorGroupNameNetwork `                                                              -IamReaderGroupName $IamReaderGroupName `                                                              -RegionName $RegionName -RegionCode aaa -Contact $Contact `
                                                               -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget
 
-    # Assign Policies
-    InlineScript
-    { 
-      $ResourceGroupNameNetwork = $Using:ResourceGroupNameNetwork
-      $Region = $Using:Region
 
-      # Get Policy
-      $Policy = Get-AzureRmPolicyDefinition | Where-Object {$_.Properties.DisplayName -eq 'Allowed locations'}
+    # Create Core Resource Group, e.g. weu-co-rsg-core-01
+    $ResourceGroupNameCore = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual core -SubscriptionCode $SubscriptionCode `                                                           -IamContributorGroupName $IamContributorGroupNameCore -IamReaderGroupName $IamReaderGroupName `                                                           -RegionName $RegionName -RegionCode aaa `                                                           -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact 
 
-      # Requires nested Hashtable with Region in 'westeurope' format
-      $Locations = @((($Region -Split(','))[0] -replace '\s','').ToLower())
-      $Locations = @{"listOfAllowedLocations"=$Locations}
-      Write-Verbose -Message ('SOL0001-AllowedLocation: ' + ($Locations | Out-String))
-      
-      # Assign Policy
-      $Result = New-AzureRmPolicyAssignment -Name $Policy.Properties.Displayname -PolicyDefinition $Policy `
-                                            -Scope ((Get-AzureRmResourceGroup -Name $ResourceGroupNameNetwork).ResourceId) `
-                                            -PolicyParameterObject $Locations
-      Write-Verbose -Message ('SOL0001-ResourceGroupPoliciesApplied: ' + ($ResourceGroupNameNetwork))
-    }
-  }
+    
+   # Create Security Resource Group, e.g. weu-co-rsg-security-01
+   $ResourceGroupNameSecurity = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual security -SubscriptionCode $SubscriptionCode `                                                              -IamContributorGroupName $IamContributorGroupNameSecurity -IamReaderGroupName $IamReaderGroupName `                                                              -RegionName $RegionName -RegionCode aaa `                                                              -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact
 
-  # Create Core Resource Group, e.g. weu-co-rsg-core-01
-  foreach ($Region in $RegionTable)
-  {
-    $ResourceGroupNameCore = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual core -SubscriptionCode $SubscriptionCode `                                                           -IamContributorGroupName $IamContributorGroupNameCore -IamReaderGroupName $IamReaderGroupName `                                                           -RegionName (($Region -Split(','))[0]) -RegionCode aaa `                                                           -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact 
-
-    # Assign Policies - assign both Regions in a Geo Region due to unavailability of Log Analytics in all Regions
-    InlineScript
-    { 
-      $ResourceGroupNameCore = $Using:ResourceGroupNameCore
-      $Region = $Using:Region
-
-      # Get Policy
-      $Policy = Get-AzureRmPolicyDefinition | Where-Object {$_.Properties.DisplayName -eq 'Allowed locations'}
-
-      # Requires nested Hashtable with Region in 'westeurope' format
-      if ($Region -match 'Europe')
-      {
-        $Locations = @()
-        $Locations = 'northeurope', 'westeurope'
-      }
-      elseif ($Region -match 'US')
-      {
-        $Locations = @()
-        $Locations = 'eastus', 'westus'
-      }
-      elseif ($Region -match 'Asia')
-      {
-        $Locations = @()
-        $Locations = 'southeastasia', 'eastasia'
-      }
-      $Locations = @{"listOfAllowedLocations"=$Locations}
-      Write-Verbose -Message ('SOL0001-AllowedLocation: ' + ($Locations | Out-String))
-      
-      # Assign Policy
-      $Result = New-AzureRmPolicyAssignment -Name $Policy.Properties.Displayname -PolicyDefinition $Policy `
-                                            -Scope ((Get-AzureRmResourceGroup -Name $ResourceGroupNameCore).ResourceId) `
-                                            -PolicyParameterObject $Locations
-      Write-Verbose -Message ('SOL0001-ResourceGroupPoliciesApplied: ' + ($ResourceGroupNameCore))
-    }
-  }
-
-  # Create Security Resource Group, e.g. weu-co-rsg-security-01
-  foreach ($Region in $RegionTable)
-  {
-    $ResourceGroupNameSecurity = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual security -SubscriptionCode $SubscriptionCode `                                                               -IamContributorGroupName $IamContributorGroupNameSecurity -IamReaderGroupName $IamReaderGroupName `                                                               -RegionName (($Region -Split(','))[0]) -RegionCode aaa `                                                               -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact
-
-    # Assign Policies - assign both Regions in a Geo Region due to unavailability of Log Analytics in all Regions
-    InlineScript
-    { 
-      $ResourceGroupNameSecurity = $Using:ResourceGroupNameSecurity
-      $Region = $Using:Region
-
-      # Get Policy
-      $Policy = Get-AzureRmPolicyDefinition | Where-Object {$_.Properties.DisplayName -eq 'Allowed locations'}
-
-      # Requires nested Hashtable with Region in 'westeurope' format
-      if ($Region -match 'Europe')
-      {
-        $Locations = @()
-        $Locations = 'northeurope', 'westeurope'
-      }
-      elseif ($Region -match 'US')
-      {
-        $Locations = @()
-        $Locations = 'eastus', 'westus'
-      }
-      elseif ($Region -match 'Asia')
-      {
-        $Locations = @()
-        $Locations = 'southeastasia', 'eastasia'
-      }
-      $Locations = @{"listOfAllowedLocations"=$Locations}
-      Write-Verbose -Message ('SOL0001-AllowedLocation: ' + ($Locations | Out-String))
-      
-      # Assign Policy
-      $Result = New-AzureRmPolicyAssignment -Name $Policy.Properties.Displayname -PolicyDefinition $Policy `
-                                            -Scope ((Get-AzureRmResourceGroup -Name $ResourceGroupNameSecurity).ResourceId) `
-                                            -PolicyParameterObject $Locations
-      Write-Verbose -Message ('SOL0001-ResourceGroupPoliciesApplied: ' + ($ResourceGroupNameSecurity))
-    }
   }
 
 
-  #############################################################################################################################################################
-  #  
-  # Create Diagnostic Storage Account - used as a central collection point for diagnostic data in the Subscription
-  #
-  #############################################################################################################################################################
-  foreach ($Region in $RegionTable)
-  {  
-    $StorageAccountName = PAT0100-StorageAccountNew -StorageAccountNameIndividual $StorageAccountNameIndividual `                                                    -ResourceGroupName "aaa-$SubscriptionCode-rsg-core-01" `                                                    -StorageAccountType $StorageAccountType `                                                    -SubscriptionCode $SubscriptionCode -RegionName  (($Region -Split(','))[0]) `                                                    -RegionCode (($Region -Split(','))[1]) -Contact $Contact  }  
-
-
-  #############################################################################################################################################################
-  #  
-  # This is for Core Subscriptions only - Create Core Storage Account and populate with NSG csv and IPAM Table in last Region (if multiple are created)
-  #
-  #############################################################################################################################################################
-  if($SubscriptionCode -eq 'co')
+  # Assign and update Policies - always assign both Regions in a Geo Region
+  InlineScript
   { 
-    foreach ($Region in $RegionTable)
-    { 
-      # Create Storage Account in each region
-      $StorageAccountName = PAT0100-StorageAccountNew -StorageAccountNameIndividual 'core' `                                                      -ResourceGroupName "aaa-$SubscriptionCode-rsg-core-01" `                                                      -StorageAccountType $StorageAccountType `                                                      -SubscriptionCode $SubscriptionCode -RegionName  (($Region -Split(','))[0]) `                                                      -RegionCode (($Region -Split(','))[1]) -Contact $Contact
+    $ResourceGroupNames = $Using:ResourceGroupNames
+    $RegionName = $Using:RegionName
+
+    foreach ($ResourceGroup in $ResourceGroupNames)
+    {
+      # Get Policy
+      $Policy = Get-AzureRmPolicyDefinition | Where-Object {$_.Properties.DisplayName -eq 'Allowed locations'}
+      
+      # Get existing Policy Assignments as Hashtable
+      try
+      { 
+        $PolicyAssignment = Get-AzureRmPolicyAssignment -Name $Policy.Properties.displayName `
+                                                        -Scope ((Get-AzureRmResourceGroup -Name $ResourceGroup).ResourceId)
+      }
+      catch
+      {
+        # Suppress error message if policies not yet assigned
+      }
+      $Locations = @()
+      $Locations = $PolicyAssignment.Properties.parameters.listOfAllowedLocations.value
+      
+      # Additional Regions
+      if ($RegionName -match 'Europe')
+      {
+        $Locations = $Locations + 'northeurope', 'westeurope'
+      }
+      elseif ($RegionName -match 'US')
+      {
+        $Locations = $Locations + 'eastus', 'westus'
+      }
+      elseif ($RegionName -match 'Asia')
+      {
+        $Locations = $Locations + 'southeastasia', 'eastasia'
+      }
+      $Locations = @{"listOfAllowedLocations"=$Locations}
+      Write-Verbose -Message ('SOL0001-AllowedLocation: ' + ($Locations | Out-String))
+      
+      # Assign Policy
+      $Result = New-AzureRmPolicyAssignment -Name $Policy.Properties.Displayname -PolicyDefinition $Policy `
+                                            -Scope ((Get-AzureRmResourceGroup -Name $ResourceGroup).ResourceId) `
+                                            -PolicyParameterObject $Locations
+      Write-Verbose -Message ('SOL0001-ResourceGroupPoliciesApplied: ' + ($ResourceGroup))
     }
+  }
+
+  # Wait to ensure Policies are applied
+  Start-Sleep -Seconds 60
+
+
+  #############################################################################################################################################################
+  #  
+  # Create Diagnostic Storage Account in each Region - used as a central collection point for diagnostic data in the Subscription
+  #
+  #############################################################################################################################################################
+  $StorageAccountName = PAT0100-StorageAccountNew -StorageAccountNameIndividual $StorageAccountNameIndividual `                                                  -ResourceGroupName "aaa-$SubscriptionCode-rsg-core-01" `                                                  -StorageAccountType $StorageAccountType `                                                  -SubscriptionCode $SubscriptionCode -RegionName  $RegionName `                                                  -RegionCode $RegionCode -Contact $Contact
+
+  #############################################################################################################################################################
+  #  
+  # This is for Core Subscriptions only - Create Core Storage Account and populate with NSG csv and IPAM Table - in First Region only
+  #
+  #############################################################################################################################################################
+  if($SubscriptionCode -eq 'co' -and $FirstRegion -eq 'yes')
+  { 
+    # Create Storage Account in each region
+    $StorageAccountName = PAT0100-StorageAccountNew -StorageAccountNameIndividual 'core' `                                                    -ResourceGroupName "aaa-$SubscriptionCode-rsg-core-01" `                                                    -StorageAccountType $StorageAccountType `                                                    -SubscriptionCode $SubscriptionCode -RegionName $RegionName `                                                    -RegionCode $RegionCode -Contact $Contact
 
     # Reset context - this time with the Core Storage Account
     TEC0005-AzureContextSet
 
-    # Populate with NSG CSV and IPAM Table - in last region only (if multiple regions are used)
+    # Populate with NSG CSV and IPAM Table
     InlineScript
     {
       # Download Runbook NsgRuleSets.csv from GitHub
@@ -357,20 +301,17 @@ workflow SOL0001-AzureSubscriptionNew
 
     #############################################################################################################################################################
     #
-    # Create default Log Analytics Workspaces
+    # Create default Log Analytics Workspaces - in First Region only
     #
     #############################################################################################################################################################
-    # Create the Core Workspace, e.g. felweucocore01
-    foreach ($Region in $RegionTable)
+    if ($FirstRegion -eq 'yes')
     {  
-      $ResourceGroupNameCore = 'aaa' + $ResourceGroupNameCore.Substring(3)      $WorkspaceNameCore = PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual core -ResourceGroupName $ResourceGroupNameCore `                                                          -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                          -RegionCode (($Region -Split(','))[1]) `                                                          -Contact $Contact 
+      # Create the Core Workspace, e.g. felweucocore01
+      $ResourceGroupNameCore = 'aaa' + $ResourceGroupNameCore.Substring(3)      $WorkspaceNameCore = PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual core -ResourceGroupName $ResourceGroupNameCore `                                                          -SubscriptionCode $SubscriptionCode -RegionName $RegionName `                                                          -RegionCode $RegionCode -Contact $Contact 
       Write-Verbose -Message ('SOL0001-LogAnalyticsCoreWorkspaceCreated: ' + ($WorkspaceNameCore))
-    }
 
-    # Create the Security Workspace, e.g. felweucosecurity01
-    foreach ($Region in $RegionTable)
-    {  
-      $ResourceGroupNameSecurity = 'aaa' + $ResourceGroupNameSecurity.Substring(3)      $WorkspaceNameSecurity = PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual security -ResourceGroupName $ResourceGroupNameSecurity `                                                              -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                              -RegionCode (($Region -Split(','))[1]) `                                                              -Contact $Contact
+      # Create the Security Workspace, e.g. felweucosecurity01
+      $ResourceGroupNameSecurity = 'aaa' + $ResourceGroupNameSecurity.Substring(3)      $WorkspaceNameSecurity = PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual security -ResourceGroupName $ResourceGroupNameSecurity `                                                              -SubscriptionCode $SubscriptionCode -RegionName $RegionName `                                                              -RegionCode $RegionCode -Contact $Contact
       Write-Verbose -Message ('SOL0001-LogAnalyticsSecuirtyWorkspaceCreated: ' + ($WorkspaceNameSecurity))
     }
 
@@ -394,8 +335,9 @@ workflow SOL0001-AzureSubscriptionNew
 
   # Connect to Workspace
   $WorkspaceCore = Get-AzureRmOperationalInsightsWorkspace | Where-Object {$_.Name -match $WorkspaceNameCore}
-  $Result = New-AzureRmOperationalInsightsAzureActivityLogDataSource -WorkspaceName $WorkspaceNameCore -ResourceGroupName $WorkspaceCore.ResourceGroupName `
-  -SubscriptionId $Subscription.Id -Name $SubscriptionName
+  $Result = New-AzureRmOperationalInsightsAzureActivityLogDataSource -WorkspaceName $WorkspaceNameCore `
+                                                                     -ResourceGroupName $WorkspaceCore.ResourceGroupName -Force `
+                                                                     -SubscriptionId $Subscription.Id -Name $SubscriptionName
 
   Write-Verbose -Message ('PAT0056-AzureActivityLogsAddedToCoreLogAnalyticsWorkspace: ' + ($Result | Out-String))
 
@@ -410,10 +352,7 @@ workflow SOL0001-AzureSubscriptionNew
   # Create NSGs for Frontend and Backend Subnets in Security Resource Group, connect with Log Analytics Workspace (diagnostics logs only, no NSG flows)
   #
   #############################################################################################################################################################
-  foreach ($Region in $RegionTable)
-  {  
-    $NsgNames = PAT0056-NetworkSecurityGroupNew -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                -RegionCode (($Region -Split(','))[1]) -Contact $Contact    Write-Verbose -Message ('SOL0001-NsgCreated: ' + ($NsgNames))
-  }
+  $NsgNames = PAT0056-NetworkSecurityGroupNew -SubscriptionCode $SubscriptionCode -RegionName $RegionName `                                              -RegionCode $RegionCode -Contact $Contact  Write-Verbose -Message ('SOL0001-NsgCreated: ' + ($NsgNames))
 
 
   #############################################################################################################################################################
@@ -421,10 +360,7 @@ workflow SOL0001-AzureSubscriptionNew
   # Create VNET with Frontend/Backend Subnets, Route Table for Frontend in Network Resource Group and connect with NSG. Configure Service Endpoints.
   #
   #############################################################################################################################################################
-  foreach ($Region in $RegionTable)
-  {  
-    $VnetName = PAT0050-NetworkVnetNew -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) -RegionCode (($Region -Split(','))[1]) `                                       -Contact $Contact
-  }
+  $VnetName = PAT0050-NetworkVnetNew -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode `                                     -Contact $Contact
 
 
   #############################################################################################################################################################
@@ -432,11 +368,8 @@ workflow SOL0001-AzureSubscriptionNew
   # Apply 'Default' NSG Rule Set to NSG created above for Frontend and Backup Subnets
   #
   #############################################################################################################################################################
-  foreach ($Region in $RegionTable)
-  {  
-    $NsgNames = $NsgNames.Split(',')
-    foreach ($NsgName in $NsgNames)                                                                                                                              # There are two NSG per Region    {      $Result = PAT0058-NetworkSecurityGroupSet -NsgName $NsgName -SubscriptionCode $SubscriptionCode -RuleSetName $RuleSetName    }
-  }
+  $NsgNames = $NsgNames.Split(',')
+  foreach ($NsgName in $NsgNames)                                                                                                                              # There are two NSG per Region  {    $Result = PAT0058-NetworkSecurityGroupSet -NsgName $NsgName -SubscriptionCode $SubscriptionCode -RuleSetName $RuleSetName  }
 
 
   #############################################################################################################################################################
@@ -444,30 +377,30 @@ workflow SOL0001-AzureSubscriptionNew
   # Create default Key Vault in Security Resource Group
   #
   #############################################################################################################################################################
-  foreach ($Region in $RegionTable)
-  {  
-    $KeyVaultName = PAT0250-SecurityKeyVaultNew -KeyVaultNameIndividual 'vault' `                                                -ResourceGroupName "aaa-$SubscriptionCode-rsg-security-01" `                                                -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                -RegionCode (($Region -Split(','))[1]) -Contact $Contact  }
-
+  $KeyVaultName = PAT0250-SecurityKeyVaultNew -KeyVaultNameIndividual 'vault' `                                              -ResourceGroupName "aaa-$SubscriptionCode-rsg-security-01" `                                              -SubscriptionCode $SubscriptionCode -RegionName $RegionName `                                              -RegionCode $RegionCode -Contact $Contact
 
   #############################################################################################################################################################
   #
-  # Configure policies on Subscription level
+  # Configure policies on Subscription level - Allowed locations limited to: West Europe / North Europe / West US / East US / Southeast Aisa / East Asia
   #
   #############################################################################################################################################################
-  # Allowed locations limited to: West Europe / North Europe / West US / East US / Southeast Aisa / East Asia
+  if ($FirstRegion -eq 'yes')
+  {   
   InlineScript
-  { 
-    $SubscriptionId = $Using:Subscription.Id
-    $Policy = Get-AzureRmPolicyDefinition | Where-Object {$_.Properties.DisplayName -eq 'Allowed locations'}
+    { 
+      $SubscriptionId = $Using:Subscription.Id
+      $Policy = Get-AzureRmPolicyDefinition | Where-Object {$_.Properties.DisplayName -eq 'Allowed locations'}
 
-    # Requires nested Hashtable with Region in 'westeurope' format
-    $Locations = @('westeurope', 'northeurope', 'westus', 'eastus', 'southeastasia', 'eastasia')
-    $Locations = @{"listOfAllowedLocations"=$Locations}
-    Write-Verbose -Message ('SOL0001-AllowedLocation: ' + ($Locations | Out-String))
-    $Result = New-AzureRmPolicyAssignment -Name $Policy.Properties.Displayname -PolicyDefinition $Policy -Scope ('/subscriptions/' + $SubscriptionId) `
-                                          -PolicyParameterObject $Locations
-    Write-Verbose -Message ('SOL0001-SubscriptionPoliciesApplied: ' + ($SubscriptionId))
+      # Requires nested Hashtable with Region in 'westeurope' format
+      $Locations = @('westeurope', 'northeurope', 'westus', 'eastus', 'southeastasia', 'eastasia')
+      $Locations = @{"listOfAllowedLocations"=$Locations}
+      Write-Verbose -Message ('SOL0001-AllowedLocation: ' + ($Locations | Out-String))
+      $Result = New-AzureRmPolicyAssignment -Name $Policy.Properties.Displayname -PolicyDefinition $Policy -Scope ('/subscriptions/' + $SubscriptionId) `
+                                            -PolicyParameterObject $Locations
+      Write-Verbose -Message ('SOL0001-SubscriptionPoliciesApplied: ' + ($SubscriptionId))
+    }
   }
+
 
   #############################################################################################################################################################
   #

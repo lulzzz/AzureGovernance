@@ -319,4 +319,38 @@ workflow SOL0150-ServerWindowsNew
       Write-Verbose -Message ('SOL0150-VM added to Azure Backup')
     }
   }
+
+
+  <##################################################################################################################################################################################
+  #
+  # Storage Configuration - execute locally on server
+  #
+  ##################################################################################################################################################################################
+  InlineScript
+  { 
+    #Remove (unmount) DVD drive letter
+    $Drive = Get-WmiObject win32_logicaldisk -filter 'DriveType=5'
+    mountvol.exe $Drive.DeviceID /D
+    Write-Verbose -Message 'SOL0001-Removed (unmount) DVD drive letter'
+
+    # Remove (unmount) A: drive letter
+    $Drive = Get-WmiObject win32_logicaldisk -filter 'DriveType=2'
+    mountvol.exe $Drive.DeviceID /D
+    Write-Verbose -Message 'SOL0001-Removed (unmount) A: drive letter'
+
+    # Create data volumes
+    $Disks = Get-Disk | Where-Object {$_.PartitionStyle -eq 'Raw'}
+    foreach ($Disk in $Disks)
+    {
+      Set-Disk -Number $Disk.Number -isOffline $false 
+      Set-Disk -Number $Disk.Number -isReadOnly $false 
+      Initialize-Disk -Number $Disk.Number
+      Start-Sleep -Seconds 5
+      $Partition = New-Partition -DiskNumber $Disk.Number -UseMaximumSize -AssignDriveLetter 
+      Start-Sleep -Seconds 5
+      Format-Volume -DriveLetter $Partition.DriveLetter -FileSystem NTFS -NewFileSystemLabel 'Data' -Confirm:$false
+    }
+    Write-Verbose -Message 'SOL0001-Created data volumes'
+  } -PSComputerName $VmName -PSCredential $LocalAdminCredential
+  #>
 }
