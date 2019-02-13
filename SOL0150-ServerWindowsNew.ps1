@@ -17,7 +17,7 @@ workflow SOL0150-ServerWindowsNew
 
   param
 	(
-    [Parameter(Mandatory=$false)][String] $VmName = 'azw0001',
+    [Parameter(Mandatory=$false)][String] $VmName = 'w0002',
     [Parameter(Mandatory=$false)][String] $LocationName = 'westeurope',
     [Parameter(Mandatory=$false)][String] $LocationShortName = 'weu',
     [Parameter(Mandatory=$false)][String] $ResourceGroupName = 'weu-co-rsg-automation-01',
@@ -25,7 +25,7 @@ workflow SOL0150-ServerWindowsNew
     [Parameter(Mandatory=$false)][String] $SubnetShortName = 'fe',
     [Parameter(Mandatory=$false)][String] $BackupRequired = 'no',
     [Parameter(Mandatory=$false)][String] $PublicIpAddressRequired = 'no',
-    [Parameter(Mandatory=$false)][String] $AvailabilitySetNameRequired = 'no',
+    [Parameter(Mandatory=$false)][String] $AvailabilityZone = '1',                                                                                               # 1/2/3
     [Parameter(Mandatory=$false)][String] $DataDisksRequired = 'no',
     [Parameter(Mandatory=$false)][String] $ApplicationId = 'Application-001',                                                                                    # Tagging
     [Parameter(Mandatory=$false)][String] $CostCenter = 'A99.2345.34-f',                                                                                         # Tagging
@@ -54,9 +54,8 @@ workflow SOL0150-ServerWindowsNew
   #
   #############################################################################################################################################################
   $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
-
-  # Credentials and groups for local non-domain joined Windows admin
-  $LocalAdminCredential = Get-AutomationPSCredential -Name CRE-AUTO-LocalAdminUser
+  $LocalAdminCredential = Get-AutomationPSCredential -Name CRE-AUTO-LocalAdminUser -Verbose:$false
+  $CustomerShortCode = Get-AutomationVariable -Name VAR-AUTO-CustomerShortCode -Verbose:$false
 
 
   #############################################################################################################################################################
@@ -65,7 +64,8 @@ workflow SOL0150-ServerWindowsNew
   #
   #############################################################################################################################################################
   $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionShortName} 
-  $AzureAccount = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+  $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+  Write-Verbose -Message ('SOL0150-AzureContext: ' + ($AzureContext | Out-String))
 
 
   InlineScript
@@ -78,7 +78,7 @@ workflow SOL0150-ServerWindowsNew
     $SubnetShortName=$Using:SubnetShortName
     $BackupRequired = $Using:BackupRequired
     $PublicIpAddressRequired =$Using:PublicIpAddressRequired
-    $AvailabilitySetNameRequired = $Using:AvailabilitySetNameRequired
+    $AvailabilityZone = $Using:AvailabilityZone
     $DataDisksRequired = $Using:DataDisksRequired
     $ApplicationId = $Using:ApplicationId
     $CostCenter = $Using:CostCenter
@@ -86,6 +86,7 @@ workflow SOL0150-ServerWindowsNew
     $Contact = $Using:Contact
     $Automation = $Using:Automation
     $LocalAdminCredential = $Using:LocalAdminCredential
+    $CustomerShortCode = $Using:CustomerShortCode
 
 
     ###########################################################################################################################################################
@@ -93,18 +94,15 @@ workflow SOL0150-ServerWindowsNew
     # Variables
     #
     ###########################################################################################################################################################
-    # Basic
-    $CustomerShortName = 'swi'
-
     # Resource Groups
-    $ResourceGroupNameCore = "$LocationShortName-$SubscriptionShortName-rsg-core-01"
-    $ResourceGroupNameNetwork = "$LocationShortName-$SubscriptionShortName-rsg-network-01"
+    $ResourceGroupNameCore = "aaa-$SubscriptionShortName-rsg-core-01"
+    $ResourceGroupNameNetwork = "aaa-$SubscriptionShortName-rsg-network-01"
 
     # VM
-    $PublisherName = 'MicrosoftWindowsServer'                                            # 'MicrosoftSqlServer' / 'MicrosoftWindowsServer'
-    $OfferName = 'WindowsServer'                                                         # 'SQL2012SP3-WS2012R2'/ 'WindowsServer'  
-    $SkuName = '2016-Datacenter'                                                         # 'Standard' / '2012-R2-Datacenter' /'2016-Datacenter'
-    $VmSize =  'Basic_A1'                                                                # 'Standard_A2' / 'Standard_DS4_v2' / 'Basic_A1' 
+    $PublisherName = 'MicrosoftWindowsServer'                                                                                                                    # 'MicrosoftSqlServer' / 'MicrosoftWindowsServer'
+    $OfferName = 'WindowsServer'                                                                                                                                 # 'SQL2012SP3-WS2012R2'/ 'WindowsServer'  
+    $SkuName = '2016-Datacenter'                                                                                                                                 # 'Standard' / '2012-R2-Datacenter' /'2016-Datacenter'
+    $VmSize =  'Standard_D1_v2'                                                                                                                                             # Not all sizes available for Availability Zones
 
     # NIC
     $VnetName = $LocationShortName + '-' + $SubscriptionShortName + '-vnt-01'
@@ -114,8 +112,7 @@ workflow SOL0150-ServerWindowsNew
     $ServerNicName = $VmName + '-' + $SubnetName.Split('-')[4] + '-01'
 
     # Storage Account for Diagnostics
-    $StorageAccountType = 's'                                                            # p = Premium / s = Standard
-    $DiagnosticsAccountName = $CustomerShortName + $LocationShortName + $SubscriptionShortName + 'diag01' + $StorageAccountType
+    $DiagnosticsAccountName = $CustomerShortCode + $LocationShortName + $SubscriptionShortName + 'diag01s'
 
     # OS Disk
     $OsDiskName = ($VmName + '-osdisk')
@@ -123,9 +120,6 @@ workflow SOL0150-ServerWindowsNew
     # Backup
     $BackupVaultName = $LocationShortName + $SubscriptionShortName + '-bkp-gsrvault-01'
     $BackupPolicyName = $LocationShortName + $SubscriptionShortName + '-bkp-gsrvault-01-default'
-
-    # Availability Set
-    $AvailabilitySetName = $LocationShortName + '-' + $SubscriptionShortName + '-avs-' + 'test' + '-01'
 
     # Data Disk(s) - disk number and disk size in GB (do not exceed 1023 GB per disk)
     $StorageType = 'Standard_LRS'
@@ -156,43 +150,9 @@ workflow SOL0150-ServerWindowsNew
     Write-Verbose -Message ('SOL0150-BackupRequired: ' + ($BackupRequired | Out-String))
     Write-Verbose -Message ('SOL0150-BackupVaultName: ' + ($BackupVaultName | Out-String))
     Write-Verbose -Message ('SOL0150-BackupPolicyName: ' + ($BackupPolicyName | Out-String))
-    Write-Verbose -Message ('SOL0150-AvailabilitySetNameRequired: ' + ($AvailabilitySetNameRequired | Out-String))
-    Write-Verbose -Message ('SOL0150-AvailabilitySetName: ' + ($AvailabilitySetName | Out-String))
+    Write-Verbose -Message ('SOL0150-AvailabilityZone: ' + ($AvailabilityZone | Out-String))
     Write-Verbose -Message ('SOL0150-DataDisksRequired: ' + ($DataDisksRequired | Out-String))
     Write-Verbose -Message ('SOL0150-DataDisks: ' + ($DataDisks | Out-String))
-
-
-    ###########################################################################################################################################################
-    #
-    # Check if Availability Set is required. If required check if existing and if not create
-    #
-    ###########################################################################################################################################################
-    if ($AvailabilitySetNameRequired -eq 'yes')
-    { 
-      try
-      {
-        $AvailabilitySetId = (Get-AzureRmAvailabilitySet -ResourceGroupName $ResourceGroupName -Name $AvailabilitySetName -ErrorAction Stop).Id
-        Write-Verbose -Message ('SOL0150-Availability Set existing ' + $AvailabilitySetId) 
-      }
-      catch
-      {
-        $AvailabilitySet = New-AzureRmAvailabilitySet -ResourceGroupName $ResourceGroupName `
-                                                      -Name $AvailabilitySetName `
-                                                      -Location $LocationName
-
-        # Create tags
-        $Tags = @{ApplicationId  = $ApplicationId; CostCenter = $CostCenter; Budget = $Budget; Contact = $Contact; Automation = $Automation}
-        $Result = Set-AzureRmResource -ResourceGroupName $ResourceGroupName -Name $AvailabilitySetName `
-                                      -Tag $Tags -ResourceType Microsoft.Compute/availabilitySets -Force
-
-        $AvailabilitySetId = (Get-AzureRmAvailabilitySet -ResourceGroupName $ResourceGroupName -Name $AvailabilitySetName).Id
-        Write-Verbose -Message ('SOL0150-New Availability Set created ' + $AvailabilitySetId) 
-      }
-    }
-    else
-    {
-      Write-Verbose -Message ('SOL0150-Availability Set not required')
-    }
   
 
     ###########################################################################################################################################################
@@ -239,14 +199,8 @@ workflow SOL0150-ServerWindowsNew
     # Create the VM object and attach the following to the object: OS disk / Data disk(s) / Admin account & OS type / Disk image / NIC
     #
     ###########################################################################################################################################################
-    if ($AvailabilitySetNameRequired -eq 'yes')
-    { 
-      $Vm = New-AzureRmVMConfig -VMName $VmName -VMSize $VmSize -AvailabilitySetId $AvailabilitySetId
-    }
-    else
-    {
-      $Vm = New-AzureRmVMConfig -VMName $VmName -VMSize $VmSize
-    }
+    $Vm = New-AzureRmVMConfig -VMName $VmName -VMSize $VmSize
+
     # Specify the image and local administrator account
     $Vm = Set-AzureRmVMOperatingSystem -VM $Vm -Windows -ComputerName $VmName -Credential $LocalAdminCredential -ProvisionVMAgent -EnableAutoUpdate
     $Vm = Set-AzureRmVMSourceImage -VM $Vm -PublisherName $PublisherName -Offer $OfferName -Skus $SkuName -Version 'latest'
@@ -259,6 +213,7 @@ workflow SOL0150-ServerWindowsNew
 
     # Specify diagnostics location
     $Vm = Set-AzureRmVMBootDiagnostics -Enable -ResourceGroupName $ResourceGroupNameCore -VM $Vm -StorageAccountName $DiagnosticsAccountName
+    Write-Verbose -Message ('SOL0150-Vm: ' + ($Vm | ConvertTo-Json))
 
 
     ###########################################################################################################################################################
@@ -291,7 +246,7 @@ workflow SOL0150-ServerWindowsNew
     #
     ###########################################################################################################################################################
     Write-Verbose -Message ('SOL0150-VM creation started')
-    $Result = New-AzureRmVM -ResourceGroupName $ResourceGroupName -Location $LocationName -VM $Vm
+    $Result = New-AzureRmVM -ResourceGroupName $ResourceGroupName -Location $LocationName -VM $Vm -Zone $AvailabilityZone
     Write-Verbose -Message ('SOL0150-VM created')
  
   
