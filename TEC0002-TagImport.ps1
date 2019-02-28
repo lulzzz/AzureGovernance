@@ -1,11 +1,9 @@
 ﻿###############################################################################################################################################################
-# Exporting tags from an Excel document. This will overwrite all existing tags. 
-#
-# Error Handling: There is no error handling available in this pattern. 
+# Imports tags from an Excel document created with TEC0001. This will overwrite all existing tags. 
 # 
 # Output:         None
 #
-# Requirements:   This requires an Excel document with a structure as created by T0002
+# Requirements:   See Import-Module in code below / Excel installed on Hybrid Runbook Worker / 'tagexport/Tags.xls' file and share on Core Storage Account
 #
 # Template:       None
 #
@@ -15,23 +13,57 @@
 ###############################################################################################################################################################
 workflow TEC0002-TagImport
 {
-  $VerbosePreference ='Continue'
+  [OutputType([object])] 	
 
-  TEC0005-SetAzureContext
+  param
+	(
+    [Parameter(Mandatory=$false)][String] $SubscriptionShortName = 'te'
+  )
+
+
+  #############################################################################################################################################################
+  #  
+  # Import modules prior to Verbose setting to avoid clutter in Azure Automation log
+  #
+  #############################################################################################################################################################
+  InlineScript
+  {
+    $VerbosePreference = 'SilentlyContinue'
+    $Result = Import-Module AzureRM.Resources, AzureRM.Storage
+    $VerbosePreference = 'Continue'
+  }
+  TEC0005-AzureContextSet
   
   InlineScript
   {
-    # Map drive to save Tags in Excel
+    $SubscriptionShortName = $Using:SubscriptionShortName
+
+    #############################################################################################################################################################
+    #
+    # Define variable and map drive before switching to non-Core Subscription
+    #
+    #############################################################################################################################################################
     $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName -Verbose:$false
     $StorageAccount = Get-AzureRmResource | Where-Object {$_.Name -eq $StorageAccountName}
     $StorageAccountKey = (Get-AzureRMStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
     $StorageAccountKey = ConvertTo-SecureString -String $StorageAccountKey -AsPlainText -Force
     $Credential = New-Object System.Management.Automation.PSCredential -ArgumentList "Azure\$StorageAccountName", $StorageAccountKey
-    New-PSDrive -Name T -PSProvider FileSystem -Root "\\$StorageAccountName.file.core.windows.net\tagexport" -Credential $Credential -Persist
-    
+    $Result = New-PSDrive -Name T -PSProvider FileSystem -Root "\\$StorageAccountName.file.core.windows.net\tagexport" -Credential $Credential
+
+
+    #############################################################################################################################################################
+    #
+    # Change to Subscription where server is to be built
+    #
+    #############################################################################################################################################################
+    $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
+    $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionShortName} 
+    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    Write-Verbose -Message ('SOL0150-AzureContext: ' + ($AzureContext | Out-String))
+      
     # Read tags from Excel and write to Azure
     $Excel = new-object -com excel.application
-    $Workbook = $Excel.workbooks.open('T:\Tags.xls')
+    $Workbook = $Excel.workbooks.open('T:\Tags.xlsx')
     $Sheet = $Workbook.Sheets.Item(1)
 
     $RowNumber = 2
@@ -81,5 +113,6 @@ workflow TEC0002-TagImport
     while ($TagsExcel.KeyName.Length -gt 0)
 
     $Excel.Workbooks.Close()
+    Remove-PSDrive -Name T -Force
   }
 }

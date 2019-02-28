@@ -1,12 +1,11 @@
 ﻿###############################################################################################################################################################
 # Exporting tags to an Excel document on the Core Storage Account. 
-#
+# This is not working if the same tag is used with different cases, e.g. Test/test. This is because PowerShell is not case sensitive. 
+# Some Resource Types don't allow changes on the Tags if they are not running, this might block the execution of this script.  
 # 
 # Output:         None
 #
-# Requirements:   This is not working if the same tag is used with different cases, e.g. Test/test. This is because PowerShell is not case sensitive. 
-#                 Some Resource Types don't allow changes on the Tags if they are not running, this might block the execution of this script.                
-#                 Only runs on a Hybrid Runbook Worker with Excel installed
+# Requirements:   See Import-Module in code below / Excel installed on Hybrid Runbook Worker / 'tagexport' file share on Core Storage Account
 #
 # Template:       None
 #
@@ -16,9 +15,53 @@
 ###############################################################################################################################################################
 workflow TEC0001-TagExport
 {
-  $VerbosePreference ='Continue'
+  [OutputType([object])] 	
 
+  param
+	(
+    [Parameter(Mandatory=$false)][String] $SubscriptionShortName = 'te'
+  )
+
+  #############################################################################################################################################################
+  #  
+  # Import modules prior to Verbose setting to avoid clutter in Azure Automation log
+  #
+  #############################################################################################################################################################
+  InlineScript
+  {
+    $VerbosePreference = 'SilentlyContinue'
+    $Result = Import-Module AzureRM.Resources, AzureRM.Storage
+    $VerbosePreference = 'Continue'
+  }
   TEC0005-AzureContextSet
+
+
+  #############################################################################################################################################################
+  #
+  # Define variable and map drive before switching to non-Core Subscription
+  #
+  #############################################################################################################################################################
+  InlineScript
+  { 
+    $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName -Verbose:$false
+    $StorageAccount = Get-AzureRmResource | Where-Object {$_.Name -eq $StorageAccountName}
+    $StorageAccountKey = (Get-AzureRMStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
+    $StorageAccountKey = ConvertTo-SecureString -String $StorageAccountKey -AsPlainText -Force
+    $Credential = New-Object System.Management.Automation.PSCredential -ArgumentList "Azure\$StorageAccountName", $StorageAccountKey
+    $Result = New-PSDrive -Name T -PSProvider FileSystem -Root "\\$StorageAccountName.file.core.windows.net\tagexport" -Credential $Credential                   # -Persisten Not working in Workflow
+    Write-Verbose -Message ('TEC0002-DriveTMapped: ' + ($Result | Out-String))
+  }
+
+
+  #############################################################################################################################################################
+  #
+  # Change to Subscription where server is to be built
+  #
+  #############################################################################################################################################################
+  $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
+  $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionShortName} 
+  $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+  Write-Verbose -Message ('SOL0150-AzureContext: ' + ($AzureContext | Out-String))
   
   InlineScript
   {
@@ -61,7 +104,7 @@ workflow TEC0001-TagExport
         foreach ($Tag in $Tags.GetEnumerator())
         {
           # Convert key/value pair to string
-          $Name = $Tag.Name.ToString()
+          $Name = $Tag.Key.ToString()
           $Value = $Tag.Value.ToString()
           Set-Variable -Name Var3 -Value $Name  
           $Row.(Get-Variable -Name Var3 -ValueOnly) = $Value
@@ -112,16 +155,9 @@ workflow TEC0001-TagExport
     } until ($Counter -eq 0)
     Write-Verbose -Message ("TEC0002-ResourceGroupTagsRetrieved: " + ($Table | Out-String))
     
-    # Map drive to save Tags in Excel
-    $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName -Verbose:$false
-    $StorageAccount = Get-AzureRmResource | Where-Object {$_.Name -eq $StorageAccountName}
-    $StorageAccountKey = (Get-AzureRMStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
-    $StorageAccountKey = ConvertTo-SecureString -String $StorageAccountKey -AsPlainText -Force
-    $Credential = New-Object System.Management.Automation.PSCredential -ArgumentList "Azure\$StorageAccountName", $StorageAccountKey
-    $Result = New-PSDrive -Name T -PSProvider FileSystem -Root "\\$StorageAccountName.file.core.windows.net\tagexport" -Credential $Credential -Persist
-    Write-Verbose -Message ('TEC0002-DriveTMapped: ' + ($Result | Out-String))
-    
-    $Table | export-csv T:\Tags.csv -noType 
+
+    # Export to mapped to drive
+    $Table | export-csv T:\Tags.csv -noType -Force
     Remove-Item T:\Tags.xls -Force -ErrorAction SilentlyContinue
     Write-Verbose -Message ("TEC0002-CsvExported")
 
@@ -168,7 +204,5 @@ workflow TEC0001-TagExport
     # Clean up
     Remove-Item T:\Tags.csv
     Remove-PSDrive -Name T -Force
-    
-    
   }
 }
