@@ -96,6 +96,8 @@ workflow SOL0155-ServerWindowsNewFromDisk
     $Vm = Add-AzureRmVMNetworkInterface -VM $Vm -Id $NetworkInterface.Id -Primary
     $Vm = Set-AzureRmVMOSDisk -VM $Vm -Windows -StorageAccountType Standard_LRS -CreateOption Attach -ManagedDiskId $OsDiskId
     $Vm = Set-AzureRmVMBootDiagnostics -Enable -ResourceGroupName $ResourceGroupNameCore -VM $Vm -StorageAccountName $DiagnosticsAccountName
+    Write-Verbose -Message ('SOL0155-StartVmCreation: ' + ($Vm | ConvertTo-Json))
+
     $Vm = New-AzureRmVM -ResourceGroupName $ResourceGroupName -Location $Region -VM $Vm 
     Write-Verbose -Message ('SOL0155-VmCreated: ' + ($Vm | ConvertTo-Json))
   }
