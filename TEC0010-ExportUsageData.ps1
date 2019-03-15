@@ -1,5 +1,4 @@
-﻿#requires -Version 3.0 -Modules AzureAutomationAuthoringToolkit, AzureRM.Consumption, AzureRM.OperationalInsights, AzureRM.profile
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Retrieving consumption details, formating the data and and writing to a Log Analytics instance
 # 
 # Output:         None
@@ -86,7 +85,7 @@ workflow TEC0010-ExportUsageData
       do
       {
         if ($UsageDataSet = Get-AzureRmConsumptionUsageDetail -IncludeMeterDetails -IncludeAdditionalProperties -StartDate $StartDateTime `
-                                                           -EndDate $EndDateTime -ErrorAction SilentlyContinue)
+                                                              -EndDate $EndDateTime -ErrorAction SilentlyContinue)
         {
           Break
         }
@@ -124,6 +123,35 @@ workflow TEC0010-ExportUsageData
     }
     Write-Verbose -Message ('TEC0010-RetrieveUsageForSubscription: ' + ($Result | Out-String))
 
+    # Get all Resource Groups for the Tags
+    $ResourceGroups = Get-AzureRmResourceGroup
+
+    # Combine billing data and Resource Group data into a single table
+    $Collection = @()
+    foreach ($Item in $UsageData) 
+    {
+      $Collection += [pscustomobject] @{
+                                          UsageStart   = $Item.UsageStart
+                                          UsageEnd     = $Item.UsageEnd
+                                          InstanceName = $Item.InstanceName
+                                          InstanceId   = $Item.InstanceId
+                                          PretaxCost   = $Item.PretaxCost
+                                          Budget       = ''
+                                       }
+    }
+ 
+    foreach ($Item in $ResourceGroups) 
+    {
+      $Collection += [pscustomobject] @{
+                                          UsageStart   = ''
+                                          UsageEnd     = ''
+                                          InstanceName = $Item.ResourceGroupName
+                                          InstanceId   = $Item.ResourceId
+                                          PretaxCost   = ''
+                                          Budget       = $Item.Tags.Get_Item('Budget')
+                                        }
+    }
+
     # Set context back to Core Subscription
     $Result = Connect-AzureRmAccount -Credential $Credentials -Subscription ($Subscriptions | Where-Object {$_.Name -match '-co'}).Name
 
@@ -140,10 +168,10 @@ workflow TEC0010-ExportUsageData
     $Method = 'POST'
 
     # Create body and wrap in an array
-    foreach ($Item in $UsageData)
+    foreach ($Item in $Collection)
     {                        `
       $Json += @"
-      {"ResourceGroupName":"$($Item.InstanceId.split('/')[4])", "ResourceName":"$($Item.InstanceName)", "Cost":"$($Item.PretaxCost)", "Tag":"$($Item.Tags)"},
+      {"ResourceGroupName":"$($Item.InstanceId.split('/')[4])", "ResourceName":"$($Item.InstanceName)", "Cost":"$($Item.PretaxCost)", "Budget":"$($Item.Budget)"},
 "@
     }
         
