@@ -121,7 +121,7 @@ workflow SOL0011-ResourceGroupNew
   # Ensure request is received from portal
   #
   #############################################################################################################################################################
-  if ($WebhookData.RequestHeader -match $PortalUrl)
+  <#if ($WebhookData.RequestHeader -match $PortalUrl)
   {
     Write-Verbose -Message ('SOL0011-Header: Header has required information')
   }
@@ -130,7 +130,7 @@ workflow SOL0011-ResourceGroupNew
     Write-Error -Message ('SOL0011-Header: Header does not contain required information')
     return
   }
-
+  #>
 
   foreach ($Region in $RegionTable)
   {

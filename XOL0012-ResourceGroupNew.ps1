@@ -18,7 +18,7 @@ workflow XOL0012-ResourceGroupNew
   param
   (
     [Parameter(Mandatory=$false)][String] $Location = 'westeurope',
-    [Parameter(Mandatory=$false)][String] $ResourceGroupNameIndividual = 'teqqqst',
+    [Parameter(Mandatory=$false)][String] $ResourceGroupNameIndividual = 'test',
     [Parameter(Mandatory=$false)][String] $Region = 'westeurope',
     [Parameter(Mandatory=$false)][String] $SubscriptionName = 'Core-co',
     [Parameter(Mandatory=$false)][String] $ApplicationId = 'App-1',
@@ -38,26 +38,37 @@ workflow XOL0012-ResourceGroupNew
     $Result = Import-Module AzureRM.Resources
     $VerbosePreference = 'Continue'
   }
-  #TEC0005-AzureContextSet
+  TEC0005-AzureContextSet
 
+  InlineScript
+  {
+    $Location = $Using:Location
+    $ResourceGroupNameIndividual= $Using:ResourceGroupNameIndividual
+    $Region = $Using:Region
+    $SubscriptionName = $Using:SubscriptionName
+    $ApplicationId = $Using:ApplicationId
+    $CostCenter = $Using:CostCenter
+    $Budget = $Using:Budget
+    $Contact = $Using:Contact
 
-  #############################################################################################################################################################
-  #  
-  # Parameters
-  #
-  #############################################################################################################################################################
-  $RoleNameGuid = New-Guid
-  $TenantId = ((Get-AzureRmContext).Tenant).Id
+    #############################################################################################################################################################
+    #  
+    # Parameters
+    #
+    #############################################################################################################################################################
+    $RoleNameGuid = New-Guid
+    $TenantId = ((Get-AzureRmContext).Tenant).Id
   
-  # ffea2e1f-0679-454f-8820-65a0186028b8
-  #############################################################################################################################################################
-  #  
-  # Deploy Template
-  #
-  #############################################################################################################################################################
-  $Result = New-AzureRmDeployment -Location $Location -ResourceGroupNameIndividual $ResourceGroupNameIndividual -Region $Region -SubscriptionName $SubscriptionName `
-                        -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
-                        -AadId ffea2e1f-0679-454f-8820-65a0186028b8 -BuiltInRoleType Reader `
-                        -RoleNameGuid $RoleNameGuid `
-                        -TemplateUri https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/XOL000-RgNew.json 
+    # ffea2e1f-0679-454f-8820-65a0186028b8
+    #############################################################################################################################################################
+    #  
+    # Deploy Template
+    #
+    #############################################################################################################################################################
+    $Result = New-AzureRmDeployment -Location $Location -ResourceGroupNameIndividual $ResourceGroupNameIndividual -Region $Region -SubscriptionName $SubscriptionName `
+                          -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
+                          -AadId ffea2e1f-0679-454f-8820-65a0186028b8 -BuiltInRoleType Reader `
+                          -RoleNameGuid $RoleNameGuid `
+                          -TemplateUri https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/XOL000-RgNew.json 
+  }
 }

@@ -38,23 +38,6 @@ workflow TEC0001-TagExport
 
   #############################################################################################################################################################
   #
-  # Define variable and map drive before switching to non-Core Subscription
-  #
-  #############################################################################################################################################################
-  InlineScript
-  { 
-    $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName -Verbose:$false
-    $StorageAccount = Get-AzureRmResource | Where-Object {$_.Name -eq $StorageAccountName}
-    $StorageAccountKey = (Get-AzureRMStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
-    $StorageAccountKey = ConvertTo-SecureString -String $StorageAccountKey -AsPlainText -Force
-    $Credential = New-Object System.Management.Automation.PSCredential -ArgumentList "Azure\$StorageAccountName", $StorageAccountKey
-    $Result = New-PSDrive -Name T -PSProvider FileSystem -Root "\\$StorageAccountName.file.core.windows.net\tagexport" -Credential $Credential                   # -Persisten Not working in Workflow
-    Write-Verbose -Message ('TEC0002-DriveTMapped: ' + ($Result | Out-String))
-  }
-
-
-  #############################################################################################################################################################
-  #
   # Change to Subscription where server is to be built
   #
   #############################################################################################################################################################
@@ -157,13 +140,13 @@ workflow TEC0001-TagExport
     
 
     # Export to mapped to drive
-    $Table | export-csv T:\Tags.csv -noType -Force
-    Remove-Item T:\Tags.xls -Force -ErrorAction SilentlyContinue
+    $Table | export-csv D:\Tags.csv -noType -Force
+    Remove-Item D:\Tags.xls -Force -ErrorAction SilentlyContinue
     Write-Verbose -Message ("TEC0002-CsvExported")
 
     # Set input and output path
-    $inputCSV = 'T:\Tags.csv'
-    $outputXLSX = 'T:\Tags.xlsx'
+    $inputCSV = 'D:\Tags.csv'
+    $outputXLSX = 'D:\Tags.xlsx'
     Write-Verbose '1'
 
     # Create a new Excel Workbook with one empty sheet
@@ -200,9 +183,25 @@ workflow TEC0001-TagExport
     Write-Verbose '9'
     $excel.Quit()
     Write-Verbose -Message ("TEC0002-TagsExportedToExcel")
-    
-    # Clean up
-    Remove-Item T:\Tags.csv
-    Remove-PSDrive -Name T -Force
+  }  
+
+  
+  #############################################################################################################################################################
+  #
+  # Upload to Core Subscription and cleanup
+  #
+  #############################################################################################################################################################
+  TEC0005-AzureContextSet
+  InlineScript
+  {
+    $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName -Verbose:$false
+    $StorageAccount = Get-AzureRmResource | Where-Object {$_.Name -eq $StorageAccountName}
+    $StorageAccountKey = (Get-AzureRMStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
+    $StorageContext = New-AzureStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
+    Set-AzureStorageFileContent -ShareName tagexport -Source D:\Tags.xlsx -Force -Context $StorageContext
   }
+
+  # Clean up
+  Remove-Item D:\Tags.csv
+  Remove-Item D:\Tags.xlsx
 }
