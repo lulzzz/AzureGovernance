@@ -65,7 +65,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/XAT0000-ResourceGroupNew.json"
+          "uri": "https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/YAT0000-ResourceGroupNew.json"
         },
         "parameters": {
           "ResourceGroupNameIndividual": { "value": "[parameters('ResourceGroupNameIndividual')]" },
@@ -86,7 +86,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/XAT0000-AssignRbac.json"
+          "uri": "https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/YAT0000-AssignRbac.json"
         },
         "parameters": {
           "AadId": { "value": "[parameters('AadId')]" },
