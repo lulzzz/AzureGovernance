@@ -1,5 +1,5 @@
 ﻿###############################################################################################################################################################
-# Creates a new Resource Group using an ARM Template 
+# Creates a new Resource Group using an ARM Template from GitHub.
 #
 # Output:         None
 #
@@ -35,7 +35,7 @@ workflow XOL0012-ResourceGroupNew
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.Resources
+    $Result = Import-Module AzureRM.profile, AzureRM.Resources, Microsoft.PowerShell.Utility
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -58,17 +58,19 @@ workflow XOL0012-ResourceGroupNew
     #############################################################################################################################################################
     $RoleNameGuid = New-Guid
     $TenantId = ((Get-AzureRmContext).Tenant).Id
-  
-    # ffea2e1f-0679-454f-8820-65a0186028b8
+
+    Write-Verbose -Message ('TEC0005-RoleNameGuid: ' + ($RoleNameGuid))
+
+
     #############################################################################################################################################################
     #  
     # Deploy Template
     #
     #############################################################################################################################################################
     $Result = New-AzureRmDeployment -Location $Location -ResourceGroupNameIndividual $ResourceGroupNameIndividual -Region $Region -SubscriptionName $SubscriptionName `
-                          -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
-                          -AadId ffea2e1f-0679-454f-8820-65a0186028b8 -BuiltInRoleType Reader `
-                          -RoleNameGuid $RoleNameGuid `
-                          -TemplateUri https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/XOL000-RgNew.json 
+                                    -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
+                                    -AadId ffea2e1f-0679-454f-8820-65a0186028b8 -BuiltInRoleType Reader `
+                                    -RoleNameGuid $RoleNameGuid `
+                                    -TemplateUri https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/XOL000-RgNew.json 
   }
 }
