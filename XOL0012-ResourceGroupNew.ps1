@@ -71,6 +71,6 @@ workflow XOL0012-ResourceGroupNew
                                     -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
                                     -AadId ffea2e1f-0679-454f-8820-65a0186028b8 -BuiltInRoleType Reader `
                                     -RoleNameGuid $RoleNameGuid `
-                                    -TemplateUri https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/XOL000-RgNew.json 
+                                    -TemplateUri https://raw.githubusercontent.com/fbodmer/AzureGovernance/master/XOL0012-ResourceGroupNew.json 
   }
 }
