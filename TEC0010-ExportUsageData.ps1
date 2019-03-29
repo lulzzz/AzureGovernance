@@ -20,7 +20,7 @@ workflow TEC0010-ExportUsageData
     [Parameter(Mandatory=$false)][String] $LogType = 'CostMonitoring'                                                                                            # Will be written as CostMonitoring_CL to Log Analytics
   )
 
-  $VerbosePreference ='Continue'
+
   #############################################################################################################################################################
   #  
   # Import modules prior to Verbose setting to avoid clutter in Azure Automation log
@@ -78,7 +78,7 @@ workflow TEC0010-ExportUsageData
     foreach ($Subscription in $Subscriptions)
     {
       $Result = Connect-AzureRmAccount -Credential $Credentials -Subscription $Subscription.Name
-      Write-Verbose -Message ('TEC0010-RetrieveUsageForSubscription: ' + ($Result | Out-String))
+      Write-Verbose -Message ('TEC0010-RetrieveUsageForSubscription: ' + ($Subscription.Name | Out-String))
        
       # Get first 10000 records, try for 2 x 15 minutes and then abort
       $Counter = 0
@@ -121,7 +121,6 @@ workflow TEC0010-ExportUsageData
         while ($UsageDataSet.NextLink)
       }
     }
-    Write-Verbose -Message ('TEC0010-RetrieveUsageForSubscription: ' + ($Result | Out-String))
 
     # Get all Resource Groups for the Tags
     $ResourceGroups = Get-AzureRmResourceGroup
