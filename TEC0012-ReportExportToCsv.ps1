@@ -1,7 +1,7 @@
 ﻿###############################################################################################################################################################
 # Exports a Log Analytics report in the Core instance to a csv on a file share 'reportexport' in the Core Storage Account.
 # 
-# Output:         csv file
+# Output:         none
 #
 # Requirements:   See Import-Module in code below / File share to store CSV output
 #
