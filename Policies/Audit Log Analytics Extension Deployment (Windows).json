@@ -1,0 +1,52 @@
+{
+    "metadata": {
+        "description": "Determine all Windows Server VMs that are not connected to a Log Analytics workspace. Linux and Windows 10 are excluded. Servers in a failed state are not reported if they don't have the agent installed."
+    },
+    "displayName": "Hilti: Audit Log Analytics Extension Deployment",
+    "description": "Verifies that all Windows Servers are connected to a Log Analytics instance.",
+    "mode": "All",
+    "policyRule": {
+        "if": {
+            "allOf": [
+                {
+                    "field": "type",
+                    "equals": "Microsoft.Compute/virtualMachines"
+                },
+                {
+                    "anyOf": [
+                        {
+                            "allOf": [
+                                {
+                                    "field": "Microsoft.Compute/imagePublisher",
+                                    "equals": "MicrosoftWindowsServer"
+                                },
+                                {
+                                    "field": "Microsoft.Compute/imageOffer",
+                                    "equals": "WindowsServer"
+                                },
+                                {
+                                    "field": "Microsoft.Compute/imageSKU",
+                                    "in": [
+                                        "2012-R2-Datacenter",
+                                        "2016-Datacenter",
+                                        "2019-Datacenter"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "then": {
+            "effect": "auditIfNotExists",
+            "details": {
+                "type": "Microsoft.Compute/virtualMachines/extensions",
+                "existenceCondition": {
+                    "field": "Microsoft.Compute/virtualMachines/extensions/publisher",
+                    "equals": "Microsoft.EnterpriseCloud.Monitoring"
+                }
+            }
+        }
+    }
+}

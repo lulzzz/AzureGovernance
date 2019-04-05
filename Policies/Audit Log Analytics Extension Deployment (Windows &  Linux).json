@@ -1,0 +1,21 @@
+{
+    "displayName": "Hilti: Audit Log Analytics Agent Deployment",
+    "description": "Verifies that all Windows Servers are connected to a Log Analytics instance.",
+    "mode": "All",
+    "policyRule": {
+        "if": {
+            "field": "type",
+            "equals": "Microsoft.Compute/virtualMachines"
+        },
+        "then": {
+            "effect": "auditIfNotExists",
+            "details": {
+                "type": "Microsoft.Compute/virtualMachines/extensions",
+                "existenceCondition": {
+                    "field": "Microsoft.Compute/virtualMachines/extensions/publisher",
+                    "equals": "Microsoft.EnterpriseCloud.Monitoring"
+                }
+            }
+        }
+    }
+}
