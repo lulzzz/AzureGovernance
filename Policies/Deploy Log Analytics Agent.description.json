@@ -1,5 +1,0 @@
-{
-    "name": "Deploy Log Analytics Agent",
-    "displayname": "Deploy Log Analytics Agent",
-    "description": "Deploys the Extension to all VMs"
-}
