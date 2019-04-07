@@ -1,1 +1,0 @@
-This specification has not yet been published. Refer to [SOL0300-AppsWebAppNew](SOL0300)<br/> for the IaC implementation. 
