@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Creates a Key Vault (e.g. weu-te-key-felkeyvault-01) in an existing Resource Group. Tags the Key Vault. 
 # Adds Key Vault to the corresponding Log Analytics Workspace (e.g. felweutesecurity01).
 # 
@@ -6,7 +6,8 @@
 #
 # Requirements:   See Import-Module in code below / Resource Group
 #
-# Template:       PAT0250-SecurityKeyVaultNew -KeyVaultNameIndividual $KeyVaultNameIndividual -ResourceGroupName $ResourceGroupName `#                                             -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode -Contact $Contact
+# Template:       PAT0250-SecurityKeyVaultNew -KeyVaultNameIndividual $KeyVaultNameIndividual -ResourceGroupName $ResourceGroupName `
+#                                             -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode -Contact $Contact
 #
 # Change log:
 # 1.0             Initial version 
@@ -18,7 +19,7 @@ workflow PAT0250-SecurityKeyVaultNew
 
   param
   (
-    [Parameter(Mandatory=$false)][String] $KeyVaultNameIndividual = 'keyvault',
+    [Parameter(Mandatory=$false)][String] $KeyVaultNameIndividual = 'valt',
     [Parameter(Mandatory=$false)][String] $ResourceGroupName = 'aaa-co-rsg-security-01',
     [Parameter(Mandatory=$false)][String] $SubscriptionCode = 'co',
     [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
@@ -34,7 +35,7 @@ workflow PAT0250-SecurityKeyVaultNew
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.Insights, AzureRM.KeyVault, AzureRM.OperationalInsights, AzureRM.profile, AzureRM.Resources
+    $Result = Import-Module Az.Monitor, Az.KeyVault, Az.OperationalInsights, Az.Accounts, Az.Resources
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -79,9 +80,9 @@ workflow PAT0250-SecurityKeyVaultNew
     # Change to Target Subscription
     #
     ###########################################################################################################################################################
-    $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
-    $Result = Disconnect-AzureRmAccount
-    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
+    $Result = DisConnect-AzAccount
+    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0250-AzureContextChanged: ' + ($AzureContext | Out-String))
 
 
@@ -91,7 +92,7 @@ workflow PAT0250-SecurityKeyVaultNew
     #
     ###########################################################################################################################################################
     $KeyVaultName = $RegionCode + '-' + $SubscriptionCode + '-' + 'key' + '-' + $CustomerShortCode + $KeyVaultNameIndividual                                     # e.g. weu-te-key-keyvault-01
-    $KeyVaultExisting = Get-AzureRmKeyVault | Where-Object {$_.VaultName -like "$KeyVaultName*"} `
+    $KeyVaultExisting = Get-AzKeyVault | Where-Object {$_.VaultName -like "$KeyVaultName*"} `
                                             | Sort-Object Name -Descending | Select-Object -First $True
     if ($KeyVaultExisting.Count -gt 0)                                                                                                                           # Skip if first Key Vault with this name
     {
@@ -113,7 +114,7 @@ workflow PAT0250-SecurityKeyVaultNew
     # Check if Key Vault exists and create if not
     #
     ###########################################################################################################################################################
-    $KeyVault = Get-AzureRmKeyVault -VaultName $KeyVaultName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+    $KeyVault = Get-AzKeyVault -VaultName $KeyVaultName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
     if ($KeyVault.Length -gt 0)
     {
       Write-Verbose -Message ('PAT0250-KeyVaultExisting: ' + ($KeyVaultName))
@@ -122,7 +123,7 @@ workflow PAT0250-SecurityKeyVaultNew
   
     try
     {
-      $KeyVault = New-AzureRmKeyVault -Name $KeyVaultName -ResourceGroupName $ResourceGroupName -Location $RegionName
+      $KeyVault = New-AzKeyVault -Name $KeyVaultName -ResourceGroupName $ResourceGroupName -Location $RegionName
       Write-Verbose -Message ('PAT0250-KeyVaultCreated: ' + ($KeyVaultName))
     }
     catch
@@ -137,21 +138,22 @@ workflow PAT0250-SecurityKeyVaultNew
     #
     ###########################################################################################################################################################
     # Change context to Core Subscription
-    $CoreSubscription = Get-AzureRmSubscription | Where-Object {$_.Name -match 'co'}
-    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $CoreSubscription.Name -Force
+    $CoreSubscription = Get-AzSubscription | Where-Object {$_.Name -match 'co'}
+    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $CoreSubscription.Name -Force
     Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))    
     
     # Get Workspace in Core Subscription
-    $LogAnalyticsWorkspace = Get-AzureRmOperationalInsightsWorkspace -Name $LogAnalyticsWorkspaceName -ResourceGroupName $ResourceGroupNameSecurity 
+    $LogAnalyticsWorkspace = Get-AzOperationalInsightsWorkspace -Name $LogAnalyticsWorkspaceName -ResourceGroupName $ResourceGroupNameSecurity
     Write-Verbose -Message ('PAT0056-LogAnalyticsWorkspace: ' + ($LogAnalyticsWorkspace | Out-String))
 
     # Change context back to Subscription to be built
-    $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionCode}
-    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode}
+    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))    
     
     # Connect Key Vault to Log Analytics Workspace    
-    $Result = Set-AzureRmDiagnosticSetting -ResourceId $KeyVault.ResourceId  -WorkspaceId $LogAnalyticsWorkspace.ResourceId -Enabled $true
+    $Result = Set-AzDiagnosticSetting -ResourceId $KeyVault.ResourceId  -WorkspaceId $LogAnalyticsWorkspace.ResourceId -Enabled $true `
+                                      -Category AuditEvent -MetricCategory AllMetrics
     Write-Verbose -Message ('PAT0250-KeyVaultAddedToLogAnalyticsWorkspace: ' + ($Result | Out-String))
       
   
@@ -163,7 +165,7 @@ workflow PAT0250-SecurityKeyVaultNew
     $Tags = @{Contact = $Contact; Automation = $Automation}
     Write-Verbose -Message ('PAT0250-TagsToWrite: ' + ($Tags | Out-String))
 
-    $Result = Set-AzureRmResource -Name $KeyVaultName -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.KeyVault/vaults' `
+    $Result = Set-AzResource -Name $KeyVaultName -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.KeyVault/vaults' `
                                   -Tag $Tags -Force
     Write-Verbose -Message ('PAT0250-KeyVaultTagged: ' + ($KeyVaultName))
 

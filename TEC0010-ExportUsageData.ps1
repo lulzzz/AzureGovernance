@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Retrieving consumption details, formating the data and and writing to a Log Analytics instance
 # 
 # Output:         None
@@ -29,8 +29,7 @@ workflow TEC0010-ExportUsageData
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.OperationalInsights, AzureRM.Consumption, AzureRM.profile, AzureRM.Resources, AzureRM.UsageAggregates, `
-                            Microsoft.ADAL.PowerShell                                                                                                           # This avoids loading the ADAL libraries
+    $Result = Import-Module Az.OperationalInsights, Az.Billing, Az.Accounts, Az.Resources, Microsoft.ADAL.PowerShell                                                                                                           # This avoids loading the ADAL libraries
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -43,8 +42,8 @@ workflow TEC0010-ExportUsageData
   #############################################################################################################################################################
   $Credentials = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser
   $WorkspaceCoreName = Get-AutomationVariable -Name VAR-AUTO-WorkspaceCoreName
-  $WorkspaceCore = Get-AzureRmOperationalInsightsWorkspace | Where-Object {$_.Name -eq $WorkspaceCoreName}
-  $WorkspaceCoreKey = (Get-AzureRmOperationalInsightsWorkspaceSharedKeys -ResourceGroupName $WorkspaceCore.ResourceGroupName -Name $WorkspaceCore.Name).PrimarySharedKey
+  $WorkspaceCore = Get-AzOperationalInsightsWorkspace | Where-Object {$_.Name -eq $WorkspaceCoreName}
+  $WorkspaceCoreKey = (Get-AzOperationalInsightsWorkspaceSharedKeys -ResourceGroupName $WorkspaceCore.ResourceGroupName -Name $WorkspaceCore.Name).PrimarySharedKey
   $WorkspaceCoreId = $WorkspaceCore.CustomerId
   
   InlineScript
@@ -65,7 +64,7 @@ workflow TEC0010-ExportUsageData
     #
     ###########################################################################################################################################################
     # Set usage parameters
-    $Subscriptions = Get-AzureRmSubscription
+    $Subscriptions = Get-AzSubscription
     $StartDateTime = [string](get-date -Format yyyy) + '-' + [string](get-date -Format MM) + '-01T00:00:00+00:00'
     $CurrentHour = Get-Date
     $CurrentHour = $CurrentHour.ToUniversalTime()
@@ -77,14 +76,14 @@ workflow TEC0010-ExportUsageData
     # Get usage records
     foreach ($Subscription in $Subscriptions)
     {
-      $Result = Connect-AzureRmAccount -Credential $Credentials -Subscription $Subscription.Name
+      $Result = Connect-AzAccount -Credential $Credentials -Subscription $Subscription.Name
       Write-Verbose -Message ('TEC0010-RetrieveUsageForSubscription: ' + ($Subscription.Name | Out-String))
        
       # Get first 10000 records, try for 2 x 15 minutes and then abort
       $Counter = 0
       do
       {
-        if ($UsageDataSet = Get-AzureRmConsumptionUsageDetail -IncludeMeterDetails -IncludeAdditionalProperties -StartDate $StartDateTime `
+        if ($UsageDataSet = Get-AzConsumptionUsageDetail -IncludeMeterDetails -IncludeAdditionalProperties -StartDate $StartDateTime `
                                                               -EndDate $EndDateTime -ErrorAction SilentlyContinue)
         {
           Break
@@ -111,7 +110,7 @@ workflow TEC0010-ExportUsageData
       {
         do
         {
-          $UsageDataSet = Get-AzureRmConsumptionUsageDetail -IncludeMeterDetails -IncludeAdditionalProperties -StartDate $StartDateTime `
+          $UsageDataSet = Get-AzConsumptionUsageDetail -IncludeMeterDetails -IncludeAdditionalProperties -StartDate $StartDateTime `
                                                             -EndDate $EndDateTime -ErrorAction SilentlyContinue `
                                                             -ContinuationToken $UsageDataSet.ContinuationToken
 
@@ -123,7 +122,7 @@ workflow TEC0010-ExportUsageData
     }
 
     # Get all Resource Groups for the Tags
-    $ResourceGroups = Get-AzureRmResourceGroup
+    $ResourceGroups = Get-AzResourceGroup
 
     # Combine billing data and Resource Group data into a single table
     $Collection = @()
@@ -138,7 +137,7 @@ workflow TEC0010-ExportUsageData
                                           Budget       = ''
                                        }
     }
- 
+�
     foreach ($Item in $ResourceGroups) 
     {
       $Collection += [pscustomobject] @{
@@ -152,7 +151,7 @@ workflow TEC0010-ExportUsageData
     }
 
     # Set context back to Core Subscription
-    $Result = Connect-AzureRmAccount -Credential $Credentials -Subscription ($Subscriptions | Where-Object {$_.Name -match '-co'}).Name
+    $Result = Connect-AzAccount -Credential $Credentials -Subscription ($Subscriptions | Where-Object {$_.Name -match '-co'}).Name
 
 
     ###########################################################################################################################################################

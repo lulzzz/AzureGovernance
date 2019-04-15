@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Exports the PowerShell Modules as well as all the dependent modules to a PowerShell Repository on an Azure Files share in the Core Storage Account. 
 # The PowerShell Modules are exported from the Hybrid Runbook Worker where this Runbook is executed. 
 # For the following reasons this Runbook doesn't support execution on a Azure Automation Server:
@@ -33,7 +33,7 @@ workflow TEC0007-ExportPowerShellModules
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.Resources, AzureRM.Storage, PowerShellGet
+    $Result = Import-Module Az.Resources, Az.Storage, PowerShellGet
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -59,8 +59,8 @@ workflow TEC0007-ExportPowerShellModules
     #
     ###########################################################################################################################################################
     $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName -Verbose:$false
-    $StorageAccount = Get-AzureRmResource | Where-Object {$_.Name -eq $StorageAccountName}
-    $StorageAccountKey = (Get-AzureRMStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
+    $StorageAccount = Get-AzResource | Where-Object {$_.Name -eq $StorageAccountName}
+    $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
     $StorageAccountKey = ConvertTo-SecureString -String $StorageAccountKey -AsPlainText -Force
     $Credential = New-Object System.Management.Automation.PSCredential -ArgumentList "Azure\$StorageAccountName", $StorageAccountKey
     $Result = New-PSDrive -Name Z -PSProvider FileSystem -Root $RepositoryPath -Credential $Credential
@@ -89,7 +89,7 @@ workflow TEC0007-ExportPowerShellModules
       Find-Module -Name $Module.Name -RequiredVersion $Module.Version -IncludeDependencies -Repository PSGallery -ErrorAction SilentlyContinue -Verbose:$false
       $WORKFLOW:VerbosePreference = 'Continue'
     }
- 
+�
     # Create a report
     $ModulesToExport = foreach ($Item in $Report)
     {
@@ -98,7 +98,6 @@ workflow TEC0007-ExportPowerShellModules
     }
 
     # Remove duplicate Module entries keeping the highest version only. 
-    # Example: AzureRm.Tags requires MinimumVersion AzureRm.Profile 5.5.1 but AzureRm.Profile 5.3.4 is already installed as main Module not as dependent Module
     $ModulesToExport = $ModulesToExport | Sort-Object -Property ModuleVersion -Descending | Sort-Object -Unique Modulename
 
     # Re-Sort to ensure that Dependency Modules are imported first

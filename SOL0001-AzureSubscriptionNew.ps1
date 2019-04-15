@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Creates and configures a Subscription. Subscriptions with a shortcode 'co' are created as Hub Subscriptions, all other as Spoke Subscriptions.
 # A single Subscription can cover any of six Azure Regions. 
 # This baseline implementation can be enhanced by submitting additional Service Requests. 
@@ -32,7 +32,7 @@ workflow SOL0001-AzureSubscriptionNew
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module Azure.Storage, AzureRM.OperationalInsights, AzureRM.Profile, AzureRM.Resources, AzureRmStorageTable
+    $Result = Import-Module Az.Storage, Az.OperationalInsights, Az.Accounts, Az.Resources, AzTable
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -145,7 +145,7 @@ workflow SOL0001-AzureSubscriptionNew
   # Create Subscription
   #
   #############################################################################################################################################################
-  #New-AzureRmSubscription -OfferType $SubscriptionOfferType -Name $SubscriptionCode -EnrollmentAccountObjectId <enrollmentAccountId> `
+  #New-AzSubscription -OfferType $SubscriptionOfferType -Name $SubscriptionCode -EnrollmentAccountObjectId <enrollmentAccountId> `
   #                        -OwnerSignInName $SubscriptionOwner
 
   
@@ -154,12 +154,12 @@ workflow SOL0001-AzureSubscriptionNew
   # Change context to the new Subscription and load Resource Providers
   #
   #############################################################################################################################################################
-  $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionCode}
-  $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+  $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode}
+  $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
   Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))
 
   # No Log Analytics instances deployed in Hub Subscriptions - which means the Resource Provider is not activiated but is required for registration
-  $Result = Register-AzureRmResourceProvider -ProviderNamespace microsoft.insights
+  $Result = Register-AzResourceProvider -ProviderNamespace microsoft.insights
 
 
   #############################################################################################################################################################
@@ -169,16 +169,26 @@ workflow SOL0001-AzureSubscriptionNew
   #############################################################################################################################################################
   if ($FirstRegion -eq 'yes')
   {
-    # Create Networking Resource Group, e.g. aaa-co-rsg-network-01    $ResourceGroupNameNetwork = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual network -SubscriptionCode $SubscriptionCode `                                                              -IamContributorGroupName $IamContributorGroupNameNetwork `                                                              -IamReaderGroupName $IamReaderGroupName `                                                              -RegionName $RegionName -RegionCode aaa -Contact $Contact `
+    # Create Networking Resource Group, e.g. aaa-co-rsg-network-01
+    $ResourceGroupNameNetwork = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual network -SubscriptionCode $SubscriptionCode `
+                                                              -IamContributorGroupName $IamContributorGroupNameNetwork `
+                                                              -IamReaderGroupName $IamReaderGroupName `
+                                                              -RegionName $RegionName -RegionCode aaa -Contact $Contact `
                                                               -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget
 
 
     # Create Core Resource Group, e.g. weu-co-rsg-core-01
-    $ResourceGroupNameCore = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual core -SubscriptionCode $SubscriptionCode `                                                           -IamContributorGroupName $IamContributorGroupNameCore -IamReaderGroupName $IamReaderGroupName `                                                           -RegionName $RegionName -RegionCode aaa `                                                           -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact 
+    $ResourceGroupNameCore = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual core -SubscriptionCode $SubscriptionCode `
+                                                           -IamContributorGroupName $IamContributorGroupNameCore -IamReaderGroupName $IamReaderGroupName `
+                                                           -RegionName $RegionName -RegionCode aaa `
+                                                           -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact 
 
     
    # Create Security Resource Group, e.g. weu-co-rsg-security-01
-   $ResourceGroupNameSecurity = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual security -SubscriptionCode $SubscriptionCode `                                                              -IamContributorGroupName $IamContributorGroupNameSecurity -IamReaderGroupName $IamReaderGroupName `                                                              -RegionName $RegionName -RegionCode aaa `                                                              -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact
+   $ResourceGroupNameSecurity = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual security -SubscriptionCode $SubscriptionCode `
+                                                              -IamContributorGroupName $IamContributorGroupNameSecurity -IamReaderGroupName $IamReaderGroupName `
+                                                              -RegionName $RegionName -RegionCode aaa `
+                                                              -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact
 
   }
 
@@ -192,18 +202,11 @@ workflow SOL0001-AzureSubscriptionNew
     foreach ($ResourceGroup in $ResourceGroupNames)
     {
       # Get Policy
-      $Policy = Get-AzureRmPolicyDefinition | Where-Object {$_.Properties.DisplayName -eq 'Allowed locations'}
+      $Policy = Get-AzPolicyDefinition | Where-Object {$_.Properties.DisplayName -eq 'Allowed locations'}
       
-      # Get existing Policy Assignments as Hashtable
-      try
-      { 
-        $PolicyAssignment = Get-AzureRmPolicyAssignment -Name $Policy.Properties.displayName `
-                                                        -Scope ((Get-AzureRmResourceGroup -Name $ResourceGroup).ResourceId)
-      }
-      catch
-      {
-        # Suppress error message if policies not yet assigned
-      }
+      # Get existing Policy Assignment locations as Hashtable
+      $PolicyAssignment = Get-AzPolicyAssignment -Name $Policy.Properties.displayName -ErrorAction SilentlyContinue `
+                                                 -Scope ((Get-AzResourceGroup -Name $ResourceGroup).ResourceId)
       $Locations = @()
       $Locations = $PolicyAssignment.Properties.parameters.listOfAllowedLocations.value
       
@@ -224,8 +227,8 @@ workflow SOL0001-AzureSubscriptionNew
       Write-Verbose -Message ('SOL0001-AllowedLocation: ' + ($Locations | Out-String))
       
       # Assign Policy
-      $Result = New-AzureRmPolicyAssignment -Name $Policy.Properties.Displayname -PolicyDefinition $Policy `
-                                            -Scope ((Get-AzureRmResourceGroup -Name $ResourceGroup).ResourceId) `
+      $Result = New-AzPolicyAssignment -Name $Policy.Properties.Displayname -PolicyDefinition $Policy `
+                                            -Scope ((Get-AzResourceGroup -Name $ResourceGroup).ResourceId) `
                                             -PolicyParameterObject $Locations
       Write-Verbose -Message ('SOL0001-ResourceGroupPoliciesApplied: ' + ($ResourceGroup))
     }
@@ -240,7 +243,12 @@ workflow SOL0001-AzureSubscriptionNew
   # Create Diagnostic Storage Account in each Region - used as a central collection point for diagnostic data in the Subscription
   #
   #############################################################################################################################################################
-  $StorageAccountName = PAT0100-StorageAccountNew -StorageAccountNameIndividual $StorageAccountNameIndividual `                                                  -ResourceGroupName "aaa-$SubscriptionCode-rsg-core-01" `                                                  -StorageAccountType $StorageAccountType `                                                  -SubscriptionCode $SubscriptionCode -RegionName  $RegionName `                                                  -RegionCode $RegionCode -Contact $Contact
+  $StorageAccountName = PAT0100-StorageAccountNew -StorageAccountNameIndividual $StorageAccountNameIndividual `
+                                                  -ResourceGroupName "aaa-$SubscriptionCode-rsg-core-01" `
+                                                  -StorageAccountType $StorageAccountType `
+                                                  -SubscriptionCode $SubscriptionCode -RegionName  $RegionName `
+                                                  -RegionCode $RegionCode -Contact $Contact
+
 
   #############################################################################################################################################################
   #  
@@ -250,7 +258,11 @@ workflow SOL0001-AzureSubscriptionNew
   if($SubscriptionCode -eq 'co' -and $FirstRegion -eq 'yes')
   { 
     # Create Storage Account in each region
-    $StorageAccountName = PAT0100-StorageAccountNew -StorageAccountNameIndividual 'core' `                                                    -ResourceGroupName "aaa-$SubscriptionCode-rsg-core-01" `                                                    -StorageAccountType $StorageAccountType `                                                    -SubscriptionCode $SubscriptionCode -RegionName $RegionName `                                                    -RegionCode $RegionCode -Contact $Contact
+    $StorageAccountName = PAT0100-StorageAccountNew -StorageAccountNameIndividual 'core' `
+                                                    -ResourceGroupName "aaa-$SubscriptionCode-rsg-core-01" `
+                                                    -StorageAccountType $StorageAccountType `
+                                                    -SubscriptionCode $SubscriptionCode -RegionName $RegionName `
+                                                    -RegionCode $RegionCode -Contact $Contact
 
     # Reset context - this time with the Core Storage Account
     TEC0005-AzureContextSet
@@ -269,8 +281,8 @@ workflow SOL0001-AzureSubscriptionNew
       Write-Verbose -Message ('TEC0003-NsgRuleSetsDownloadedFromGit: ' + ($NsgRuleSetsContent | Out-String))
 
       # Create File Share and upload NsgRuleSets.csv
-      $StorageShare = New-AzureStorageShare -Name nsg-rule-set
-      Set-AzureStorageFileContent -ShareName nsg-rule-set -Source D:\NsgRuleSets.csv 
+      $StorageShare = New-AzStorageShare -Name nsg-rule-set -Context $StorageContext
+      Set-AzStorageFileContent -ShareName nsg-rule-set -Source D:\NsgRuleSets.csv -Context $StorageContext
 
       # Download Runbook Ipam.csv from GitHub
       $GitHubRepo = '/fbodmer/AzureGovernance'
@@ -283,18 +295,19 @@ workflow SOL0001-AzureSubscriptionNew
       $IpamContent = Import-Csv -Path D:\Ipam.csv
 
       # Create Azure Table for IPAM and load data
-      $Table = New-AzureStorageTable -Name Ipam
+      $Table = New-AzStorageTable -Name Ipam
+      $Table = (Get-AzStorageTable -Name Ipam -Context $StorageContext).CloudTable
       foreach ($Entity in $IpamContent)
       {
-        $Result = Add-StorageTableRow -table $Table -partitionKey $Entity.PartitionKey -rowKey $Entity.RowKey `
-                                      -property @{
-                                                    "IpAddress"=$Entity.IpAddress
-                                                    "IpAddressAssignment"=$Entity.IpAddressAssignment
-                                                    "SubnetIpRange"=$Entity.SubnetIpRange
-                                                    "SubnetName"=$Entity.SubnetName
-                                                    "VnetIpRange"=$Entity.VnetIpRange
-                                                    "VnetName"=$Entity.VnetName
-                                                  }
+        $Result = Add-AzTableRow -Table $Table -PartitionKey $Entity.PartitionKey -RowKey $Entity.RowKey `
+                                               -Property @{
+                                                             "IpAddress"=$Entity.IpAddress
+                                                             "IpAddressAssignment"=$Entity.IpAddressAssignment
+                                                             "SubnetIpRange"=$Entity.SubnetIpRange
+                                                             "SubnetName"=$Entity.SubnetName
+                                                             "VnetIpRange"=$Entity.VnetIpRange
+                                                             "VnetName"=$Entity.VnetName
+                                                           }
       }
     }
   
@@ -307,17 +320,23 @@ workflow SOL0001-AzureSubscriptionNew
     if ($FirstRegion -eq 'yes')
     {  
       # Create the Core Workspace, e.g. felweucocore01
-      $ResourceGroupNameCore = 'aaa' + $ResourceGroupNameCore.Substring(3)      $WorkspaceNameCore = PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual core -ResourceGroupName $ResourceGroupNameCore `                                                          -SubscriptionCode $SubscriptionCode -RegionName $RegionName `                                                          -RegionCode $RegionCode -Contact $Contact 
+      $ResourceGroupNameCore = 'aaa' + $ResourceGroupNameCore.Substring(3)
+      $WorkspaceNameCore = PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual core -ResourceGroupName $ResourceGroupNameCore `
+                                                          -SubscriptionCode $SubscriptionCode -RegionName $RegionName `
+                                                          -RegionCode $RegionCode -Contact $Contact 
       Write-Verbose -Message ('SOL0001-LogAnalyticsCoreWorkspaceCreated: ' + ($WorkspaceNameCore))
 
       # Create the Security Workspace, e.g. felweucosecurity01
-      $ResourceGroupNameSecurity = 'aaa' + $ResourceGroupNameSecurity.Substring(3)      $WorkspaceNameSecurity = PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual security -ResourceGroupName $ResourceGroupNameSecurity `                                                              -SubscriptionCode $SubscriptionCode -RegionName $RegionName `                                                              -RegionCode $RegionCode -Contact $Contact
+      $ResourceGroupNameSecurity = 'aaa' + $ResourceGroupNameSecurity.Substring(3)
+      $WorkspaceNameSecurity = PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual security -ResourceGroupName $ResourceGroupNameSecurity `
+                                                              -SubscriptionCode $SubscriptionCode -RegionName $RegionName `
+                                                              -RegionCode $RegionCode -Contact $Contact
       Write-Verbose -Message ('SOL0001-LogAnalyticsSecuirtyWorkspaceCreated: ' + ($WorkspaceNameSecurity))
     }
 
     # Connect the Azure AD diagnostics to the Security Log Analytics Workspace - applies to Core Subscriptions only ???
-    $WorkspaceCore = Get-AzureRmOperationalInsightsWorkspace -Name $WorkspaceNameSecurity -ResourceGroupName $ResourceGroupNameSecurity
-    #$Result = Set-AzureRmDiagnosticSetting -ResourceId $Subscription.Id -WorkspaceId $WorkspaceCore.ResourceId -Enabled $true
+    $WorkspaceCore = Get-AzOperationalInsightsWorkspace -Name $WorkspaceNameSecurity -ResourceGroupName $ResourceGroupNameSecurity
+    #$Result = Set-AzDiagnosticSetting -ResourceId $Subscription.Id -WorkspaceId $WorkspaceCore.ResourceId -Enabled $true
 
     Write-Verbose -Message ('PAT0056-AzureAdLogsAddedToSecurityLogAnalyticsWorkspace: ' + ($Result | Out-String))
   }
@@ -329,21 +348,21 @@ workflow SOL0001-AzureSubscriptionNew
   #
   #############################################################################################################################################################
   # Change context to Core Subscription
-  $CoreSubscription = Get-AzureRmSubscription | Where-Object {$_.Name -match 'co'}
-  $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $CoreSubscription.Name -Force
+  $CoreSubscription = Get-AzSubscription | Where-Object {$_.Name -match 'co'}
+  $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $CoreSubscription.Name -Force
   Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))
 
   # Connect to Workspace
-  $WorkspaceCore = Get-AzureRmOperationalInsightsWorkspace | Where-Object {$_.Name -match $WorkspaceNameCore}
-  $Result = New-AzureRmOperationalInsightsAzureActivityLogDataSource -WorkspaceName $WorkspaceNameCore `
+  $WorkspaceCore = Get-AzOperationalInsightsWorkspace | Where-Object {$_.Name -match $WorkspaceNameCore}
+  $Result = New-AzOperationalInsightsAzureActivityLogDataSource -WorkspaceName $WorkspaceNameCore `
                                                                      -ResourceGroupName $WorkspaceCore.ResourceGroupName -Force `
                                                                      -SubscriptionId $Subscription.Id -Name $SubscriptionName
 
   Write-Verbose -Message ('PAT0056-AzureActivityLogsAddedToCoreLogAnalyticsWorkspace: ' + ($Result | Out-String))
 
   # Change context back to Subscription to be built
-  $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionCode}
-  $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+  $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode}
+  $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
   Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))
 
 
@@ -352,7 +371,9 @@ workflow SOL0001-AzureSubscriptionNew
   # Create NSGs for Frontend and Backend Subnets in Security Resource Group, connect with Log Analytics Workspace (diagnostics logs only, no NSG flows)
   #
   #############################################################################################################################################################
-  $NsgNames = PAT0056-NetworkSecurityGroupNew -SubscriptionCode $SubscriptionCode -RegionName $RegionName `                                              -RegionCode $RegionCode -Contact $Contact  Write-Verbose -Message ('SOL0001-NsgCreated: ' + ($NsgNames))
+  $NsgNames = PAT0056-NetworkSecurityGroupNew -SubscriptionCode $SubscriptionCode -RegionName $RegionName `
+                                              -RegionCode $RegionCode -Contact $Contact
+  Write-Verbose -Message ('SOL0001-NsgCreated: ' + ($NsgNames))
 
 
   #############################################################################################################################################################
@@ -360,7 +381,8 @@ workflow SOL0001-AzureSubscriptionNew
   # Create VNET with Frontend/Backend Subnets, Route Table for Frontend in Network Resource Group and connect with NSG. Configure Service Endpoints.
   #
   #############################################################################################################################################################
-  $VnetName = PAT0050-NetworkVnetNew -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode `                                     -Contact $Contact
+  $VnetName = PAT0050-NetworkVnetNew -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode `
+                                     -Contact $Contact
 
 
   #############################################################################################################################################################
@@ -369,7 +391,10 @@ workflow SOL0001-AzureSubscriptionNew
   #
   #############################################################################################################################################################
   $NsgNames = $NsgNames.Split(',')
-  foreach ($NsgName in $NsgNames)                                                                                                                              # There are two NSG per Region  {    $Result = PAT0058-NetworkSecurityGroupSet -NsgName $NsgName -SubscriptionCode $SubscriptionCode -RuleSetName $RuleSetName  }
+  foreach ($NsgName in $NsgNames)                                                                                                                              # There are two NSG per Region
+  {
+    $Result = PAT0058-NetworkSecurityGroupSet -NsgName $NsgName -SubscriptionCode $SubscriptionCode -RuleSetName $RuleSetName
+  }
 
 
   #############################################################################################################################################################
@@ -377,7 +402,11 @@ workflow SOL0001-AzureSubscriptionNew
   # Create default Key Vault in Security Resource Group
   #
   #############################################################################################################################################################
-  $KeyVaultName = PAT0250-SecurityKeyVaultNew -KeyVaultNameIndividual 'vault' `                                              -ResourceGroupName "aaa-$SubscriptionCode-rsg-security-01" `                                              -SubscriptionCode $SubscriptionCode -RegionName $RegionName `                                              -RegionCode $RegionCode -Contact $Contact
+  $KeyVaultName = PAT0250-SecurityKeyVaultNew -KeyVaultNameIndividual 'vault' `
+                                              -ResourceGroupName "aaa-$SubscriptionCode-rsg-security-01" `
+                                              -SubscriptionCode $SubscriptionCode -RegionName $RegionName `
+                                              -RegionCode $RegionCode -Contact $Contact
+
 
   #############################################################################################################################################################
   #
@@ -389,13 +418,13 @@ workflow SOL0001-AzureSubscriptionNew
   InlineScript
     { 
       $SubscriptionId = $Using:Subscription.Id
-      $Policy = Get-AzureRmPolicyDefinition | Where-Object {$_.Properties.DisplayName -eq 'Allowed locations'}
+      $Policy = Get-AzPolicyDefinition | Where-Object {$_.Properties.DisplayName -eq 'Allowed locations'}
 
       # Requires nested Hashtable with Region in 'westeurope' format
       $Locations = @('westeurope', 'northeurope', 'westus', 'eastus', 'southeastasia', 'eastasia')
       $Locations = @{"listOfAllowedLocations"=$Locations}
       Write-Verbose -Message ('SOL0001-AllowedLocation: ' + ($Locations | Out-String))
-      $Result = New-AzureRmPolicyAssignment -Name $Policy.Properties.Displayname -PolicyDefinition $Policy -Scope ('/subscriptions/' + $SubscriptionId) `
+      $Result = New-AzPolicyAssignment -Name $Policy.Properties.Displayname -PolicyDefinition $Policy -Scope ('/subscriptions/' + $SubscriptionId) `
                                             -PolicyParameterObject $Locations
       Write-Verbose -Message ('SOL0001-SubscriptionPoliciesApplied: ' + ($SubscriptionId))
     }

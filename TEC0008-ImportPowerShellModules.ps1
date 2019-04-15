@@ -1,4 +1,4 @@
-ï»¿###############################################################################################################################################################
+###############################################################################################################################################################
 # Imports the PowerShell Modules from the PowerShell Repository on an Azure Files share in the Core Storage Account. The PowerShell Modules are imported to 
 # the Hybrid Runbook Worker where this Runbook is executed. Prior to the import all PowerShell Modules are deleted. This ensures that Modules no longer used
 # are removed. Some Modules can't be deleted because they haven't been installed using the Install-Module cmdlet, but that is intentional. These modules
@@ -42,7 +42,7 @@ workflow TEC0008-ImportPowerShellModules
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureAutomationAuthoringToolkit, AzureRM.Resources, AzureRM.Storage, PowerShellGet
+    $Result = Import-Module AzureAutomationAuthoringToolkit, Az.Resources, Az.Storage, PowerShellGet
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -65,8 +65,8 @@ workflow TEC0008-ImportPowerShellModules
     #
     ###########################################################################################################################################################
     $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName -Verbose:$false
-    $StorageAccount = Get-AzureRmResource | Where-Object {$_.Name -eq $StorageAccountName}
-    $StorageAccountKey = (Get-AzureRMStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
+    $StorageAccount = Get-AzResource | Where-Object {$_.Name -eq $StorageAccountName}
+    $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
     $StorageAccountKey = ConvertTo-SecureString -String $StorageAccountKey -AsPlainText -Force
     $Credential = New-Object System.Management.Automation.PSCredential -ArgumentList "Azure\$StorageAccountName", $StorageAccountKey
     $Result = New-PSDrive -Name Z -PSProvider FileSystem -Root $RepositoryPath -Credential $Credential
@@ -83,30 +83,30 @@ workflow TEC0008-ImportPowerShellModules
     $Modules = Get-Module
     foreach ($Module in $Modules)
     {
-Â      Remove-Module $Module.Name -Force
+      Remove-Module $Module.Name -Force
     }
 
-Â 
+ 
     ###########################################################################################################################################################
-    #Â 
+    # 
     # De-install all modules
     # The following modules in the following locations will not be de-installed: 
     # - C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules
-    #Â - C:\Program Files\Microsoft Monitoring Agent\Agent\AzureAutomation\7.2.13848.0
-    #Â - C:\Program Files\Microsoft Monitoring Agent\Agent\AzureAutomation\7.2.13848.0\HybridAgent\Modules
-    #Â - C:\Program Files\Microsoft Monitoring Agent\Agent\PowerShell\
+    # - C:\Program Files\Microsoft Monitoring Agent\Agent\AzureAutomation\7.2.13848.0
+    # - C:\Program Files\Microsoft Monitoring Agent\Agent\AzureAutomation\7.2.13848.0\HybridAgent\Modules
+    # - C:\Program Files\Microsoft Monitoring Agent\Agent\PowerShell\
     #
     ###########################################################################################################################################################
     $Modules = Get-Module -ListAvailable
     foreach ($Module in $Modules)
     {
-Â      Write-Verbose -Message ('TEC0007-Removing: ' + $Module.Name)
-Â      $Result = Uninstall-Module $Module.Name -Force -ErrorAction SilentlyContinue
+      Write-Verbose -Message ('TEC0007-Removing: ' + $Module.Name)
+      $Result = Uninstall-Module $Module.Name -Force -ErrorAction SilentlyContinue
     }
-Â 
+ 
 
     ###########################################################################################################################################################
-  Â  #
+    #
     # Reset $env:PSModulePath
     # The following will be re-added automatically: C:\Users\<user>\Documents\WindowsPowerShell\Modules
     #
@@ -117,7 +117,7 @@ workflow TEC0008-ImportPowerShellModules
                                                    $_ -like 'C:\Program Files\WindowsPowerShell\Modules\'} `
                                    | ForEach-Object -Process {$PSmodulePath += $_}
      $env:PSmodulepath = $PSmodulePath -join(';')
-Â 
+ 
 
     ###########################################################################################################################################################
     #

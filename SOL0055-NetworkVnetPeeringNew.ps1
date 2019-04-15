@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Creates a Peering between two VNETs. 
 #
 # Output:         None
@@ -28,7 +28,7 @@ workflow SOL0055-NetworkVnetPeeringNew
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.Resources
+    $Result = Import-Module Az.Resources
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet

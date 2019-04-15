@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Creates a new server based on the input parameters. Optionally a Public IP, Availability Sets, Data Disks and Backup can be configured.
 # 
 # Output:         None
@@ -17,12 +17,12 @@ workflow SOL0150-ServerWindowsNew
 
   param
 	(
-    [Parameter(Mandatory=$false)][String] $VmName = 'geoweumswtst01',
+    [Parameter(Mandatory=$false)][String] $VmName = 'azw1234',
     [Parameter(Mandatory=$false)][String] $LocationName = 'westeurope',
     [Parameter(Mandatory=$false)][String] $LocationShortName = 'weu',
-    [Parameter(Mandatory=$false)][String] $ResourceGroupName = 'weu-dv-rsg-test-01',
-    [Parameter(Mandatory=$false)][String] $SubscriptionShortName = 'dv',
-    [Parameter(Mandatory=$false)][String] $SubnetShortName = 'dz',
+    [Parameter(Mandatory=$false)][String] $ResourceGroupName = 'weu-te-rsg-test-01',
+    [Parameter(Mandatory=$false)][String] $SubscriptionShortName = 'te',
+    [Parameter(Mandatory=$false)][String] $SubnetShortName = 'fe',
     [Parameter(Mandatory=$false)][String] $BackupRequired = 'no',
     [Parameter(Mandatory=$false)][String] $PublicIpAddressRequired = 'yes',
     [Parameter(Mandatory=$false)][String] $AvailabilitySetNameRequired = 'no',
@@ -42,7 +42,7 @@ workflow SOL0150-ServerWindowsNew
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.Compute, AzureRM.Network, AzureRM.profile, AzureRM.RecoveryServices, AzureRM.RecoveryServices.Backup, AzureRM.Resources
+    $Result = Import-Module Az.Compute, Az.Network, Az.Accounts, Az.RecoveryServices, Az.Resources
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -64,8 +64,8 @@ workflow SOL0150-ServerWindowsNew
   # Change to Subscription where server is to be built
   #
   #############################################################################################################################################################
-  $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionShortName} 
-  $AzureAccount = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+  $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionShortName} 
+  $AzureAccount = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
 
 
   InlineScript
@@ -109,8 +109,8 @@ workflow SOL0150-ServerWindowsNew
     # NIC
     $VnetName = $LocationShortName + '-' + $SubscriptionShortName + '-vnt-01'
     $SubnetName = $LocationShortName + '-' + $SubscriptionShortName + '-sub-vnt01-' + $SubnetShortName
-    $Vnet = Get-AzureRmVirtualNetwork -Name $VnetName -ResourceGroupName  $ResourceGroupNameNetwork
-    $Subnet = Get-AzureRmVirtualNetworkSubnetConfig -Name $SubnetName -VirtualNetwork $Vnet
+    $Vnet = Get-AzVirtualNetwork -Name $VnetName -ResourceGroupName  $ResourceGroupNameNetwork
+    $Subnet = Get-AzVirtualNetworkSubnetConfig -Name $SubnetName -VirtualNetwork $Vnet
     $ServerNicName = $VmName + '-' + $SubnetName.Split('-')[4] + '-01'
 
     # Storage Account for Diagnostics
@@ -171,21 +171,21 @@ workflow SOL0150-ServerWindowsNew
     { 
       try
       {
-        $AvailabilitySetId = (Get-AzureRmAvailabilitySet -ResourceGroupName $ResourceGroupName -Name $AvailabilitySetName -ErrorAction Stop).Id
+        $AvailabilitySetId = (Get-AzAvailabilitySet -ResourceGroupName $ResourceGroupName -Name $AvailabilitySetName -ErrorAction Stop).Id
         Write-Verbose -Message ('SOL0150-Availability Set existing ' + $AvailabilitySetId) 
       }
       catch
       {
-        $AvailabilitySet = New-AzureRmAvailabilitySet -ResourceGroupName $ResourceGroupName `
+        $AvailabilitySet = New-AzAvailabilitySet -ResourceGroupName $ResourceGroupName `
                                                       -Name $AvailabilitySetName `
                                                       -Location $LocationName
 
         # Create tags
         $Tags = @{ApplicationId  = $ApplicationId; CostCenter = $CostCenter; Budget = $Budget; Contact = $Contact; Automation = $Automation}
-        $Result = Set-AzureRmResource -ResourceGroupName $ResourceGroupName -Name $AvailabilitySetName `
+        $Result = Set-AzResource -ResourceGroupName $ResourceGroupName -Name $AvailabilitySetName `
                                       -Tag $Tags -ResourceType Microsoft.Compute/availabilitySets -Force
 
-        $AvailabilitySetId = (Get-AzureRmAvailabilitySet -ResourceGroupName $ResourceGroupName -Name $AvailabilitySetName).Id
+        $AvailabilitySetId = (Get-AzAvailabilitySet -ResourceGroupName $ResourceGroupName -Name $AvailabilitySetName).Id
         Write-Verbose -Message ('SOL0150-New Availability Set created ' + $AvailabilitySetId) 
       }
     }
@@ -202,13 +202,13 @@ workflow SOL0150-ServerWindowsNew
     ###########################################################################################################################################################
     if ($PublicIpAddressRequired -eq 'yes')
     { 
-      $PublicIpAddress = New-AzureRmPublicIpAddress -AllocationMethod Static -ResourceGroupName $ResourceGroupName -IpAddressVersion IPv4 `
+      $PublicIpAddress = New-AzPublicIpAddress -AllocationMethod Static -ResourceGroupName $ResourceGroupName -IpAddressVersion IPv4 `
                                                     -Location $LocationName -Name "$LocationShortName-$SubscriptionShortName-pub-$VmName-01"
 
       # Create tags
       $Tags = @{ApplicationId  = $ApplicationId; CostCenter = $CostCenter; Budget = $Budget; Contact = $Contact; Automation = $Automation}
       $PublicIpAddress.Tag = $Tags
-      $PublicIpAddress = Set-AzureRmPublicIpAddress -PublicIpAddress $PublicIpAddress
+      $PublicIpAddress = Set-AzPublicIpAddress -PublicIpAddress $PublicIpAddress
       Write-Verbose -Message ('SOL0150-Network Interface Tags written: ' + ($Tags | Out-String))
     }
     else
@@ -222,7 +222,7 @@ workflow SOL0150-ServerWindowsNew
     # Create network interface
     #
     ###########################################################################################################################################################
-    $NetworkInterface = New-AzureRmNetworkInterface -Name $ServerNicName -ResourceGroupName $ResourceGroupName -Location $LocationName `
+    $NetworkInterface = New-AzNetworkInterface -Name $ServerNicName -ResourceGroupName $ResourceGroupName -Location $LocationName `
                                                     -SubnetId $Subnet.Id  `
                                                     -PublicIpAddressId $PublicIpAddress.Id -Force -WarningAction SilentlyContinue
     Write-Verbose -Message ('SOL0150-Network Interface created: ' + ($NetworkInterface | Out-String))
@@ -230,7 +230,7 @@ workflow SOL0150-ServerWindowsNew
     # Create tags
     $Tags = @{ApplicationId  = $ApplicationId; CostCenter = $CostCenter; Budget = $Budget; Contact = $Contact; Automation = $Automation}
     $NetworkInterface.Tag = $Tags
-    $NetworkInterface = Set-AzureRmNetworkInterface -NetworkInterface $NetworkInterface 
+    $NetworkInterface = Set-AzNetworkInterface -NetworkInterface $NetworkInterface 
     Write-Verbose -Message ('SOL0150-Network Interface Tags written: ' + ($Tags | Out-String))
 
 
@@ -241,24 +241,24 @@ workflow SOL0150-ServerWindowsNew
     ###########################################################################################################################################################
     if ($AvailabilitySetNameRequired -eq 'yes')
     { 
-      $Vm = New-AzureRmVMConfig -VMName $VmName -VMSize $VmSize -AvailabilitySetId $AvailabilitySetId
+      $Vm = New-AzVMConfig -VMName $VmName -VMSize $VmSize -AvailabilitySetId $AvailabilitySetId
     }
     else
     {
-      $Vm = New-AzureRmVMConfig -VMName $VmName -VMSize $VmSize
+      $Vm = New-AzVMConfig -VMName $VmName -VMSize $VmSize
     }
     # Specify the image and local administrator account
-    $Vm = Set-AzureRmVMOperatingSystem -VM $Vm -Windows -ComputerName $VmName -Credential $LocalAdminCredential -ProvisionVMAgent -EnableAutoUpdate
-    $Vm = Set-AzureRmVMSourceImage -VM $Vm -PublisherName $PublisherName -Offer $OfferName -Skus $SkuName -Version 'latest'
+    $Vm = Set-AzVMOperatingSystem -VM $Vm -Windows -ComputerName $VmName -Credential $LocalAdminCredential -ProvisionVMAgent -EnableAutoUpdate
+    $Vm = Set-AzVMSourceImage -VM $Vm -PublisherName $PublisherName -Offer $OfferName -Skus $SkuName -Version 'latest'
 
     # Specify the NIC
-    $Vm = Add-AzureRmVMNetworkInterface -VM $Vm -Id $NetworkInterface.Id -Primary
+    $Vm = Add-AzVMNetworkInterface -VM $Vm -Id $NetworkInterface.Id -Primary
 
     # Specify the OS disk
-    $Vm = Set-AzureRmVMOSDisk -VM $Vm -Name $OsDiskName -StorageAccountType Standard_LRS -CreateOption FromImage -Caching ReadWrite
+    $Vm = Set-AzVMOSDisk -VM $Vm -Name $OsDiskName -StorageAccountType Standard_LRS -CreateOption FromImage -Caching ReadWrite
 
     # Specify diagnostics location
-    $Vm = Set-AzureRmVMBootDiagnostics -Enable -ResourceGroupName $ResourceGroupNameCore -VM $Vm -StorageAccountName $DiagnosticsAccountName
+    $Vm = Set-AzVMBootDiagnostics -Enable -ResourceGroupName $ResourceGroupNameCore -VM $Vm -StorageAccountName $DiagnosticsAccountName
 
 
     ###########################################################################################################################################################
@@ -271,10 +271,10 @@ workflow SOL0150-ServerWindowsNew
       $DataDiskLun = 0
       foreach ($Disk in $DataDisks.GetEnumerator())
       {
-        $DiskConfig = New-AzureRmDiskConfig -AccountType $StorageType -Location $LocationName -CreateOption Empty `
+        $DiskConfig = New-AzDiskConfig -AccountType $StorageType -Location $LocationName -CreateOption Empty `
                                             -DiskSizeGB $DataDisks.Get_Item(($DataDiskLun+1).ToString('00'))
-        $DataDisk = New-AzureRmDisk -DiskName ($VmName + '-datadisk' + ($DataDiskLun+1).ToString('00')) -Disk $DiskConfig -ResourceGroupName $ResourceGroupName
-        $Vm = Add-AzureRmVMDataDisk -VM $Vm -Name ($VmName + '-datadisk' + ($DataDiskLun+1).ToString('00')) -CreateOption Attach -ManagedDiskId $DataDisk.Id `
+        $DataDisk = New-AzDisk -DiskName ($VmName + '-datadisk' + ($DataDiskLun+1).ToString('00')) -Disk $DiskConfig -ResourceGroupName $ResourceGroupName
+        $Vm = Add-AzVMDataDisk -VM $Vm -Name ($VmName + '-datadisk' + ($DataDiskLun+1).ToString('00')) -CreateOption Attach -ManagedDiskId $DataDisk.Id `
                                     -Lun $DataDiskLun
         $DataDiskLun ++
       }
@@ -291,7 +291,7 @@ workflow SOL0150-ServerWindowsNew
     #
     ###########################################################################################################################################################
     Write-Verbose -Message ('SOL0150-VM creation started')
-    $Result = New-AzureRmVM -ResourceGroupName $ResourceGroupName -Location $LocationName -VM $Vm
+    $Result = New-AzVM -ResourceGroupName $ResourceGroupName -Location $LocationName -VM $Vm
     Write-Verbose -Message ('SOL0150-VM created')
  
   
@@ -301,7 +301,7 @@ workflow SOL0150-ServerWindowsNew
     #
     ###########################################################################################################################################################
     $Tags = @{ApplicationId  = $ApplicationId; CostCenter = $CostCenter; Budget = $Budget; Contact = $Contact; Automation = $Automation}
-    $Result = Set-AzureRmResource -Name $VmName -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.Compute/VirtualMachines' -Tag $Tags -Force
+    $Result = Set-AzResource -Name $VmName -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.Compute/VirtualMachines' -Tag $Tags -Force
     Write-Verbose -Message ('SOL0150-VM Tags created')
  
   
@@ -312,10 +312,10 @@ workflow SOL0150-ServerWindowsNew
     ###########################################################################################################################################################
     if ($BackupRequired -eq 'yes')
     { 
-      $BackupVault = Get-AzureRmRecoveryServicesVault -Name $BackupVaultName
-      $Result = Set-AzureRmRecoveryServicesVaultContext -Vault $BackupVault
-      $BackupPolicy = Get-AzureRmRecoveryServicesBackupProtectionPolicy -Name $BackupPolicyName
-      $Result = Enable-AzureRmRecoveryServicesBackupProtection -Policy $BackupPolicy -Name $VmName -ResourceGroupName $ResourceGroupName
+      $BackupVault = Get-AzRecoveryServicesVault -Name $BackupVaultName
+      $Result = Set-AzRecoveryServicesVaultContext -Vault $BackupVault
+      $BackupPolicy = Get-AzRecoveryServicesBackupProtectionPolicy -Name $BackupPolicyName
+      $Result = Enable-AzRecoveryServicesBackupProtection -Policy $BackupPolicy -Name $VmName -ResourceGroupName $ResourceGroupName
       Write-Verbose -Message ('SOL0150-VM added to Azure Backup')
     }
   }

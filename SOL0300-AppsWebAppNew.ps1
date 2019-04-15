@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Creates a new App Service Plan and a Web App. Connects the Web App with a GitHub repository. Registers the Web App in AAD and
 # configures AAD Authentication/Authorization. 
 #
@@ -21,8 +21,8 @@ workflow SOL0300-AppsWebAppNew
 	(
     [Parameter(Mandatory=$false)][String] $GitHubRepo = '/fbodmer/felportal',
     [Parameter(Mandatory=$false)][String] $ResourceGroupName = 'weu-co-rsg-automation-01',
-    [Parameter(Mandatory=$false)][String] $AppServicePlanNameIndividual = 'portal-01',
-    [Parameter(Mandatory=$false)][String] $WebAppNameIndividual = 'portal-01',
+    [Parameter(Mandatory=$false)][String] $AppServicePlanNameIndividual = 'portal-02',
+    [Parameter(Mandatory=$false)][String] $WebAppNameIndividual = 'portal-02',
     [Parameter(Mandatory=$false)][String] $SubscriptionCode = 'co',
     [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
     [Parameter(Mandatory=$false)][String] $RegionCode = 'weu'
@@ -37,7 +37,7 @@ workflow SOL0300-AppsWebAppNew
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureAD, AzureRM.profile, AzureRM.Resources, AzureRM.Websites, Microsoft.PowerShell.Utility
+    $Result = Import-Module AzureAD, Az.Accounts, Az.Resources, Az.Websites, Microsoft.PowerShell.Utility
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -74,9 +74,9 @@ workflow SOL0300-AppsWebAppNew
     # Change to Target Subscription
     #
     ###########################################################################################################################################################
-    $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
-    $Result = Disconnect-AzureRmAccount
-    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
+    $Result = DisConnect-AzAccount
+    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('SOL0300-AzureContextChanged: ' + ($AzureContext | Out-String))
 
 
@@ -85,7 +85,7 @@ workflow SOL0300-AppsWebAppNew
     # Create the Azure App Service Plan
     #
     #############################################################################################################################################################
-    $AppServicePlan = New-AzureRmAppServicePlan -ResourceGroupName $ResourceGroupName -Location $RegionName -Tier Free -Name $AppServicePlanName
+    $AppServicePlan = New-AzAppServicePlan -ResourceGroupName $ResourceGroupName -Location $RegionName -Tier Free -Name $AppServicePlanName
 
     Write-Verbose -Message ('SOL0300-AppServicePlanCreated: ' + ($AppServicePlan | Out-String))
 
@@ -95,7 +95,7 @@ workflow SOL0300-AppsWebAppNew
     # Create the Azure Web App an connect to GitHub repository
     #
     #############################################################################################################################################################
-    $WebApp = New-AzureRmWebApp -ResourceGroupName $ResourceGroupName -Location $RegionName -AppServicePlan $AppServicePlanName -Name $WebAppName
+    $WebApp = New-AzWebApp -ResourceGroupName $ResourceGroupName -Location $RegionName -AppServicePlan $AppServicePlanName -Name $WebAppName
 
     # Connect the Azure Web App to the GitHub Repository
     $PropertiesObject = @{
@@ -103,7 +103,7 @@ workflow SOL0300-AppsWebAppNew
         branch = "master";
         isManualIntegration = "true";
     }
-    $Result = Set-AzureRmResource -PropertyObject $PropertiesObject -ResourceGroupName $ResourceGroupName -ResourceType Microsoft.Web/sites/sourcecontrols `
+    $Result = Set-AzResource -PropertyObject $PropertiesObject -ResourceGroupName $ResourceGroupName -ResourceType Microsoft.Web/sites/sourcecontrols `
                                   -ResourceName ($WebAppName + '/web') -ApiVersion 2018-11-01 -Force
 
     Write-Verbose -Message ('SOL0300-WebAppCreated: ' + ($WebApp | Out-String))
@@ -111,13 +111,13 @@ workflow SOL0300-AppsWebAppNew
 
     #############################################################################################################################################################
     #
-    # Create the AAD registration for Azure Web App - New-AzureRmADApplication can't be used:
+    # Create the AAD registration for Azure Web App - New-AzADApplication can't be used:
     # https://blogs.msdn.microsoft.com/azuregov/2017/12/06/web-app-easy-auth-configuration-using-powershell/
     #
     #############################################################################################################################################################
     # Login to AAD
-    $AzureRmContext = Get-AzureRmContext
-    $AzureAd = Connect-AzureAD -TenantId $AzureRmContext.Tenant.Id -Credential $AzureAutomationCredential
+    $AzContext = Get-AzContext
+    $AzureAd = Connect-AzureAD -TenantId $AzContext.Tenant.Id -Credential $AzureAutomationCredential
     
     # Parameters
     $SiteUri = ('https://' + $WebApp.DefaultHostName)
@@ -152,7 +152,7 @@ workflow SOL0300-AppsWebAppNew
     # Configure Azure Web App
     #
     #############################################################################################################################################################
-    $WebAppSiteConfiguration = Invoke-AzureRmResourceAction -ResourceGroupName $ResourceGroupName -ResourceType Microsoft.Web/sites/config `
+    $WebAppSiteConfiguration = Invoke-AzResourceAction -ResourceGroupName $ResourceGroupName -ResourceType Microsoft.Web/sites/config `
                                          -ResourceName ($WebAppName + '/authsettings') -Action list -ApiVersion 2018-11-01 -Force
     Write-Verbose -Message ('SOL0300-ExistingConfiguration: ' + ($WebAppSiteConfiguration | Out-String))
 
@@ -166,8 +166,9 @@ workflow SOL0300-AppsWebAppNew
     $WebAppSiteConfiguration.properties.clientSecret = $Password
     $WebAppSiteConfiguration.properties.issuer = $IssuerUrl
  
-    $WebAppSiteConfiguration = New-AzureRmResource -PropertyObject $WebAppSiteConfiguration.properties -ResourceGroupName $ResourceGroupName `
-                                                   -ResourceType Microsoft.Web/sites/config -ResourceName ($WebAppName + '/authsettings') -ApiVersion 2018-11-01 `                                                   -Force
+    $WebAppSiteConfiguration = New-AzResource -PropertyObject $WebAppSiteConfiguration.properties -ResourceGroupName $ResourceGroupName `
+                                                   -ResourceType Microsoft.Web/sites/config -ResourceName ($WebAppName + '/authsettings') -ApiVersion 2018-11-01 `
+                                                   -Force
     Write-Verbose -Message ('SOL0300-ConfigurationUpdated: ' + ($WebAppSiteConfiguration | Out-String))
 
   }

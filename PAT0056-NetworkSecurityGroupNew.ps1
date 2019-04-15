@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Creates default NSGs for the Frontend (e.g. weu-te-nsg-vnt01fe) and Backend (e.g. weu-te-nsg-vnt01fe) Subnets in the '-rsg-security-01' Resource Group. 
 # Adds the NSG to the Security Log Analytics Workspace (e.g. felweutesecurity01). Tags the NSGs.
 #
@@ -32,7 +32,7 @@ workflow PAT0056-NetworkSecurityGroupNew
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.Insights, AzureRM.Network, AzureRM.OperationalInsights, AzureRM.profile, AzureRM.Resources
+    $Result = Import-Module Az.Monitor, Az.Network, Az.OperationalInsights, Az.Accounts, Az.Resources
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -82,9 +82,9 @@ workflow PAT0056-NetworkSecurityGroupNew
     # Change to Target Subscription
     #
     ###########################################################################################################################################################
-    $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
-    $Result = Disconnect-AzureRmAccount
-    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
+    $Result = DisConnect-AzAccount
+    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0056-AzureContextChanged: ' + ($AzureContext | Out-String))
 
 
@@ -93,14 +93,14 @@ workflow PAT0056-NetworkSecurityGroupNew
     # Check if NSG already exists
     #
     ###########################################################################################################################################################
-    $NsgFrontendSubnet = Get-AzureRmNetworkSecurityGroup -Name $NsgFrontendSubnetName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+    $NsgFrontendSubnet = Get-AzNetworkSecurityGroup -Name $NsgFrontendSubnetName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
     if ($NsgFrontendSubnet.Length -gt '0')
     {
       Write-Error -Message ('PAT0056-NsgAlreadyExisting: ' + ($NsgFrontendSubnet | Out-String))
       Return
     }
 
-    $NsgBackendSubnet = Get-AzureRmNetworkSecurityGroup -Name $NsgBackendSubnetName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+    $NsgBackendSubnet = Get-AzNetworkSecurityGroup -Name $NsgBackendSubnetName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
     if ($NsgBackendSubnet.Length -gt '0')
     {
       Write-Error -Message ('PAT0056-NsgAlreadyExisting: ' + ($NsgBackendSubnet | Out-String))
@@ -114,11 +114,11 @@ workflow PAT0056-NetworkSecurityGroupNew
     #
     ###########################################################################################################################################################
     # Create Frontend Subnet e.g. weu-te-sub-vnt01-fe
-    $NsgFrontendSubnet = New-AzureRmNetworkSecurityGroup -Name $NsgFrontendSubnetName -ResourceGroupName $ResourceGroupName -Location $RegionName
+    $NsgFrontendSubnet = New-AzNetworkSecurityGroup -Name $NsgFrontendSubnetName -ResourceGroupName $ResourceGroupName -Location $RegionName
     Write-Verbose -Message ('PAT0056-NsgFrontSubnetCreated: ' + ($NsgFrontendSubnet | Out-String))
 
     # Create Backend Subnet e.g. weu-te-sub-vnt01-be
-    $NsgBackendSubnet = New-AzureRmNetworkSecurityGroup -Name $NsgBackendSubnetName -ResourceGroupName $ResourceGroupName -Location $RegionName
+    $NsgBackendSubnet = New-AzNetworkSecurityGroup -Name $NsgBackendSubnetName -ResourceGroupName $ResourceGroupName -Location $RegionName
     Write-Verbose -Message ('PAT0056-NsgBackendSubnetCreated: ' + ($NsgBackendSubnet | Out-String))
 
 
@@ -128,28 +128,28 @@ workflow PAT0056-NetworkSecurityGroupNew
     #
     ###########################################################################################################################################################
     # Change context to Core Subscription
-    $CoreSubscription = Get-AzureRmSubscription | Where-Object {$_.Name -match 'co'}
-    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $CoreSubscription.Name -Force
+    $CoreSubscription = Get-AzSubscription | Where-Object {$_.Name -match 'co'}
+    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $CoreSubscription.Name -Force
     Write-Verbose -Message ('PAT0056-AzureContextChanged: ' + ($AzureContext | Out-String))    
     
     # Get Workspace in Core Subscription
-    $LogAnalyticsWorkspace = Get-AzureRmOperationalInsightsWorkspace -Name $LogAnalyticsWorkspaceName -ResourceGroupName $ResourceGroupNameSecurity 
+    $LogAnalyticsWorkspace = Get-AzOperationalInsightsWorkspace -Name $LogAnalyticsWorkspaceName -ResourceGroupName $ResourceGroupNameSecurity 
     Write-Verbose -Message ('PAT0056-LogAnalyticsWorkspace: ' + ($LogAnalyticsWorkspace | Out-String))
     Write-Verbose -Message ('PAT0056-NsgFrontendSubnet: ' + ($NsgFrontendSubnet | Out-String))
     Write-Verbose -Message ('PAT0056-NsgBackendSubnet: ' + ($NsgBackendSubnet | Out-String))
 
     # Change context back to Subscription to be built
-    $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionCode}
-    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode}
+    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0056-AzureContextChanged: ' + ($AzureContext | Out-String))
 
     # Connect NSG to Log Analytics Workspace
-    $Result = Set-AzureRmDiagnosticSetting -ResourceId $NsgFrontendSubnet.Id -WorkspaceId $LogAnalyticsWorkspace.ResourceId -Enabled $true `
-                                           -Categories 'NetworkSecurityGroupEvent','NetworkSecurityGroupRuleCounter'
+    $Result = Set-AzDiagnosticSetting -ResourceId $NsgFrontendSubnet.Id -WorkspaceId $LogAnalyticsWorkspace.ResourceId -Enabled $true `
+                                      -Category NetworkSecurityGroupEvent, NetworkSecurityGroupRuleCounter
     Write-Verbose -Message ('PAT0056-NsgFrontendSubnetAddedToLogAnalyticsWorkspace: ' + ($Result | Out-String))
 
-    $Result = Set-AzureRmDiagnosticSetting -ResourceId $NsgBackendSubnet.Id -WorkspaceId $LogAnalyticsWorkspace.ResourceId -Enabled $true `
-                                           -Categories 'NetworkSecurityGroupEvent','NetworkSecurityGroupRuleCounter'
+    $Result = Set-AzDiagnosticSetting -ResourceId $NsgBackendSubnet.Id -WorkspaceId $LogAnalyticsWorkspace.ResourceId -Enabled $true `
+                                      -Category 'NetworkSecurityGroupEvent','NetworkSecurityGroupRuleCounter'
     Write-Verbose -Message ('PAT0056-NsgBackendSubnetAddedToLogAnalyticsWorkspace: ' + ($Result | Out-String))
   
 
@@ -163,11 +163,11 @@ workflow PAT0056-NetworkSecurityGroupNew
     Write-Verbose -Message ('PAT0056-TagsToWrite: ' + ($Tags | Out-String))
 
     # NSGs
-    $Result = Set-AzureRmResource -Name $NsgFrontendSubnetName -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.Network/networkSecurityGroups' `
+    $Result = Set-AzResource -Name $NsgFrontendSubnetName -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.Network/networkSecurityGroups' `
                                   -Tag $Tags -Force
     Write-Verbose -Message ('PAT0056-NsgFrontendSubnetTagged: ' + ($NsgFrontendSubnetName))
     
-    $Result = Set-AzureRmResource -Name $NsgBackendSubnetName -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.Network/networkSecurityGroups' `
+    $Result = Set-AzResource -Name $NsgBackendSubnetName -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.Network/networkSecurityGroups' `
                                   -Tag $Tags -Force
     Write-Verbose -Message ('PAT0056-NsgBackendSubnetTagged: ' + ($NsgBackendSubnetName))
 

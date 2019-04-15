@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Imports tags from an Excel document created with TEC0001. This will overwrite all existing tags. 
 # 
 # Output:         None
@@ -29,7 +29,7 @@ workflow TEC0002-TagImport
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.Resources, AzureRM.Storage
+    $Result = Import-Module Az.Resources, Az.Storage
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -44,8 +44,8 @@ workflow TEC0002-TagImport
     #
     #############################################################################################################################################################
     $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName -Verbose:$false
-    $StorageAccount = Get-AzureRmResource | Where-Object {$_.Name -eq $StorageAccountName}
-    $StorageAccountKey = (Get-AzureRMStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
+    $StorageAccount = Get-AzResource | Where-Object {$_.Name -eq $StorageAccountName}
+    $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
     $StorageAccountKey = ConvertTo-SecureString -String $StorageAccountKey -AsPlainText -Force
     $Credential = New-Object System.Management.Automation.PSCredential -ArgumentList "Azure\$StorageAccountName", $StorageAccountKey
     $Result = New-PSDrive -Name T -PSProvider FileSystem -Root "\\$StorageAccountName.file.core.windows.net\tagexport" -Credential $Credential
@@ -57,8 +57,8 @@ workflow TEC0002-TagImport
     #
     #############################################################################################################################################################
     $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
-    $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionShortName} 
-    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionShortName} 
+    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('SOL0150-AzureContext: ' + ($AzureContext | Out-String))
       
     # Read tags from Excel and write to Azure
@@ -102,11 +102,11 @@ workflow TEC0002-TagImport
       $TagsNew.Remove('KeyRgName')
       if ($TagsExcel.KeyType -eq 'ResourceGroup')
       {
-        Set-AzureRmResourceGroup -Name $TagsExcel.KeyRgName -Tag $TagsNew
+        Set-AzResourceGroup -Name $TagsExcel.KeyRgName -Tag $TagsNew
       }
       else
       {
-        Set-AzureRmResource -Name $TagsExcel.KeyName -ResourceGroupName $TagsExcel.KeyRgName -ResourceType $TagsExcel.KeyType -Tag $TagsNew -Force
+        Set-AzResource -Name $TagsExcel.KeyName -ResourceGroupName $TagsExcel.KeyRgName -ResourceType $TagsExcel.KeyType -Tag $TagsNew -Force
       }
       $RowNumber++
     }

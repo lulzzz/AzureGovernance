@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Used to import an individual Azure Policy from GitHub into the selected Subscription. 
 # 
 # Output:         None
@@ -30,7 +30,7 @@ workflow TEC0014-PolicyImport
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.profile, AzureRM.Resources
+    $Result = Import-Module Az.Accounts, Az.Resources
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -48,8 +48,8 @@ workflow TEC0014-PolicyImport
     #
     #############################################################################################################################################################
     $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
-    $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionShortName} 
-    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionShortName} 
+    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('TEC0014-AzureContext: ' + ($AzureContext | Out-String))    
 
 
@@ -73,7 +73,7 @@ workflow TEC0014-PolicyImport
     # Import Policy from GitHub
     #  
     ###########################################################################################################################################################
-    $Result = New-AzureRmPolicyDefinition -Name $Metadata.name `
+    $Result = New-AzPolicyDefinition -Name $Metadata.name `
                                 -DisplayName $Metadata.displayname `
                                 -Description $Metadata.description `
                                 -Policy "https://raw.githubusercontent.com$GitHubRepo/master/Policies/$PolicyName.rule.json" `

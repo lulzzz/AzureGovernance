@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Creates a Resource Group in a single or multiple Regions. Applies Policies and assigns Contributor and Reader roles to the provided AAD Security Groups.  
 # The Policy 'Allowed Locations' can be set to 0-6 Regions in accordance with the Policy set on Subscription level. 
 #
@@ -29,7 +29,7 @@ workflow SOL0011-ResourceGroupNew
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.Resources
+    $Result = Import-Module Az.Resources
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -139,7 +139,11 @@ workflow SOL0011-ResourceGroupNew
     # Create Resource Groups
     #
     ###########################################################################################################################################################
-    $ResourceGroupName = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual $ResourceGroupNameIndividual `                                                       -IamContributorGroupName $IamContributorGroupName -IamReaderGroupName $IamReaderGroupName `                                                       -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `                                                       -RegionCode (($Region -Split(','))[1]) `                                                       -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact
+    $ResourceGroupName = PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual $ResourceGroupNameIndividual `
+                                                       -IamContributorGroupName $IamContributorGroupName -IamReaderGroupName $IamReaderGroupName `
+                                                       -SubscriptionCode $SubscriptionCode -RegionName (($Region -Split(','))[0]) `
+                                                       -RegionCode (($Region -Split(','))[1]) `
+                                                       -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact
     Write-Verbose -Message ('SOL0011-ResourceGroupCreated: ' + ($ResourceGroupName))
 
     
@@ -154,7 +158,7 @@ workflow SOL0011-ResourceGroupNew
       $Region = $Using:Region
 
       # Get Policy
-      $Policy = Get-AzureRmPolicyDefinition | Where-Object {$_.Properties.DisplayName -eq 'Allowed locations'}
+      $Policy = Get-AzPolicyDefinition | Where-Object {$_.Properties.DisplayName -eq 'Allowed locations'}
 
       # Requires nested Hashtable with Region in 'westeurope' format
       if ($Region -match 'Europe')
@@ -176,8 +180,8 @@ workflow SOL0011-ResourceGroupNew
       Write-Verbose -Message ('SOL0011-AllowedLocation: ' + ($Locations | Out-String))
 
       # Assign Policy
-      $Result = New-AzureRmPolicyAssignment -Name $Policy.Properties.Displayname -PolicyDefinition $Policy `
-                                            -Scope ((Get-AzureRmResourceGroup -Name $ResourceGroupName).ResourceId) `
+      $Result = New-AzPolicyAssignment -Name $Policy.Properties.Displayname -PolicyDefinition $Policy `
+                                            -Scope ((Get-AzResourceGroup -Name $ResourceGroupName).ResourceId) `
                                             -PolicyParameterObject $Locations
       Write-Verbose -Message ('SOL0011-ResourceGroupPoliciesApplied: ' + ($ResourceGroupName))
     }

@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Setting the Azure context including the storage context for the core storage account. The context setting is attempted in an endless loop of suspend/resume 
 # of this runbook.
 #
@@ -22,7 +22,7 @@ workflow TEC0005-AzureContextSet
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.Storage, Azure.Storage, AzureRM.profile
+    $Result = Import-Module Az.Storage, Az.Storage, Az.Accounts
     $VerbosePreference = 'Continue'
   }
   
@@ -35,12 +35,15 @@ workflow TEC0005-AzureContextSet
       $SubscriptionName = Get-AutomationVariable -Name VAR-AUTO-SubscriptionName
       $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName
       $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser
-      $Result = Disconnect-AzureRmAccount -ErrorAction SilentlyContinue
-      $AzureAccount = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $SubscriptionName -Force
-      $StorageAccount = Get-AzureRmStorageAccount | Where-Object -FilterScript {$_.StorageAccountName -eq "$StorageAccountName"}
+      $Result = DisConnect-AzAccount -ErrorAction SilentlyContinue
+      $AzureAccount = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $SubscriptionName -Force
+      $StorageAccount = Get-AzStorageAccount | Where-Object -FilterScript {$_.StorageAccountName -eq "$StorageAccountName"}
+      $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.StorageAccountName).Value[0]
       try
       {
-        $StorageContext = Set-AzureRmCurrentStorageAccount -StorageAccountName $StorageAccountName -ResourceGroupName $StorageAccount.ResourceGroupName}
+        
+        $StorageContext = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
+      }
       catch
       {
         # No catch - try/catch used to supress error messages in case the Core Storage Account is not (yet) available.
@@ -70,8 +73,8 @@ workflow TEC0005-AzureContextSet
     }
     else
     {
-      $AzureRmContext = Get-AzureRmContext
-      Write-Verbose -Message ('TEC0005-SetAzureContext: ' + ($AzureRmContext | Out-String))
+      $AzContext = Get-AzContext
+      Write-Verbose -Message ('TEC0005-SetAzureContext: ' + ($AzContext | Out-String))
     }
   }
   until ($ReturnCode -eq 'Success')

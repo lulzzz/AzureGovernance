@@ -35,7 +35,7 @@ workflow XOL0012-ResourceGroupNew
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.profile, AzureRM.Resources, Microsoft.PowerShell.Utility
+    $Result = Import-Module Az.Accounts, Az.Resources, Microsoft.PowerShell.Utility
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -57,7 +57,7 @@ workflow XOL0012-ResourceGroupNew
     #
     #############################################################################################################################################################
     $RoleNameGuid = New-Guid
-    $TenantId = ((Get-AzureRmContext).Tenant).Id
+    $TenantId = ((Get-AzContext).Tenant).Id
 
     Write-Verbose -Message ('TEC0005-RoleNameGuid: ' + ($RoleNameGuid))
 
@@ -67,7 +67,7 @@ workflow XOL0012-ResourceGroupNew
     # Deploy Template
     #
     #############################################################################################################################################################
-    $Result = New-AzureRmDeployment -Location $Location -ResourceGroupNameIndividual $ResourceGroupNameIndividual -Region $Region -SubscriptionName $SubscriptionName `
+    $Result = New-AzDeployment -Location $Location -ResourceGroupNameIndividual $ResourceGroupNameIndividual -Region $Region -SubscriptionName $SubscriptionName `
                                     -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact `
                                     -AadId ffea2e1f-0679-454f-8820-65a0186028b8 -BuiltInRoleType Reader `
                                     -RoleNameGuid $RoleNameGuid `

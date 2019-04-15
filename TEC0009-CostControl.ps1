@@ -1,4 +1,4 @@
-ï»¿###############################################################################################################################################################
+###############################################################################################################################################################
 # Compares the actual cost accumulated on a resource with the estimated cost value captured in the Tag of the Resource Group.
 # The resource data is retrieved based on the $StartDateTime and $EndDateTime, for the Resource Groups current data is retrieved. This means that Resources
 # in deleted Resource Groups are supplied, but not the Resource Group itself. 
@@ -8,7 +8,7 @@
 # 
 # Output:         None
 #
-# Requirements:   AzureRM.profile, AzureRM.Resources, AzureRM.UsageAggregates, Microsoft.ADAL.PowerShell - this avoids loading the ADAL libraries
+# Requirements:   Az.Accounts, Az.Resources, Az.UsageAggregates, Microsoft.ADAL.PowerShell - this avoids loading the ADAL libraries
 #
 # Template:       None
 #   
@@ -40,7 +40,7 @@ workflow TEC0009-CostControl
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.profile, AzureRM.Resources, AzureRM.UsageAggregates, Microsoft.ADAL.PowerShell
+    $Result = Import-Module Az.Accounts, Az.Resources, Az.UsageAggregates, Microsoft.ADAL.PowerShell
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -79,7 +79,7 @@ workflow TEC0009-CostControl
     #
     ###########################################################################################################################################################
     # Set usage parameters
-    $Subscriptions = Get-AzureRmSubscription
+    $Subscriptions = Get-AzSubscription
     $Granularity = 'Hourly'                                                                                                                                      # Can be Hourly or Daily
     $ShowDetails = $true
     $StartDateTime = [string](get-date -Format yyyy) + '-' + [string](get-date -Format MM) + '-01T00:00:00+00:00'
@@ -93,7 +93,7 @@ workflow TEC0009-CostControl
     # Get usage records
     foreach ($Subscription in $Subscriptions)
     {
-      $Result = Add-AzureRmAccount -Credential $Credentials -Subscription $Subscription.Name
+      $Result = Connect-AzAccount -Credential $Credentials -Subscription $Subscription.Name
       Write-Verbose -Message ('TEC0009-RetrieveUsageForSubscription: ' + ($Result | Out-String))
        
       # Get first 10000 records, try for 2 x 15 minutes and then abort
@@ -154,10 +154,10 @@ workflow TEC0009-CostControl
     # Acquire token
     $AccessToken = Get-ADALAccessToken -AuthorityName $AdTenant -ClientId $AadApplicationId -ResourceId 'https://management.core.windows.net/' `
                                        -UserName $Credentials.UserName -Password $Credentials.GetNetworkCredential().password                                    # Requires password as string
-Â 
+ 
     # Execute call to get Rate Cards - Select one of the subscriptions assume they all use the same Currency/Locale/RegionInfo ???
     $Filter = "OfferDurableId eq '$OfferDurableId' and Currency eq '$Currency' and Locale eq '$Locale' and RegionInfo eq '$RegionInfo'"
-    $Subscription = Get-AzureRmSubscription | Select-Object -First 1
+    $Subscription = Get-AzSubscription | Select-Object -First 1
     $Uri = 'https://management.azure.com/subscriptions/' + $Subscription.Id + '/providers/Microsoft.Commerce/RateCard?api-version=2016-08-31-preview&$filter=' + $Filter
     $Header = @{Authorization = 'Bearer ' + $AccessToken}
     $RateCards = Invoke-RestMethod -Uri $Uri `
@@ -173,7 +173,7 @@ workflow TEC0009-CostControl
       $RateCard | Where-Object {$RateCardsRequired -contains $RateCard.MeterID}
     }
 
-    Write-Verbose -Message ('TEC0009-RateCardsUsed: ' + $RateCardsMeters.Count)Â 
+    Write-Verbose -Message ('TEC0009-RateCardsUsed: ' + $RateCardsMeters.Count) 
 
 
     ###########################################################################################################################################################
@@ -191,14 +191,23 @@ workflow TEC0009-CostControl
         $ResourceName = ((($Usage.InstanceData -split '/')[8] -split '","')[0]).ToLower()
         $Meter = ($RateCardsMeters | Where-Object {$_.MeterId -eq $Usage.MeterId} | Select-Object -Property IncludedQuantity, MeterRates, MeterId, MeterName)
   
-        [PSCustomObject]@{ResourceGroupName = $ResourceGroupName; `                          ResourceName = $ResourceName; `                          UsageStartTime = $Usage.UsageStartTime; `                          UsageEndTime = $Usage.UsageEndTime; `                          UsageQuantity = $Usage.Quantity; `                          UsageUnit = $Usage.Unit; `                          MeterName = $Meter.MeterName; `
-                          MeterIncludedQuantity = $Meter.IncludedQuantity; `                          MeterRates = $Meter.MeterRates; `                          Tag = $TagValue; `
-                          Uri = $Uri; `                          MeterId = $Meter.MeterId; `
+        [PSCustomObject]@{ResourceGroupName = $ResourceGroupName; `
+                          ResourceName = $ResourceName; `
+                          UsageStartTime = $Usage.UsageStartTime; `
+                          UsageEndTime = $Usage.UsageEndTime; `
+                          UsageQuantity = $Usage.Quantity; `
+                          UsageUnit = $Usage.Unit; `
+                          MeterName = $Meter.MeterName; `
+                          MeterIncludedQuantity = $Meter.IncludedQuantity; `
+                          MeterRates = $Meter.MeterRates; `
+                          Tag = $TagValue; `
+                          Uri = $Uri; `
+                          MeterId = $Meter.MeterId; `
                           Grouping = $Uri + $Meter.MeterId; `
         }
       } 
     }
-    Write-Verbose -Message ('TEC0009-CombinedUsageAndRateCardRecords: ' + $Combined.Count)Â 
+    Write-Verbose -Message ('TEC0009-CombinedUsageAndRateCardRecords: ' + $Combined.Count) 
 
 
     ###########################################################################################################################################################
@@ -215,12 +224,19 @@ workflow TEC0009-CostControl
     {
       $Record = ($Combined | Where-Object {$_.Grouping -eq $UsageTotal.Name}) | Select-Object -First 1
 
-      [PSCustomObject]@{ResourceGroupName = $Record.ResourceGroupName; `                        ResourceName = $Record.ResourceName; `                        UsageQuantityTotal = $UsageTotal.UsageTotal; `                        UsageUnit = $Record.UsageUnit; `                        MeterName = $Record.MeterName
-                        MeterIncludedQuantity = $Record.MeterIncludedQuantity; `                        MeterRates = $Record.MeterRates; `                        Tag = $Record.Tag; `
-                        Uri = $Record.Uri; `                        MeterId = $Record.MeterId; `
+      [PSCustomObject]@{ResourceGroupName = $Record.ResourceGroupName; `
+                        ResourceName = $Record.ResourceName; `
+                        UsageQuantityTotal = $UsageTotal.UsageTotal; `
+                        UsageUnit = $Record.UsageUnit; `
+                        MeterName = $Record.MeterName
+                        MeterIncludedQuantity = $Record.MeterIncludedQuantity; `
+                        MeterRates = $Record.MeterRates; `
+                        Tag = $Record.Tag; `
+                        Uri = $Record.Uri; `
+                        MeterId = $Record.MeterId; `
       }    
     }
-    Write-Verbose -Message ('TEC0009-CombinedSummarizedUsageAndRateCardRecords: ' + $CombinedUsageTotals.Count)Â 
+    Write-Verbose -Message ('TEC0009-CombinedSummarizedUsageAndRateCardRecords: ' + $CombinedUsageTotals.Count) 
 
 
     ###########################################################################################################################################################
@@ -254,12 +270,29 @@ workflow TEC0009-CostControl
       if ($CombinedUsageTotal.UsageQuantityTotal - $CombinedUsageTotal.MeterIncludedQuantity -le 0)
       {
         0
-      }      else      {      ($CombinedUsageTotal.UsageQuantityTotal - $CombinedUsageTotal.MeterIncludedQuantity)       }      $Cost = $UsageCharged * $Rate      [PSCustomObject]@{ResourceGroupName = $CombinedUsageTotal.ResourceGroupName; `                        ResourceName = $CombinedUsageTotal.ResourceName; `                        UsageQuantityTotal = $CombinedUsageTotal.UsageQuantityTotal; `                        UsageUnit = $CombinedUsageTotal.UsageUnit; `                        MeterName = $CombinedUsageTotal.MeterName
-                        MeterIncludedQuantity = $CombinedUsageTotal.MeterIncludedQuantity; `                        UsageCharged = $UsageCharged; `                        MeterRates = $MeterRecord.MeterRates; `                        Rate = $Rate; `                        Cost = $Cost; `                        MeterRecordNps = $MeterRecordNps; `                        MeterRecordNp = $MeterRecordNp; `
+      }
+      else
+      {
+      ($CombinedUsageTotal.UsageQuantityTotal - $CombinedUsageTotal.MeterIncludedQuantity) 
+      }
+      $Cost = $UsageCharged * $Rate
+
+      [PSCustomObject]@{ResourceGroupName = $CombinedUsageTotal.ResourceGroupName; `
+                        ResourceName = $CombinedUsageTotal.ResourceName; `
+                        UsageQuantityTotal = $CombinedUsageTotal.UsageQuantityTotal; `
+                        UsageUnit = $CombinedUsageTotal.UsageUnit; `
+                        MeterName = $CombinedUsageTotal.MeterName
+                        MeterIncludedQuantity = $CombinedUsageTotal.MeterIncludedQuantity; `
+                        UsageCharged = $UsageCharged; `
+                        MeterRates = $MeterRecord.MeterRates; `
+                        Rate = $Rate; `
+                        Cost = $Cost; `
+                        MeterRecordNps = $MeterRecordNps; `
+                        MeterRecordNp = $MeterRecordNp; `
                         Tag = $CombinedUsageTotal.Tag; `
       }
     }
-    Write-Verbose -Message ('TEC0009-CombinedSummarizedUsageAndRateCardRecordsChf: ' + $CombinedUsageTotalsChf.Count)Â 
+    Write-Verbose -Message ('TEC0009-CombinedSummarizedUsageAndRateCardRecordsChf: ' + $CombinedUsageTotalsChf.Count) 
 
 
     ###########################################################################################################################################################
@@ -275,10 +308,13 @@ workflow TEC0009-CostControl
     {
       $Record = ($CombinedUsageTotalsChf | Where-Object {$_.ResourceName -eq $SumCombinedUsageTotalChf.Name}) | Select-Object -First 1
 
-      [PSCustomObject]@{ResourceGroupName = $Record.ResourceGroupName; `                        ResourceName = $Record.ResourceName; `                        Cost = $SumCombinedUsageTotalChf.SumCost; `                        Tag = $Record.Tag; `
+      [PSCustomObject]@{ResourceGroupName = $Record.ResourceGroupName; `
+                        ResourceName = $Record.ResourceName; `
+                        Cost = $SumCombinedUsageTotalChf.SumCost; `
+                        Tag = $Record.Tag; `
       }    
     }
-    Write-Verbose -Message ('TEC0009-RecordsToBeWrittenToLogAnalytics: ' + $FinalResult.Count)Â 
+    Write-Verbose -Message ('TEC0009-RecordsToBeWrittenToLogAnalytics: ' + $FinalResult.Count) 
 
 
     ###########################################################################################################################################################
@@ -303,9 +339,9 @@ workflow TEC0009-CostControl
     # Add Resource Groups to body - required as Tag for budget is on RG level and RG are no supplied with billing data
     foreach ($Subscription in $Subscriptions)
     {
-      $Result = Add-AzureRmAccount -Credential $Credentials -Subscription $Subscription.Name
+      $Result = Connect-AzAccount -Credential $Credentials -Subscription $Subscription.Name
       Write-Verbose -Message ('TEC0009-RetrieveResourceGroupsForSubscription: ' + ($Result | Out-String))
-      $ResourceGroups = Get-AzureRmResourceGroup
+      $ResourceGroups = Get-AzResourceGroup
     
       foreach ($ResourceGroup in $ResourceGroups)
       {                        `

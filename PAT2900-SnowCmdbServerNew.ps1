@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Creating the required CIs in the ServiceNow CMDB. This includes cmdb_ci_win/linux_server and in the case of an Availability Set the corresponding 
 # cmdb_ci_cluster and cmdb_ci_cluster_node. In addition, all CIs are connected to the cmdb_ci_environment using the relationship table cmdb_environment_to_ci.
 #
@@ -40,7 +40,7 @@ workflow PAT2900-SnowCmdbServerNew
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.Compute, AzureRM.Resources, CimCmdlets
+    $Result = Import-Module Az.Compute, Az.Resources, CimCmdlets
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -61,10 +61,10 @@ workflow PAT2900-SnowCmdbServerNew
   $Manufacturer = 'Microsoft Corporation'
   $ModelId = 'Virtual Machine'
   $DeploymentMethod = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion
-  $ResourceGroupName = (Get-AzureRmResource | Where-Object {$_.Name -eq $ServerName}).ResourceGroupName
+  $ResourceGroupName = (Get-AzResource | Where-Object {$_.Name -eq $ServerName}).ResourceGroupName
 
   # Determine if Windows or Linux server
-  if (((Get-AzureRmVm -Name $ServerName -ResourceGroup $ResourceGroupName).OSProfile.WindowsConfiguration).Count -ne 0)
+  if (((Get-AzVM -Name $ServerName -ResourceGroup $ResourceGroupName).OSProfile.WindowsConfiguration).Count -ne 0)
   {
     $ServerCi = 'cmdb_ci_win_server'
     $SerialNumber = (New-CimSession -ComputerName $PrivateIpAddress -Credential $CredentialsAutomationUser | `

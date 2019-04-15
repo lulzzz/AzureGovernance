@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Creates a default VNET (e.g. weu-te-vnt-01) in the '-rsg-network-01' Resource Group, IP ranges are retrieved from the Azure Table Ipam
 # Creates an empty Route Table for the Frontend Subnet (e.g. weu-te-rot-routetable-01). 
 # Connects the Subnets (weu-te-sub-vnt01-fe / weu-te-sub-vnt01-be) to the existing NSGs (weu-te-nsg-vnt01fe / weu-te-nsg-vnt01be).
@@ -20,7 +20,7 @@ workflow PAT0050-NetworkVnetNew
 
   param
 	(
-    [Parameter(Mandatory=$false)][String] $SubscriptionCode = 'te',
+    [Parameter(Mandatory=$false)][String] $SubscriptionCode = 'co',
     [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
     [Parameter(Mandatory=$false)][String] $RegionCode = 'weu',
     [Parameter(Mandatory=$false)][String] $Contact = 'contact@customer.com'                                                                                     # Tagging
@@ -34,7 +34,7 @@ workflow PAT0050-NetworkVnetNew
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.Network, AzureRM.profile, AzureRM.Resources, AzureRmStorageTable
+    $Result = Import-Module Az.Network, Az.Accounts, Az.Resources, AzTable
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -71,6 +71,12 @@ workflow PAT0050-NetworkVnetNew
     $NsgBackendSubnetName = $RegionCode + '-' + $SubscriptionCode + '-nsg-vnt01be'                                                                               # e.g. weu-te-nsg-vnt01be
     $ResourceGroupNameNsg = 'aaa-' + $SubscriptionCode + '-rsg-security-01'                                                                                      # e.g. weu-te-rsg-security-01
 
+    # Set Storage Context
+    $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName
+    $StorageAccount = Get-AzStorageAccount | Where-Object -FilterScript {$_.StorageAccountName -eq "$StorageAccountName"}
+    $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.StorageAccountName).Value[0]
+    $StorageContext = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
+
     Write-Verbose -Message ('PAT0050-SubscriptionCode: ' + ($SubscriptionCode))
     Write-Verbose -Message ('PAT0050-RegionName: ' + ($RegionName))
     Write-Verbose -Message ('PAT0050-Contact: ' + ($Contact))
@@ -90,14 +96,14 @@ workflow PAT0050-NetworkVnetNew
     # Retrieve available VNET and associated Subnet IP address ranges form Azure Table Ipam in the Core Storage Account
     #
     ###########################################################################################################################################################
-    $Table = Get-AzureStorageTable -Name Ipam
+    $Table = (Get-AzStorageTable -Name Ipam -Context $StorageContext).CloudTable
 
     # Select first available VNET Range
-    $VnetIpRange = (Get-AzureStorageTableRowByColumnName -table $Table -columnName VnetName -value $null -operator Equal | Sort-Object PartitionKey | `
+    $VnetIpRange = (Get-AzTableRowByColumnName -table $Table -columnName VnetName -value $null -operator Equal | Sort-Object PartitionKey | `
                     Select-Object -First 1).VnetIpRange
 
     # Get Subnet IP ranges for selected VNET
-    $SubnetIpRange = (Get-AzureStorageTableRowByColumnName -table $Table -columnName VnetIpRange -value $VnetIpRange -operator Equal | `
+    $SubnetIpRange = (Get-AzTableRowByColumnName -table $Table -columnName VnetIpRange -value $VnetIpRange -operator Equal | `
                       Sort-Object SubnetIpRange | Select-Object -Property SubnetIpRange -Unique).SubnetIpRange
     $FrontendSubnetIpRange = $SubnetIpRange[0]
     $BackendSubnetIpRange = $SubnetIpRange[1]
@@ -112,9 +118,9 @@ workflow PAT0050-NetworkVnetNew
     # Change to Target Subscription
     #
     ###########################################################################################################################################################
-    $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
-    $Result = Disconnect-AzureRmAccount
-    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
+    $Result = DisConnect-AzAccount
+    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0050-AzureContextChanged: ' + ($AzureContext | Out-String))
 
 
@@ -123,7 +129,7 @@ workflow PAT0050-NetworkVnetNew
     # Check if VNET already exists
     #
     ###########################################################################################################################################################
-    $Vnet = Get-AzureRmVirtualNetwork -Name $VnetName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+    $Vnet = Get-AzVirtualNetwork -Name $VnetName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
     if ($Vnet.Length -gt '0')
     {
       Write-Error -Message ('PAT0050-VnetAlreadyExisting: ' + ($Vnet | Out-String))
@@ -137,11 +143,11 @@ workflow PAT0050-NetworkVnetNew
     #
     ###########################################################################################################################################################
     # Get NSG for Frontend Subnet
-    $NsgFrontendSubnet = Get-AzureRmNetworkSecurityGroup -Name $NsgFrontendSubnetName -ResourceGroupName $ResourceGroupNameNsg
+    $NsgFrontendSubnet = Get-AzNetworkSecurityGroup -Name $NsgFrontendSubnetName -ResourceGroupName $ResourceGroupNameNsg
     Write-Verbose -Message ('PAT0050-NsgFrontSubnetCreated: ' + ($NsgFrontendSubnet | Out-String))
 
     # Get NSG for Backend Subnet
-    $NsgBackendSubnet = Get-AzureRmNetworkSecurityGroup -Name $NsgBackendSubnetName -ResourceGroupName $ResourceGroupNameNsg
+    $NsgBackendSubnet = Get-AzNetworkSecurityGroup -Name $NsgBackendSubnetName -ResourceGroupName $ResourceGroupNameNsg
     Write-Verbose -Message ('PAT0050-NsgBackendSubnetCreated: ' + ($NsgBackendSubnet | Out-String))
 
 
@@ -150,24 +156,24 @@ workflow PAT0050-NetworkVnetNew
     # Create Route Table to be assigned to Frontend Subnet
     #
     ###########################################################################################################################################################
-    $RouteTable = New-AzureRmRouteTable -Name $RouteTableName -ResourceGroupName $ResourceGroupName -Location $RegionName
+    $RouteTable = New-AzRouteTable -Name $RouteTableName -ResourceGroupName $ResourceGroupName -Location $RegionName
     Write-Verbose -Message ('PAT0050-RouteTableCreated: ' + ($RouteTable | Out-String))
 
        
     ###########################################################################################################################################################
     #  
-    # Create VNET with Subnets and a Service Endpoint for Azure Storage (Microsoft.Storage) - assign Route Table to Frontend Subnet
+    # Create VNET with Subnets and a Service Endpoint for Az.Storage (Microsoft.Storage) - assign Route Table to Frontend Subnet
     #
     ###########################################################################################################################################################
-    $FrontendSubnet = New-AzureRmVirtualNetworkSubnetConfig -Name $FrontendSubnetName -AddressPrefix $FrontendSubnetIpRange -RouteTable $RouteTable `
+    $FrontendSubnet = New-AzVirtualNetworkSubnetConfig -Name $FrontendSubnetName -AddressPrefix $FrontendSubnetIpRange -RouteTable $RouteTable `
                                                             -NetworkSecurityGroup $NsgFrontendSubnet -ServiceEndpoint Microsoft.Storage
     Write-Verbose -Message ('PAT0050-FrontendSubnetCreated: ' + ($FrontendSubnet | Out-String))
 
-    $BackendSubnet  = New-AzureRmVirtualNetworkSubnetConfig -Name $BackendSubnetName  -AddressPrefix $BackendSubnetIpRange `
+    $BackendSubnet  = New-AzVirtualNetworkSubnetConfig -Name $BackendSubnetName  -AddressPrefix $BackendSubnetIpRange `
                                                             -NetworkSecurityGroup $NsgBackendSubnet -ServiceEndpoint Microsoft.Storage
     Write-Verbose -Message ('PAT0050-BackendSubnetCreated: ' + ($BackendSubnet | Out-String))
 
-    $Vnet = New-AzureRmVirtualNetwork -Name $VnetName -ResourceGroupName $ResourceGroupName -Location $RegionName -AddressPrefix $VnetIpRange `
+    $Vnet = New-AzVirtualNetwork -Name $VnetName -ResourceGroupName $ResourceGroupName -Location $RegionName -AddressPrefix $VnetIpRange `
                                       -Subnet $FrontendSubnet, $BackendSubnet
     Write-Verbose -Message ('PAT0050-VnetCreated: ' + ($Vnet | Out-String))
 
@@ -182,12 +188,12 @@ workflow PAT0050-NetworkVnetNew
     Write-Verbose -Message ('PAT0050-TagsToWrite: ' + ($Tags | Out-String))
 
     # VNET
-    $Result = Set-AzureRmResource -Name $VnetName -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.Network/virtualNetworks' `
+    $Result = Set-AzResource -Name $VnetName -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.Network/virtualNetworks' `
                                   -Tag $Tags -Force
     Write-Verbose -Message ('PAT0050-VnetTagged: ' + ($VnetName))
 
     # Route Table
-    $Result = Set-AzureRmResource -Name $RouteTableName -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.Network/routeTables' `
+    $Result = Set-AzResource -Name $RouteTableName -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.Network/routeTables' `
                                   -Tag $Tags -Force
     Write-Verbose -Message ('PAT0050-RouteTableTagged: ' + ($VnetName))
 
@@ -197,21 +203,20 @@ workflow PAT0050-NetworkVnetNew
     # Reserve VNET and associated Subnet IP address ranges retrieved above
     #
     ###########################################################################################################################################################
-    TEC0005-AzureContextSet
-    $TableEntries = Get-AzureStorageTableRowByColumnName -table $Table -columnName SubnetIpRange -value $FrontendSubnetIpRange -operator Equal
+    $TableEntries = Get-AzTableRow -table $Table -columnName SubnetIpRange -value $FrontendSubnetIpRange -operator Equal
     foreach ($TableEntry in $TableEntries)
     {
       $TableEntry.VnetName = $VnetName
       $TableEntry.SubnetName = $FrontendSubnetName
-      $Result = $TableEntry | Update-AzureStorageTableRow -table $Table
+      $Result = $TableEntry | Update-AzTableRow -table $Table
     }
 
-    $TableEntries = Get-AzureStorageTableRowByColumnName -table $Table -columnName SubnetIpRange -value $BackendSubnetIpRange -operator Equal
+    $TableEntries = Get-AzTableRow -table $Table -columnName SubnetIpRange -value $BackendSubnetIpRange -operator Equal
     foreach ($TableEntry in $TableEntries)
     {
       $TableEntry.VnetName = $VnetName
       $TableEntry.SubnetName = $BackendSubnetName
-      $Result = $TableEntry | Update-AzureStorageTableRow -table $Table
+      $Result = $TableEntry | Update-AzTableRow -table $Table
     }
 
 

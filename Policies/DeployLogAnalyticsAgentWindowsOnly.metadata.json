@@ -1,0 +1,5 @@
+{
+    "name": "Deploy Log Analytics Agent Windows Only",
+    "displayname": "Deploy Log Analytics Agent Windows Only",
+    "description": "Determine all Windows Server VMs that are not connected to a Log Analytics workspace. Linux and Windows 10 are excluded. Servers in a failed state are not reported if they don't have the agent installed. Deploy the Log Analytics extension to servers that are missing it. "
+}

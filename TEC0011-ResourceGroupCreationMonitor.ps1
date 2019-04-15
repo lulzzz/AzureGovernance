@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # An Event Grid Subscription monitors the creation of a Resource Group. 
 # Once a Resource Group is created the Event Grid Subscription trigger this Runbook using a Webhook.
 # The Channel configured on the Runbook's Webhook is then used by this Runbook to send a Message to a Teams channel.

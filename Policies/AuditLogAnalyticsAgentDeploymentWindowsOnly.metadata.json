@@ -1,0 +1,5 @@
+{
+    "name": "Audit Log Analytics Agent Deployment Windows Only",
+    "displayname": "Audit Log Analytics Agent Deployment Windows Only",
+    "description": "Determine all Windows Server VMs that are not connected to a Log Analytics workspace. Linux and Windows 10 are excluded. Servers in a failed state are not reported if they don't have the agent installed."
+}

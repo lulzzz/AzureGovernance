@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Creates a Storage Account (e.g. felweutediag01s) in an existing Resource Group. Tags the Storage Accounts.
 # Configures Firewall - allow access from all Subnets in all VNETs as well as Azure Services.
 #
@@ -6,7 +6,9 @@
 #
 # Requirements:   See Import-Module in code below / Resource Group
 #
-# Template:       PAT0100-StorageAccountNew -StorageAccountNameIndividual $StorageAccountNameIndividual -ResourceGroupName $ResourceGroupName `#                                           -StorageAccountType $StorageAccountType#                                           -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode -Contact $Contact
+# Template:       PAT0100-StorageAccountNew -StorageAccountNameIndividual $StorageAccountNameIndividual -ResourceGroupName $ResourceGroupName `
+#                                           -StorageAccountType $StorageAccountType
+#                                           -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode -Contact $Contact
 #
 # Change log:
 # 1.0             Initial version 
@@ -18,8 +20,8 @@ workflow PAT0100-StorageAccountNew
 
   param
 	(
-    [Parameter(Mandatory=$false)][String] $StorageAccountNameIndividual = 'diag',
-    [Parameter(Mandatory=$false)][String] $ResourceGroupName = 'weu-te-rsg-core-01',
+    [Parameter(Mandatory=$false)][String] $StorageAccountNameIndividual = 'diagbbb',
+    [Parameter(Mandatory=$false)][String] $ResourceGroupName = 'aaa-te-rsg-core-01',
     [Parameter(Mandatory=$false)][String] $StorageAccountType = 'standard',                                                                                      # 'standard' / 'premium'
     [Parameter(Mandatory=$false)][String] $SubscriptionCode = 'te',
     [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
@@ -35,7 +37,7 @@ workflow PAT0100-StorageAccountNew
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.Network, AzureRM.profile, AzureRM.Resources, AzureRmStorageTable
+    $Result = Import-Module Az.Network, Az.Accounts, Az.Resources, AzTable
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -76,9 +78,9 @@ workflow PAT0100-StorageAccountNew
     # Change to Target Subscription
     #
     ###########################################################################################################################################################
-    $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
-    $Result = Disconnect-AzureRmAccount
-    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
+    $Result = DisConnect-AzAccount
+    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0100-AzureContextChanged: ' + ($AzureContext | Out-String))
 
 
@@ -90,8 +92,8 @@ workflow PAT0100-StorageAccountNew
     $StorageAccountName = $CustomerShortCode + $RegionCode + $SubscriptionCode + $StorageAccountNameIndividual                                                   # e.g. felweutediag01s
   
     
-    $StorageAccountExisting = Get-AzureRmStorageAccount | Where-Object {$_.StorageAccountName -like "$StorageAccountName*"} `
-                                                        | Sort-Object Name -Descending | Select-Object -First $True
+    $StorageAccountExisting = Get-AzStorageAccount | Where-Object {$_.StorageAccountName -like "$StorageAccountName*"} `
+                                                   | Sort-Object Name -Descending | Select-Object -First $True
     if ($StorageAccountExisting.Count -gt 0)                                                                                                                     # Skip if first Storage Account with this name
     {
       Write-Verbose -Message ('PAT0100-StorageAccountHighestCounter: ' + ($StorageAccountExisting.StorageAccountName))
@@ -112,7 +114,7 @@ workflow PAT0100-StorageAccountNew
     # Check if Storage Account exists and create if not
     #
     ###########################################################################################################################################################
-    $Result = Get-AzureRmStorageAccount -Name $StorageAccountName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+    $Result = Get-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
     if ($Result.Length -gt 0)
     {
       Write-Error -Message ('PAT0100-StorageAccountExisting: ' + ($StorageAccountName))
@@ -121,7 +123,7 @@ workflow PAT0100-StorageAccountNew
   
     try
     {
-      $Result = (New-AzureRmStorageAccount -Name $StorageAccountName -ResourceGroupName $ResourceGroupName -Location $RegionName -Kind StorageV2 `
+      $Result = (New-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $ResourceGroupName -Location $RegionName -Kind StorageV2 `
                                                      -SkuName ($StorageAccountType + '_LRS')).Id
       Write-Verbose -Message ('PAT0100-StorageAccountCreated: ' + ($StorageAccountName))
     }
@@ -136,22 +138,22 @@ workflow PAT0100-StorageAccountNew
     #
     # Configure Firewall - allow access from all Subnets in all VNETs as well as Azure Services
     # This is currently not implemented as Azure Automation is not Trusted Microsoft service:
-    # https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security#exceptions
+    # https://docs.microsoft.com/en-us/Az.Storage/common/storage-network-security#exceptions
     #
     ###########################################################################################################################################################
     <#
     # Deny access by default but allow Azure Services to bypass the Firewall
-    $Result = Update-AzureRMStorageAccountNetworkRuleSet -Name $StorageAccountName -ResourceGroupName $ResourceGroupName -DefaultAction Deny `
+    $Result = Update-AzStorageAccountNetworkRuleSet -Name $StorageAccountName -ResourceGroupName $ResourceGroupName -DefaultAction Deny `
                                                          -Bypass AzureServices
     Write-Verbose -Message ('PAT0100-FirewallConfigured: ' + ($Result | Out-String))
 
     # Allow access by all Subnets in all VNETs in the Subscription
-    $Vnets = Get-AzureRmVirtualNetwork
+    $Vnets = Get-AzVirtualNetwork
     foreach ($Vnet in $Vnets)
     {
       foreach ($Subnet in $Vnet.Subnets)
       {
-        $Result = Add-AzureRMStorageAccountNetworkRule -AccountName $StorageAccountName -ResourceGroupName $ResourceGroupName `
+        $Result = Add-AzStorageAccountNetworkRule -AccountName $StorageAccountName -ResourceGroupName $ResourceGroupName `
                                                        -VirtualNetworkResourceId $Subnet.Id
       }
       Write-Verbose -Message ('PAT0100-FirewallConfiguredForVnet: ' + ($Result | Out-String))
@@ -167,7 +169,7 @@ workflow PAT0100-StorageAccountNew
     $Tags = @{Contact = $Contact; Automation = $Automation}
     Write-Verbose -Message ('PAT0100-TagsToWrite: ' + ($Tags | Out-String))
 
-    $Result = Set-AzureRmResource -Name $StorageAccountName -ResourceGroupName $ResourceGroupName -ResourceType '/Microsoft.Storage/storageAccounts' `
+    $Result = Set-AzResource -Name $StorageAccountName -ResourceGroupName $ResourceGroupName -ResourceType '/Microsoft.Storage/storageAccounts' `
                                   -Tag $Tags -Force
     Write-Verbose -Message ('PAT0100-StorageAccountTagged: ' + ($StorageAccountName))
 

@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Updates an NSG by applying the selected rule set retrieved from CSV on Files on core Storage Account.  
 #
 # Output:         'Success', 'Failure'
@@ -30,7 +30,7 @@ workflow PAT0058-NetworkSecurityGroupSet
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.Network, AzureRM.profile, AzureRM.Resources, AzureRmStorageTable
+    $Result = Import-Module Az.Network, Az.Accounts, Az.Resources, AzTable
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -62,10 +62,10 @@ workflow PAT0058-NetworkSecurityGroupSet
     #
     ###########################################################################################################################################################
     $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName -Verbose:$false
-    $StorageAccount = Get-AzureRmResource | Where-Object {$_.Name -eq $StorageAccountName}
-    $StorageAccountKey = Get-AzureRMStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccountName
-    $StorageContext = New-AzureStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey.Value[0] 
-    $Result = Get-AzureStorageFileContent -Context $StorageContext -ShareName nsg-rule-set -Path NsgRuleSets.csv -Destination D:\ -Force -Verbose:$false
+    $StorageAccount = Get-AzResource | Where-Object {$_.Name -eq $StorageAccountName}
+    $StorageAccountKey = Get-AzStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccountName
+    $StorageContext = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey.Value[0] 
+    $Result = Get-AzStorageFileContent -Context $StorageContext -ShareName nsg-rule-set -Path NsgRuleSets.csv -Destination D:\ -Force -Verbose:$false
     $NsgRuleSets = Import-Csv -Path  D:\NsgRuleSets.csv 
     $NsgRuleSet = $NsgRuleSets | Where-Object {$_.RuleSet -match $RuleSetName}
     Write-Verbose -Message ('PAT0058-RulesToApply: ' + ($NsgRuleSet | Out-String))
@@ -76,9 +76,9 @@ workflow PAT0058-NetworkSecurityGroupSet
     # Change to Target Subscription
     #
     ###########################################################################################################################################################
-    $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
-    $Result = Disconnect-AzureRmAccount
-    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
+    $Result = DisConnect-AzAccount
+    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0058-AzureContextChanged: ' + ($AzureContext | Out-String))
 
     
@@ -87,9 +87,9 @@ workflow PAT0058-NetworkSecurityGroupSet
     # Check that NSG exists
     #
     ###########################################################################################################################################################
-    $Nsg = Get-AzureRmResource | Where-Object {$_.name -eq $NsgName}
+    $Nsg = Get-AzResource | Where-Object {$_.name -eq $NsgName}
     $ResourceGroupName = $Nsg.ResourceGroupName                                                                                                                  # e.g. weu-te-rsg-network-01
-    $Nsg = Get-AzureRmNetworkSecurityGroup -Name $NsgName -ResourceGroupName $ResourceGroupName                                                                  # Get-AzureRmResource not retrieving all parameters
+    $Nsg = Get-AzNetworkSecurityGroup -Name $NsgName -ResourceGroupName $ResourceGroupName                                                                  # Get-AzResource not retrieving all parameters
     Write-Verbose -Message ('PAT0058-Nsg: ' + ($Nsg | Out-String))
 
     if ($ResourceGroupName.Length -le '0')
@@ -106,7 +106,7 @@ workflow PAT0058-NetworkSecurityGroupSet
     ###########################################################################################################################################################
     $VnetName = ($Nsg.Subnets[0].Id).Split('/')[8]
     $ResourceGroupNameVnet = ($Nsg.Subnets[0].Id).Split('/')[4]
-    $Vnet = Get-AzureRmVirtualNetwork -Name $VnetName -ResourceGroupName $ResourceGroupNameVnet
+    $Vnet = Get-AzVirtualNetwork -Name $VnetName -ResourceGroupName $ResourceGroupNameVnet
     Write-Verbose -Message ('PAT0058-Vnet: ' + ($Vnet)) 
 
     $FrontendSubnetAddressPrefix = ($Vnet.Subnets | Where-Object {$_.Name -match '-fe'}).AddressPrefix
@@ -143,12 +143,12 @@ workflow PAT0058-NetworkSecurityGroupSet
     ###########################################################################################################################################################
     foreach ($Rule in $NsgRuleSet)
     {
-      $Result = Remove-AzureRmNetworkSecurityRuleConfig -Name $Rule.Name -NetworkSecurityGroup $Nsg                                                              # Remove existing rule before re-creating it
+      $Result = Remove-AzNetworkSecurityRuleConfig -Name $Rule.Name -NetworkSecurityGroup $Nsg                                                              # Remove existing rule before re-creating it
       
       # Only apply rule if the IP ranges are not the same as the one of Subnet to which they should be applied
       if ($NsgSubnetAddressPrefix -ne $Rule.SourceAddressPrefix -and $NsgSubnetAddressPrefix -ne $Rule.DestinationAddressPrefix) 
       {
-        $Result = Add-AzureRmNetworkSecurityRuleConfig -NetworkSecurityGroup $Nsg `
+        $Result = Add-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $Nsg `
                                                        -Name $Rule.Name `
                                                        -Description $Rule.Description `
                                                        -Protocol $Rule.Protocol `
@@ -159,7 +159,7 @@ workflow PAT0058-NetworkSecurityGroupSet
                                                        -Access $Rule.Access `
                                                        -Priority $Rule.Priority `
                                                        -Direction $Rule.Direction
-        $Result = Set-AzureRmNetworkSecurityGroup -NetworkSecurityGroup $Nsg
+        $Result = Set-AzNetworkSecurityGroup -NetworkSecurityGroup $Nsg
         Write-Verbose -Message ('PAT0058-SecurityRuleApplied: ' + ($Rule.Name))
       }
     }

@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Exports a Log Analytics report in the Core instance to a csv on a file share 'reportexport' in the Core Storage Account.
 # 
 # Output:         none
@@ -29,7 +29,7 @@ workflow TEC0012-ReportExportToCsv
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module Azure.Storage, AzureRM.OperationalInsights, AzureRM.Resources, AzureRM.Storage                                                       # This avoids loading the ADAL libraries
+    $Result = Import-Module Az.Storage, Az.OperationalInsights, Az.Resources, Az.Storage                                                       # This avoids loading the ADAL libraries
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -46,14 +46,14 @@ workflow TEC0012-ReportExportToCsv
     #############################################################################################################################################################
     $Credentials = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser
     $WorkspaceCoreName = Get-AutomationVariable -Name VAR-AUTO-WorkspaceCoreName
-    $WorkspaceCore = Get-AzureRmOperationalInsightsWorkspace | Where-Object {$_.Name -eq $WorkspaceCoreName}
-    $WorkspaceCoreKey = (Get-AzureRmOperationalInsightsWorkspaceSharedKeys -ResourceGroupName $WorkspaceCore.ResourceGroupName -Name $WorkspaceCore.Name).PrimarySharedKey
+    $WorkspaceCore = Get-AzOperationalInsightsWorkspace | Where-Object {$_.Name -eq $WorkspaceCoreName}
+    $WorkspaceCoreKey = (Get-AzOperationalInsightsWorkspaceSharedKeys -ResourceGroupName $WorkspaceCore.ResourceGroupName -Name $WorkspaceCore.Name).PrimarySharedKey
     $WorkspaceCoreId = $WorkspaceCore.CustomerId
 
     $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName -Verbose:$false
-    $StorageAccount = Get-AzureRmResource | Where-Object {$_.Name -eq $StorageAccountName}
-    $StorageAccountKey = (Get-AzureRMStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
-    $StorageContext = New-AzureStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
+    $StorageAccount = Get-AzResource | Where-Object {$_.Name -eq $StorageAccountName}
+    $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
+    $StorageContext = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
 
 
     ###############################################################################################################################################################
@@ -61,11 +61,11 @@ workflow TEC0012-ReportExportToCsv
     # Get data using the saved query
     #
     ###############################################################################################################################################################
-    $SavedSearches = (Get-AzureRmOperationalInsightsSavedSearch -WorkspaceName $WorkspaceCoreName -ResourceGroupName $WorkspaceCore.ResourceGroupName).Value     
+    $SavedSearches = (Get-AzOperationalInsightsSavedSearch -WorkspaceName $WorkspaceCoreName -ResourceGroupName $WorkspaceCore.ResourceGroupName).Value     
     $SavedSearch = $SavedSearches | Where-Object {$_.Properties.DisplayName -eq $SearchName}
 
-    # This would be better using Get-AzureRmOperationalInsightsSavedSearchResults but is not supported with the now Log Analytics query language
-    $Results = Invoke-AzureRmOperationalInsightsQuery -WorkspaceId $WorkspaceCoreId -Query $SavedSearch.Properties.Query
+    # This would be better using Get-AzOperationalInsightsSavedSearchResults but is not supported with the now Log Analytics query language
+    $Results = Invoke-AzOperationalInsightsQuery -WorkspaceId $WorkspaceCoreId -Query $SavedSearch.Properties.Query
 
 
     #############################################################################################################################################################

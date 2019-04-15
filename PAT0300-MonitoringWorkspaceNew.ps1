@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Creates a Log Analytics Workspace (e.g. felweutecore01) in an existing Resource Group. Tags the created Workspace. 
 # Since Log Analytics is not available in all Regions there is a naming violations in certain regions. The name reflects in what region the Log Analytics
 # Workspace should be deployed, not where it actually is deployed. 
@@ -7,7 +7,9 @@
 #
 # Requirements:   See Import-Module in code below / Resource Group
 #
-# Template:       PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual $WorkspaceNameIndividual -ResourceGroupName $ResourceGroupName `#                                                -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode `#                                                -Contact $Contact -Automation $Automation
+# Template:       PAT0300-MonitoringWorkspaceNew -WorkspaceNameIndividual $WorkspaceNameIndividual -ResourceGroupName $ResourceGroupName `
+#                                                -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode `
+#                                                -Contact $Contact -Automation $Automation
 #                                                     
 # Change log:
 # 1.0             Initial version
@@ -19,7 +21,7 @@ workflow PAT0300-MonitoringWorkspaceNew
 
   param
   (
-    [Parameter(Mandatory=$false)][String] $WorkspaceNameIndividual = 'core',
+    [Parameter(Mandatory=$false)][String] $WorkspaceNameIndividual = 'core1',
     [Parameter(Mandatory=$false)][String] $ResourceGroupName = 'aaa-co-rsg-core-01',
     [Parameter(Mandatory=$false)][String] $SubscriptionCode = 'co',
     [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
@@ -35,7 +37,7 @@ workflow PAT0300-MonitoringWorkspaceNew
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.OperationalInsights, AzureRM.profile
+    $Result = Import-Module Az.OperationalInsights, Az.Accounts
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -87,9 +89,9 @@ workflow PAT0300-MonitoringWorkspaceNew
     # Change to Target Subscription
     #
     ###########################################################################################################################################################
-    $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
-    $Result = Disconnect-AzureRmAccount
-    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
+    $Result = DisConnect-AzAccount
+    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0300-AzureContextChanged: ' + ($AzureContext | Out-String))
 
 
@@ -98,8 +100,8 @@ workflow PAT0300-MonitoringWorkspaceNew
     # Configure Workspace name
     #
     ###########################################################################################################################################################
-    $WorkspaceName = ($CustomerShortCode + $RegionCode + $SubscriptionCode + $WorkspaceNameIndividual)                                                           # e.g. felweutecore01
-    $WorkspaceExisting = Get-AzureRmOperationalInsightsWorkspace `
+    $WorkspaceName = ($RegionCode + '-' + $SubscriptionCode + '-law-' + $WorkspaceNameIndividual + '-')                                                               # e.g. felweutecore01
+    $WorkspaceExisting = Get-AzOperationalInsightsWorkspace `
     |                        Where-Object {$_.Name -like "$WorkspaceName*"} `
     |                        Sort-Object Name -Descending | Select-Object -First $True
 
@@ -122,7 +124,7 @@ workflow PAT0300-MonitoringWorkspaceNew
     # Check if Workspace exists and create if not
     #
     ###########################################################################################################################################################
-    $Result = Get-AzureRmOperationalInsightsWorkspace -Name $WorkspaceName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+    $Result = Get-AzOperationalInsightsWorkspace -Name $WorkspaceName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
     if ($Result.Length -gt 0)
     {
       Write-Error -Message ('PAT0300-WorkspaceExisting: ' + $WorkspaceName)
@@ -131,7 +133,7 @@ workflow PAT0300-MonitoringWorkspaceNew
   
     try
     {
-      $LogAnalyticsWorkspace = New-AzureRmOperationalInsightsWorkspace -Location $RegionNameTechnical `
+      $LogAnalyticsWorkspace = New-AzOperationalInsightsWorkspace -Location $RegionNameTechnical `
                                                                        -Name $WorkspaceName `
                                                                        -ResourceGroupName $ResourceGroupName `
                                                                        -Sku pernode `
@@ -154,7 +156,7 @@ workflow PAT0300-MonitoringWorkspaceNew
 
     Write-Verbose -Message ('PAT0300-TagsToWrite: ' + ($Tags | Out-String))
 
-    $Result = Set-AzureRmOperationalInsightsWorkspace -Name $WorkspaceName -ResourceGroupName $ResourceGroupName  -Tag $Tags
+    $Result = Set-AzOperationalInsightsWorkspace -Name $WorkspaceName -ResourceGroupName $ResourceGroupName  -Tag $Tags
     Write-Verbose -Message ('PAT0300-WorkspaceTagged: ' + ($ResourceGroupName))
 
 

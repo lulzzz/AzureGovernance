@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Imports all the Runbooks from GitHub into Azure Automation. Prior to the import all Runbooks in the Azure Automation Account are deleted - except the 
 # ones with Webhooks.
 # This Runbook needs to be executed from the Automation Account to which the Runbooks are imported. 
@@ -30,7 +30,7 @@ workflow TEC0004-GitHubImportAll
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.Automation, AzureRM.Resources
+    $Result = Import-Module Az.Automation, Az.Resources
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -47,7 +47,7 @@ workflow TEC0004-GitHubImportAll
     #
     ###########################################################################################################################################################
     $AutomationAccountName = Get-AutomationVariable -Name VAR-AUTO-AutomationAccountName -Verbose:$false
-    $ResourceGroupName = (Get-AzureRmResource | Where-Object {$_.Name -eq $AutomationAccountName}).ResourceGroupName
+    $ResourceGroupName = (Get-AzResource | Where-Object {$_.Name -eq $AutomationAccountName}).ResourceGroupName
 
     # Below is not required for public GitHub Repositories
     # $GitHubCredentials = Get-AutomationPSCredential -Name CRE-AUTO-GitHubUser -Verbose:$false
@@ -78,17 +78,17 @@ workflow TEC0004-GitHubImportAll
     #
     ###########################################################################################################################################################
     # Prepare access to Azure Automation Runbooks
-    $AutomationAccount = (Get-AzureRmAutomationAccount -ResourceGroupName $ResourceGroupName | Where-Object {$_.AutomationAccountName -eq $AutomationAccountName})
+    $AutomationAccount = (Get-AzAutomationAccount -ResourceGroupName $ResourceGroupName | Where-Object {$_.AutomationAccountName -eq $AutomationAccountName})
     Write-Verbose -Message ('TEC0004-AutomatonAccountUsed: ' + $ResourceGroupName + ' - ' + ($AutomationAccount | Out-String))
 
     # Get all Runbooks
     $RunbooksAll = @()
-    $RunbooksAll = (Get-AzureRmAutomationRunbook -ResourceGroupName $ResourceGroupName -AutomationAccountName $AutomationAccount.AutomationAccountName).Name
+    $RunbooksAll = (Get-AzAutomationRunbook -ResourceGroupName $ResourceGroupName -AutomationAccountName $AutomationAccount.AutomationAccountName).Name
     Write-Verbose -Message ('TEC0004-AllRunbooksInAccount: ' + ($RunbooksAll | Out-String))
 
     # Get all Webhooks
     $Webhooks = @()
-    $Webhooks = (Get-AzureRmAutomationWebhook -ResourceGroupName $ResourceGroupName -AutomationAccountName $AutomationAccountName).RunbookName
+    $Webhooks = (Get-AzAutomationWebhook -ResourceGroupName $ResourceGroupName -AutomationAccountName $AutomationAccountName).RunbookName
     Write-Verbose -Message ('TEC0004-RunbooksWithWebhooks: ' + ($Webhooks | Out-String))
 
     # Runbooks that don't have Webhook configured
@@ -103,7 +103,7 @@ workflow TEC0004-GitHubImportAll
     {
       foreach ($RunbooksWithoutWebhook in $RunbooksWithoutWebhooks)
       { 
-        $Result = Remove-AzureRmAutomationRunbook -ResourceGroupName $ResourceGroupName `
+        $Result = Remove-AzAutomationRunbook -ResourceGroupName $ResourceGroupName `
                                                   -AutomationAccountName $AutomationAccountName `
                                                   -Name $RunbooksWithoutWebhook `
                                                   -Force
@@ -130,7 +130,7 @@ workflow TEC0004-GitHubImportAll
       $Result = Out-File -InputObject $RunbookContent -FilePath D:\$Runbook -Force
 
       # Import to Azure Automation
-      $Result = Import-AzureRmAutomationRunbook -ResourceGroupName $ResourceGroupName -AutomationAccountName $AutomationAccountName `
+      $Result = Import-AzAutomationRunbook -ResourceGroupName $ResourceGroupName -AutomationAccountName $AutomationAccountName `
                                       -Type PowerShellWorkflow `
                                       -Path D:\$Runbook `
                                       -LogVerbose $true `

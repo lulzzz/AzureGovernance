@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Used to import an individual Runbook from GitHub into the Azure Automation Account in which TEC0003 is executed. 
 # The import overwrites existing Runbooks in the Azure Automation Account.
 # Runbooks are imported with verbose logging on, a description 'Imported from GitHub' and in a published state.
@@ -30,7 +30,7 @@ workflow TEC0003-GitHubImportIndividual
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.Automation, AzureRM.Resources
+    $Result = Import-Module Az.Automation, Az.Resources
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -61,8 +61,8 @@ workflow TEC0003-GitHubImportIndividual
     #  
     ###########################################################################################################################################################
     $AutomationAccountName = Get-AutomationVariable -Name VAR-AUTO-AutomationAccountName
-    $ResourceGroupName = (Get-AzureRmResource | Where-Object {$_.Name -eq $AutomationAccountName}).ResourceGroupName
-    $Result = Import-AzureRmAutomationRunbook -ResourceGroupName $ResourceGroupName `
+    $ResourceGroupName = (Get-AzResource | Where-Object {$_.Name -eq $AutomationAccountName}).ResourceGroupName
+    $Result = Import-AzAutomationRunbook -ResourceGroupName $ResourceGroupName `
                                               -AutomationAccountName $AutomationAccountName `
                                               -Type PowerShellWorkflow `
                                               -Path D:\$RunbookName `

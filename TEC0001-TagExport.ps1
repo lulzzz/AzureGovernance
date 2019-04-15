@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Exporting tags to an Excel document on the Core Storage Account. 
 # This is not working if the same tag is used with different cases, e.g. Test/test. This is because PowerShell is not case sensitive. 
 # Some Resource Types don't allow changes on the Tags if they are not running, this might block the execution of this script.  
@@ -30,7 +30,7 @@ workflow TEC0001-TagExport
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.Resources, AzureRM.Storage
+    $Result = Import-Module Az.Resources, Az.Storage
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -42,8 +42,8 @@ workflow TEC0001-TagExport
   #
   #############################################################################################################################################################
   $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
-  $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionShortName} 
-  $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+  $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionShortName} 
+  $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
   Write-Verbose -Message ('SOL0150-AzureContext: ' + ($AzureContext | Out-String))
   
   InlineScript
@@ -55,13 +55,13 @@ workflow TEC0001-TagExport
     [void]$Table.Columns.Add('KeyType')
 
     # Get Tags of Resources
-    $Resource = Get-AzureRmResource # | Where-Object {  $_.Name -like 'weu*' -or $_.Name -like 'roc*'}
+    $Resource = Get-AzResource # | Where-Object {  $_.Name -like 'weu*' -or $_.Name -like 'roc*'}
     $Counter = $Resource.Count
     do
     {
       $Counter = $Counter - 1
       $Resource.Name[$Counter]
-      $Tags = (Get-AzureRmResource -ResourceName $Resource.Name[$Counter] -ResourceGroupName $Resource.ResourceGroupName[$Counter]).Tags
+      $Tags = (Get-AzResource -ResourceName $Resource.Name[$Counter] -ResourceGroupName $Resource.ResourceGroupName[$Counter]).Tags
       # Add columns to table
       if ($Tags.Length -ne 0)
       {
@@ -98,7 +98,7 @@ workflow TEC0001-TagExport
     Write-Verbose -Message ("TEC0002-ResourceTagsRetrieved" + ($Table | Out-String))
 
     # Get Tags of Resource Groups
-    $Resource = Get-AzureRmResourceGroup # | Where-Object {  $_.ResourceGroupName -like 'weu*' -or $_.Name -like 'roc*'}
+    $Resource = Get-AzResourceGroup # | Where-Object {  $_.ResourceGroupName -like 'weu*' -or $_.Name -like 'roc*'}
     $Counter = $Resource.Count
     do
     {
@@ -195,10 +195,10 @@ workflow TEC0001-TagExport
   InlineScript
   {
     $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName -Verbose:$false
-    $StorageAccount = Get-AzureRmResource | Where-Object {$_.Name -eq $StorageAccountName}
-    $StorageAccountKey = (Get-AzureRMStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
-    $StorageContext = New-AzureStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
-    Set-AzureStorageFileContent -ShareName tagexport -Source D:\Tags.xlsx -Force -Context $StorageContext
+    $StorageAccount = Get-AzResource | Where-Object {$_.Name -eq $StorageAccountName}
+    $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
+    $StorageContext = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
+    Set-AzStorageFileContent -ShareName tagexport -Source D:\Tags.xlsx -Force -Context $StorageContext
   }
 
   # Clean up

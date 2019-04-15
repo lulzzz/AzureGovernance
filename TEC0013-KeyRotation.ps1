@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Regenerates key1 of a Storage Account and then updates the secret in Azure Key Vault. If the secret is not available in the Azure Key Vault, it will 
 # be created.
 # 
@@ -32,7 +32,7 @@ workflow TEC0013-KeyRotation
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureRM.KeyVault, AzureRM.Storage
+    $Result = Import-Module Az.KeyVault, Az.Storage
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -44,11 +44,11 @@ workflow TEC0013-KeyRotation
     $KeyVaultName = $Using:KeyVaultName
     
     # Regenerate key on Storage Account
-    $Result = New-AzureRmStorageAccountKey -ResourceGroupName $ResourceGroupName -Name $StorageAccountName -KeyName key1
+    $Result = New-AzStorageAccountKey -ResourceGroupName $ResourceGroupName -Name $StorageAccountName -KeyName key1
     Write-Verbose -Message ('TEC0013-StorageAccountKeyRegenerated')
 
     # Get newly generated key
-    $StorageAccountKey = (Get-AzureRmStorageAccountKey -ResourceGroupName $ResourceGroupName -Name $StorageAccountName).Value[0]
+    $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $ResourceGroupName -Name $StorageAccountName).Value[0]
     Write-Verbose -Message ('TEC0013-NewStorageAccountKey: ' + $StorageAccountKey)
 
     # Update secret in Key Vault

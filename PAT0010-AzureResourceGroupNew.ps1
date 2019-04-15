@@ -1,4 +1,4 @@
-﻿###############################################################################################################################################################
+###############################################################################################################################################################
 # Creates a Resource Group (e.g. weu-te-rsg-core-01) with Tags. The counter in the name is determined based on the existing Resource Groups.
 # Assigns Contributor and Reader roles to the provided AD Security Groups. 
 # 
@@ -6,7 +6,10 @@
 #
 # Requirements:   See Import-Module in code below / AD Security Groups
 #
-# Template:       PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual $ResourceGroupNameIndividual `#                                               -SubscriptionCode $SubscriptionCode -IamContributorGroupName $IamContributorGroupName `#                                               -IamReaderGroupName $IamReaderGroupName -RegionName $RegionName -RegionCode $RegionCode `#                                               -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact
+# Template:       PAT0010-AzureResourceGroupNew -ResourceGroupNameIndividual $ResourceGroupNameIndividual `
+#                                               -SubscriptionCode $SubscriptionCode -IamContributorGroupName $IamContributorGroupName `
+#                                               -IamReaderGroupName $IamReaderGroupName -RegionName $RegionName -RegionCode $RegionCode `
+#                                               -ApplicationId $ApplicationId -CostCenter $CostCenter -Budget $Budget -Contact $Contact
 #                                                     
 # Change log:
 # 1.0             Initial version
@@ -21,7 +24,7 @@ workflow PAT0010-AzureResourceGroupNew
     [Parameter(Mandatory=$false)][String] $ResourceGroupNameIndividual = 'felixtest',
     [Parameter(Mandatory=$false)][String] $SubscriptionCode = 'te',
     [Parameter(Mandatory=$false)][String] $IamContributorGroupName = 'AzureNetwork-Contributor',
-    [Parameter(Mandatory=$false)][String] $IamReaderGroupName = 'Azure-Reader',
+    [Parameter(Mandatory=$false)][String] $IamReaderGroupName = 'AzureReader-Reader',
     [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
     [Parameter(Mandatory=$false)][String] $RegionCode = 'weu',
     [Parameter(Mandatory=$false)][String] $ApplicationId = 'Application-001',                                                                                    # Tagging
@@ -38,7 +41,7 @@ workflow PAT0010-AzureResourceGroupNew
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module AzureAD, AzureRM.profile, AzureRM.Resources
+    $Result = Import-Module AzureAD, Az.Accounts, Az.Resources
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet
@@ -65,7 +68,7 @@ workflow PAT0010-AzureResourceGroupNew
     ###########################################################################################################################################################
     $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
     $Automation = Get-AutomationVariable -Name VAR-AUTO-AutomationVersion -Verbose:$false
-    $TenantId = ((Get-AzureRmContext).Tenant).Id
+    $TenantId = ((Get-AzContext).Tenant).Id
 
     Write-Verbose -Message ('PAT0010-ResourceGroupNameIndividual: ' + ($ResourceGroupNameIndividual))
     Write-Verbose -Message ('PAT0010-SubscriptionCode: ' + ($SubscriptionCode))
@@ -86,9 +89,9 @@ workflow PAT0010-AzureResourceGroupNew
     # Change to Target Subscription
     #
     ###########################################################################################################################################################
-    $Subscription = Get-AzureRmSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
-    $Result = Disconnect-AzureRmAccount
-    $AzureContext = Connect-AzureRmAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
+    $Result = DisConnect-AzAccount
+    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0010-AzureContextChanged: ' + ($AzureContext | Out-String))
 
 
@@ -98,7 +101,7 @@ workflow PAT0010-AzureResourceGroupNew
     #
     ###########################################################################################################################################################
     $ResourceGroupName = ($RegionCode + '-' + $SubscriptionCode + '-' + 'rsg' + '-' + $ResourceGroupNameIndividual).ToLower()                                    # e.g. weu-te-rsg-core
-    $ResourceGroupExisting = Get-AzureRmResourceGroup `
+    $ResourceGroupExisting = Get-AzResourceGroup `
     |                        Where-Object {$_.ResourceGroupName -like "$ResourceGroupName*"} `
     |                        Sort-Object Name -Descending | Select-Object -First $True
 
@@ -121,7 +124,7 @@ workflow PAT0010-AzureResourceGroupNew
     # Check if Resource Group exists and create if not
     #
     ###########################################################################################################################################################
-    $Result = Get-AzureRmResourceGroup -Name $ResourceGroupName -Location $RegionName -ErrorAction SilentlyContinue
+    $Result = Get-AzResourceGroup -Name $ResourceGroupName -Location $RegionName -ErrorAction SilentlyContinue
     if ($Result.Length -gt 0)
     {
       Write-Verbose -Message ('PAT0010-ResourceGroupExisting: ' + ($ResourceGroupName))
@@ -130,7 +133,7 @@ workflow PAT0010-AzureResourceGroupNew
   
     try
     {
-      $ResourceGroup = New-AzureRmResourceGroup -Name $ResourceGroupName -Location $RegionName -Verbose:$false
+      $ResourceGroup = New-AzResourceGroup -Name $ResourceGroupName -Location $RegionName -Verbose:$false
       Write-Verbose -Message ('PAT0010-ResourceGroupCreated: ' + ($ResourceGroupName))
     }
     catch
@@ -145,6 +148,7 @@ workflow PAT0010-AzureResourceGroupNew
     # Configure AD Groups as Contributor and Reader of the Resource Group
     #
     ###########################################################################################################################################################
+    $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser 
     $Result = Connect-AzureAD -TenantId $TenantId -Credential $AzureAutomationCredential
 
     # Assign Contributor Group
@@ -156,7 +160,7 @@ workflow PAT0010-AzureResourceGroupNew
     else
     {
       Write-Verbose -Message ('PAT0010-IamContributorGroup: ' + ($IamContributorGroup)) 
-      $RoleAssignment = New-AzureRmRoleAssignment -ObjectId $IamContributorGroup.ObjectId  -RoleDefinitionName Contributor -Scope $ResourceGroup.ResourceId
+      $RoleAssignment = New-AzRoleAssignment -ObjectId $IamContributorGroup.ObjectId  -RoleDefinitionName Contributor -Scope $ResourceGroup.ResourceId
       Write-Verbose -Message ('PAT0010-IamContributorGroupAssigned: ' + ($RoleAssignment))       
     }
 
@@ -169,7 +173,7 @@ workflow PAT0010-AzureResourceGroupNew
     else
     {
       Write-Verbose -Message ('PAT0010-IamReaderGroup: ' + ($IamReaderGroup)) 
-      $RoleAssignment = New-AzureRmRoleAssignment -ObjectId $IamReaderGroup.ObjectId  -RoleDefinitionName Reader -Scope $ResourceGroup.ResourceId
+      $RoleAssignment = New-AzRoleAssignment -ObjectId $IamReaderGroup.ObjectId  -RoleDefinitionName Reader -Scope $ResourceGroup.ResourceId
       Write-Verbose -Message ('PAT0010-IamReaderGroupAssigned: ' + ($RoleAssignment))       
     }
 
@@ -182,7 +186,7 @@ workflow PAT0010-AzureResourceGroupNew
     $Tags = @{ApplicationId  = $ApplicationId; CostCenter = $CostCenter; Budget = $Budget; Contact = $Contact; Automation = $Automation}
     Write-Verbose -Message ('PAT0010-TagsToWrite: ' + ($Tags | Out-String))
 
-    $Result = Set-AzureRmResourceGroup -Name $ResourceGroupName -Tag $Tags -Verbose:$false
+    $Result = Set-AzResourceGroup -Name $ResourceGroupName -Tag $Tags -Verbose:$false
     Write-Verbose -Message ('PAT0010-ResourceGroupTagged: ' + ($ResourceGroupName))
 
 
