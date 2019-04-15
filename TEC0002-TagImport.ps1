@@ -63,7 +63,7 @@ workflow TEC0002-TagImport
       
     # Read tags from Excel and write to Azure
     $Excel = new-object -com excel.application
-    $Workbook = $Excel.workbooks.open('T:\Tags.xlsx')
+    $Workbook = $Excel.workbooks.open('D:\Tags.xlsx')
     $Sheet = $Workbook.Sheets.Item(1)
 
     $RowNumber = 2
