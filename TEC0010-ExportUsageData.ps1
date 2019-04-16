@@ -1,5 +1,6 @@
 ###############################################################################################################################################################
-# Retrieving consumption details, formating the data and and writing to a Log Analytics instance
+# Retrieving consumption details, formating the data and and writing to a Log Analytics instance.
+# Resource Groups without a 'Budget' Tag will throw an error.
 # 
 # Output:         None
 #
@@ -41,7 +42,7 @@ workflow TEC0010-ExportUsageData
   #
   #############################################################################################################################################################
   $Credentials = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser
-  $WorkspaceCoreName = Get-AutomationVariable -Name VAR-AUTO-WorkspaceCoreName
+  $WorkspaceCoreName = Get-AutomationVariable -Name VAR-AUTO-WorkspaceBillingName
   $WorkspaceCore = Get-AzOperationalInsightsWorkspace | Where-Object {$_.Name -eq $WorkspaceCoreName}
   $WorkspaceCoreKey = (Get-AzOperationalInsightsWorkspaceSharedKeys -ResourceGroupName $WorkspaceCore.ResourceGroupName -Name $WorkspaceCore.Name).PrimarySharedKey
   $WorkspaceCoreId = $WorkspaceCore.CustomerId

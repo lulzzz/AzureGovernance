@@ -13,7 +13,7 @@
 ###############################################################################################################################################################
 workflow TEC0002-TagImport
 {
-  [OutputType([object])] 	
+  [OutputType([object])]
 
   param
 	(
@@ -38,22 +38,22 @@ workflow TEC0002-TagImport
   {
     $SubscriptionShortName = $Using:SubscriptionShortName
 
+
     #############################################################################################################################################################
     #
-    # Define variable and map drive before switching to non-Core Subscription
+    # Download the file
     #
     #############################################################################################################################################################
     $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName -Verbose:$false
     $StorageAccount = Get-AzResource | Where-Object {$_.Name -eq $StorageAccountName}
     $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.Name).Value[0]
-    $StorageAccountKey = ConvertTo-SecureString -String $StorageAccountKey -AsPlainText -Force
-    $Credential = New-Object System.Management.Automation.PSCredential -ArgumentList "Azure\$StorageAccountName", $StorageAccountKey
-    $Result = New-PSDrive -Name T -PSProvider FileSystem -Root "\\$StorageAccountName.file.core.windows.net\tagexport" -Credential $Credential
+    $StorageContext = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
+    Get-AzStorageFileContent -ShareName tagexport -Path Tags.xlsx -Destination D:\Tags.xlsx -Force -Context $StorageContext
 
 
     #############################################################################################################################################################
     #
-    # Change to Subscription where server is to be built
+    # Change to Subscription where Tags are imported
     #
     #############################################################################################################################################################
     $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
@@ -62,7 +62,7 @@ workflow TEC0002-TagImport
     Write-Verbose -Message ('SOL0150-AzureContext: ' + ($AzureContext | Out-String))
       
     # Read tags from Excel and write to Azure
-    $Excel = new-object -com excel.application
+    $Excel = New-Object -com excel.application
     $Workbook = $Excel.workbooks.open('D:\Tags.xlsx')
     $Sheet = $Workbook.Sheets.Item(1)
 
@@ -113,6 +113,6 @@ workflow TEC0002-TagImport
     while ($TagsExcel.KeyName.Length -gt 0)
 
     $Excel.Workbooks.Close()
-    Remove-PSDrive -Name T -Force
+    Remove-Item D:\Tags.xlsx -Force
   }
 }

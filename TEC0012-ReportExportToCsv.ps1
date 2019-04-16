@@ -45,7 +45,7 @@ workflow TEC0012-ReportExportToCsv
     #
     #############################################################################################################################################################
     $Credentials = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser
-    $WorkspaceCoreName = Get-AutomationVariable -Name VAR-AUTO-WorkspaceCoreName
+    $WorkspaceCoreName = Get-AutomationVariable -Name VAR-AUTO-WorkspaceBillingName
     $WorkspaceCore = Get-AzOperationalInsightsWorkspace | Where-Object {$_.Name -eq $WorkspaceCoreName}
     $WorkspaceCoreKey = (Get-AzOperationalInsightsWorkspaceSharedKeys -ResourceGroupName $WorkspaceCore.ResourceGroupName -Name $WorkspaceCore.Name).PrimarySharedKey
     $WorkspaceCoreId = $WorkspaceCore.CustomerId
@@ -74,7 +74,7 @@ workflow TEC0012-ReportExportToCsv
     #
     #############################################################################################################################################################
     $Results.Results | Export-Csv D:\$SearchName.csv -noType -Force
-    $Result = Set-AzureStorageFileContent -ShareName reportexport -Source "D:\$SearchName.csv" -Force -Context $StorageContext
+    $Result = Set-AzStorageFileContent -ShareName reportexport -Source "D:\$SearchName.csv" -Force -Context $StorageContext
     $Result = Remove-Item D:\$SearchName.csv
 
   }
