@@ -10,7 +10,8 @@
 #                                             -SubscriptionCode $SubscriptionCode -RegionName $RegionName -RegionCode $RegionCode -Contact $Contact
 #
 # Change log:
-# 1.0             Initial version 
+# 1.0             Initial version
+# 2.0             Migration to Az modules with use of Set-AzContext
 #
 ###############################################################################################################################################################
 workflow PAT0250-SecurityKeyVaultNew
@@ -82,7 +83,7 @@ workflow PAT0250-SecurityKeyVaultNew
     ###########################################################################################################################################################
     $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
     $Result = DisConnect-AzAccount
-    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $AzureContext = Set-AzContext -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0250-AzureContextChanged: ' + ($AzureContext | Out-String))
 
 
@@ -139,7 +140,7 @@ workflow PAT0250-SecurityKeyVaultNew
     ###########################################################################################################################################################
     # Change context to Core Subscription
     $CoreSubscription = Get-AzSubscription | Where-Object {$_.Name -match 'co'}
-    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $CoreSubscription.Name -Force
+    $AzureContext = Set-AzContext -Subscription $CoreSubscription.Name -Force
     Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))    
     
     # Get Workspace in Core Subscription
@@ -148,7 +149,7 @@ workflow PAT0250-SecurityKeyVaultNew
 
     # Change context back to Subscription to be built
     $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode}
-    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $AzureContext = Set-AzContext -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))    
     
     # Connect Key Vault to Log Analytics Workspace    

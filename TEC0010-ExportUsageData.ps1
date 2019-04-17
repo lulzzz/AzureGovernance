@@ -10,6 +10,7 @@
 #   
 # Change log:
 # 1.0             Initial version
+# 2.0             Migration to Az modules with use of Set-AzContext
 #
 ###############################################################################################################################################################
 workflow TEC0010-ExportUsageData
@@ -77,7 +78,7 @@ workflow TEC0010-ExportUsageData
     # Get usage records
     foreach ($Subscription in $Subscriptions)
     {
-      $Result = Connect-AzAccount -Credential $Credentials -Subscription $Subscription.Name
+      $Result = Set-AzContext -Subscription $Subscription.Name
       Write-Verbose -Message ('TEC0010-RetrieveUsageForSubscription: ' + ($Subscription.Name | Out-String))
        
       # Get first 10000 records, try for 2 x 15 minutes and then abort
@@ -85,7 +86,7 @@ workflow TEC0010-ExportUsageData
       do
       {
         if ($UsageDataSet = Get-AzConsumptionUsageDetail -IncludeMeterDetails -IncludeAdditionalProperties -StartDate $StartDateTime `
-                                                              -EndDate $EndDateTime -ErrorAction SilentlyContinue)
+                                                         -EndDate $EndDateTime -ErrorAction SilentlyContinue)
         {
           Break
         }
@@ -152,7 +153,7 @@ workflow TEC0010-ExportUsageData
     }
 
     # Set context back to Core Subscription
-    $Result = Connect-AzAccount -Credential $Credentials -Subscription ($Subscriptions | Where-Object {$_.Name -match '-co'}).Name
+    $Result = Set-AzContext -Subscription ($Subscriptions | Where-Object {$_.Name -match '-co'}).Name
 
 
     ###########################################################################################################################################################

@@ -12,6 +12,7 @@
 # Change log:
 # 1.0             Initial version 
 # 1.1             Remove multi-region deployment
+# 2.0             Migration to Az modules with use of Set-AzContext
 #
 ###############################################################################################################################################################
 workflow SOL0001-AzureSubscriptionNew
@@ -155,7 +156,7 @@ workflow SOL0001-AzureSubscriptionNew
   #
   #############################################################################################################################################################
   $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode}
-  $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+  $AzureContext = Set-AzContext -Subscription $Subscription.Name -Force
   Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))
 
   # No Log Analytics instances deployed in Hub Subscriptions - which means the Resource Provider is not activiated but is required for registration
@@ -349,7 +350,7 @@ workflow SOL0001-AzureSubscriptionNew
   #############################################################################################################################################################
   # Change context to Core Subscription
   $CoreSubscription = Get-AzSubscription | Where-Object {$_.Name -match 'co'}
-  $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $CoreSubscription.Name -Force
+  $AzureContext = Set-AzContext -Subscription $CoreSubscription.Name -Force
   Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))
 
   # Connect to Workspace
@@ -362,7 +363,7 @@ workflow SOL0001-AzureSubscriptionNew
 
   # Change context back to Subscription to be built
   $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode}
-  $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+  $AzureContext = Set-AzContext -Subscription $Subscription.Name -Force
   Write-Verbose -Message ('SOL0001-AzureContextChanged: ' + ($AzureContext | Out-String))
 
 

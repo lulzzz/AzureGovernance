@@ -29,7 +29,7 @@ workflow TEC0012-ReportExportToCsv
   InlineScript
   {
     $VerbosePreference = 'SilentlyContinue'
-    $Result = Import-Module Az.Storage, Az.OperationalInsights, Az.Resources, Az.Storage                                                       # This avoids loading the ADAL libraries
+    $Result = Import-Module Az.Storage, Az.OperationalInsights, Az.Resources, Az.Storage                                                                         # This avoids loading the ADAL libraries
     $VerbosePreference = 'Continue'
   }
   TEC0005-AzureContextSet

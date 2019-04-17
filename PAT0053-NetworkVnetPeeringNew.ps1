@@ -10,6 +10,7 @@
 #
 # Change log:
 # 1.0             Initial version 
+# 2.0             Migration to Az modules with use of Set-AzContext
 #
 ###############################################################################################################################################################
 workflow PAT0053-NetworkVnetPeeringNew
@@ -54,14 +55,14 @@ workflow PAT0053-NetworkVnetPeeringNew
     # Vnet1
     $Vnet1SubscriptionCode = $Vnet1Name.Split('-')[1]
     $Vnet1SubscriptionName = (Get-AzSubscription | Where-Object {$_.Name -match $Vnet1SubscriptionCode}).Name
-    $AzureAccount = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Vnet1SubscriptionName -Force
+    $AzureAccount = Set-AzContext -Subscription $Vnet1SubscriptionName -Force
     $Vnet1 = Get-AzVirtualNetwork | Where-Object {$_.Name -eq $Vnet1Name}
     Write-Verbose -Message ('PAT0053-Vnet1: ' + ($Vnet1 | Out-String)) 
 
     # Vnet2
     $Vnet2SubscriptionCode = $Vnet2Name.Split('-')[1]
     $Vnet2SubscriptionName = (Get-AzSubscription | Where-Object {$_.Name -match $Vnet2SubscriptionCode}).Name
-    $AzureAccount = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Vnet2SubscriptionName -Force
+    $AzureAccount = Set-AzContext -Subscription $Vnet2SubscriptionName -Force
     $Vnet2 = Get-AzVirtualNetwork | Where-Object {$_.Name -eq $Vnet2Name}
     Write-Verbose -Message ('PAT0053-Vnet2: ' + ($Vnet2 | Out-String)) 
 
@@ -82,7 +83,7 @@ workflow PAT0053-NetworkVnetPeeringNew
     # In Subscription of Vnet1 - by default this is the Core VNET
     if ($Vnet1.VirtualNetworkPeerings.Name -notcontains  $Vnet1NetworkPeeringName)
     {
-      $AzureAccount = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Vnet1SubscriptionName -Force
+      $AzureAccount = Set-AzContext -Subscription $Vnet1SubscriptionName -Force
       if ($Gateway -eq 'yes')
       {
         $Vnet1Peering = Add-AzVirtualNetworkPeering -Name $Vnet1NetworkPeeringName -VirtualNetwork $Vnet1 -RemoteVirtualNetworkId $Vnet2.Id `
@@ -104,7 +105,7 @@ workflow PAT0053-NetworkVnetPeeringNew
     # In Subscription of Vnet2 - by default this is the Use Case VNET
     if ($Vnet2.VirtualNetworkPeerings.Name -notcontains  $Vnet2NetworkPeeringName)
     {
-      $AzureAccount = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Vnet2SubscriptionName -Force
+      $AzureAccount = Set-AzContext -Subscription $Vnet2SubscriptionName -Force
       if ($Gateway -eq 'yes')
       {
         $Vnet2Peering = Add-AzVirtualNetworkPeering -Name $Vnet2NetworkPeeringName -VirtualNetwork $Vnet2 -RemoteVirtualNetworkId $Vnet1.Id `

@@ -9,6 +9,7 @@
 #   
 # Change log:
 # 1.0             Initial version
+# 2.0             Migration to Az modules with use of Set-AzContext
 #
 ###############################################################################################################################################################
 workflow SOL0150-ServerWindowsNew
@@ -65,7 +66,7 @@ workflow SOL0150-ServerWindowsNew
   #
   #############################################################################################################################################################
   $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionShortName} 
-  $AzureAccount = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+  $AzureAccount = Set-AzContext -Subscription $Subscription.Name -Force
 
 
   InlineScript

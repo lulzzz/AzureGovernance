@@ -14,6 +14,7 @@
 #   
 # Change log:
 # 1.0             Initial version
+# 2.0             Migration to Az modules with use of Set-AzContext
 #
 ###############################################################################################################################################################
 workflow TEC0009-CostControl
@@ -93,7 +94,7 @@ workflow TEC0009-CostControl
     # Get usage records
     foreach ($Subscription in $Subscriptions)
     {
-      $Result = Connect-AzAccount -Credential $Credentials -Subscription $Subscription.Name
+      $Result = Set-AzContext -Subscription $Subscription.Name
       Write-Verbose -Message ('TEC0009-RetrieveUsageForSubscription: ' + ($Result | Out-String))
        
       # Get first 10000 records, try for 2 x 15 minutes and then abort
@@ -339,7 +340,7 @@ workflow TEC0009-CostControl
     # Add Resource Groups to body - required as Tag for budget is on RG level and RG are no supplied with billing data
     foreach ($Subscription in $Subscriptions)
     {
-      $Result = Connect-AzAccount -Credential $Credentials -Subscription $Subscription.Name
+      $Result = Set-AzContext -Subscription $Subscription.Name
       Write-Verbose -Message ('TEC0009-RetrieveResourceGroupsForSubscription: ' + ($Result | Out-String))
       $ResourceGroups = Get-AzResourceGroup
     

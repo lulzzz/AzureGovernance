@@ -10,6 +10,7 @@
 #
 # Change log:
 # 1.0             Initial version
+# 2.0             Migration to Az modules with use of Set-AzContext
 #
 ###############################################################################################################################################################
 workflow SOL0155-ServerWindowsNewFromDisk
@@ -70,7 +71,7 @@ workflow SOL0155-ServerWindowsNewFromDisk
     #############################################################################################################################################################
     $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser -Verbose:$false
     $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionShortName} 
-    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $AzureContext = Set-AzContext -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('SOL0155-AzureContext: ' + ($AzureContext | Out-String))
 
 

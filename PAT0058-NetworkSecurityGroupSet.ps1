@@ -9,6 +9,7 @@
 #
 # Change log:
 # 1.0             Initial version 
+# 2.0             Migration to Az modules with use of Set-AzContext
 #
 ###############################################################################################################################################################
 workflow PAT0058-NetworkSecurityGroupSet
@@ -78,7 +79,7 @@ workflow PAT0058-NetworkSecurityGroupSet
     ###########################################################################################################################################################
     $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
     $Result = DisConnect-AzAccount
-    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $AzureContext = Set-AzContext -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0058-AzureContextChanged: ' + ($AzureContext | Out-String))
 
     

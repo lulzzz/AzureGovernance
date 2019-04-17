@@ -10,6 +10,7 @@
 #
 # Change log:
 # 1.0             Initial version 
+# 2.0             Migration to Az modules with use of Set-AzContext
 #
 ###############################################################################################################################################################
 workflow PAT0056-NetworkSecurityGroupNew
@@ -84,7 +85,7 @@ workflow PAT0056-NetworkSecurityGroupNew
     ###########################################################################################################################################################
     $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
     $Result = DisConnect-AzAccount
-    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $AzureContext = Set-AzContext -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0056-AzureContextChanged: ' + ($AzureContext | Out-String))
 
 
@@ -129,7 +130,7 @@ workflow PAT0056-NetworkSecurityGroupNew
     ###########################################################################################################################################################
     # Change context to Core Subscription
     $CoreSubscription = Get-AzSubscription | Where-Object {$_.Name -match 'co'}
-    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $CoreSubscription.Name -Force
+    $AzureContext = Set-AzContext -Subscription $CoreSubscription.Name -Force
     Write-Verbose -Message ('PAT0056-AzureContextChanged: ' + ($AzureContext | Out-String))    
     
     # Get Workspace in Core Subscription
@@ -140,7 +141,7 @@ workflow PAT0056-NetworkSecurityGroupNew
 
     # Change context back to Subscription to be built
     $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode}
-    $AzureContext = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $Subscription.Name -Force
+    $AzureContext = Set-AzContext -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0056-AzureContextChanged: ' + ($AzureContext | Out-String))
 
     # Connect NSG to Log Analytics Workspace

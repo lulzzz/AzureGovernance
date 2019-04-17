@@ -10,6 +10,7 @@
 #
 # Change log:
 # 1.0             Initial version 
+# 2.0             Migration to Az modules with use of Service Principal
 #
 ###############################################################################################################################################################
 workflow TEC0005-AzureContextSet
@@ -34,15 +35,17 @@ workflow TEC0005-AzureContextSet
     {
       $SubscriptionName = Get-AutomationVariable -Name VAR-AUTO-SubscriptionName
       $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName
-      $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser
+      $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUserSp
+      $TenantId = Get-AutomationVariable -Name VAR-AUTO-TenantId
       $Result = DisConnect-AzAccount -ErrorAction SilentlyContinue
-      $AzureAccount = Connect-AzAccount -Credential $AzureAutomationCredential -Subscription $SubscriptionName -Force
+      $AzureAccount = Connect-AzAccount -ServicePrincipal -Credential $AzureAutomationCredential -TenantId $TenantId
+      $AzContext = Set-AzContext -Subscription $SubscriptionName
       $StorageAccount = Get-AzStorageAccount | Where-Object -FilterScript {$_.StorageAccountName -eq "$StorageAccountName"}
       $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.StorageAccountName).Value[0]
       try
       {
         
-        $StorageContext = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
+      $StorageContext = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
       }
       catch
       {
