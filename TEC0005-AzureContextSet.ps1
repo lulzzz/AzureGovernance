@@ -35,7 +35,7 @@ workflow TEC0005-AzureContextSet
     {
       $SubscriptionName = Get-AutomationVariable -Name VAR-AUTO-SubscriptionName
       $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName
-      $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUserSp
+      $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser
       $TenantId = Get-AutomationVariable -Name VAR-AUTO-TenantId
       $Result = DisConnect-AzAccount -ErrorAction SilentlyContinue
       $AzureAccount = Connect-AzAccount -ServicePrincipal -Credential $AzureAutomationCredential -TenantId $TenantId
