@@ -38,8 +38,8 @@ workflow TEC0005-AzureContextSet
       $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser
       $TenantId = Get-AutomationVariable -Name VAR-AUTO-TenantId
       $Result = DisConnect-AzAccount -ErrorAction SilentlyContinue
-      $AzureAccount = Connect-AzAccount -ServicePrincipal -Credential $AzureAutomationCredential -TenantId $TenantId
-      $AzContext = Set-AzContext -Subscription $SubscriptionName
+      $AzureAccount = Connect-AzAccount -ServicePrincipal -Credential $AzureAutomationCredential -TenantId $TenantId -ErrorAction Stop
+      $AzContext = Set-AzContext -Subscription $SubscriptionName -ErrorAction Stop
       try
       {
         $StorageAccount = Get-AzStorageAccount | Where-Object -FilterScript {$_.StorageAccountName -eq "$StorageAccountName"}
@@ -50,7 +50,7 @@ workflow TEC0005-AzureContextSet
       {
         # No catch - try/catch used to supress error messages in case the Core Storage Account is not (yet) available.
       }
-      Return 'Success'
+      Return $StorageContext
     }
     catch
     {
@@ -75,10 +75,10 @@ workflow TEC0005-AzureContextSet
     }
     else
     {
-      $AzContext = Get-AzContext
-      Write-Verbose -Message ('TEC0005-SetAzureContext: ' + ($AzContext | Out-String))
+      Write-Verbose -Message ('TEC0005-AzureContext: ' + (Get-AzContext | Out-String))
+      Write-Verbose -Message ('TEC0005-StorageContext: ' + ($ReturnCode | Out-String))
     }
   }
-  until ($ReturnCode -eq 'Success')
+  while ($ReturnCode -eq 'Failure')
 }
 
