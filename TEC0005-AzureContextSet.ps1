@@ -40,12 +40,11 @@ workflow TEC0005-AzureContextSet
       $Result = DisConnect-AzAccount -ErrorAction SilentlyContinue
       $AzureAccount = Connect-AzAccount -ServicePrincipal -Credential $AzureAutomationCredential -TenantId $TenantId
       $AzContext = Set-AzContext -Subscription $SubscriptionName
-      $StorageAccount = Get-AzStorageAccount | Where-Object -FilterScript {$_.StorageAccountName -eq "$StorageAccountName"}
-      $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.StorageAccountName).Value[0]
       try
       {
-        
-      $StorageContext = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
+        $StorageAccount = Get-AzStorageAccount | Where-Object -FilterScript {$_.StorageAccountName -eq "$StorageAccountName"}
+        $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.StorageAccountName).Value[0]
+        $StorageContext = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
       }
       catch
       {
@@ -82,3 +81,4 @@ workflow TEC0005-AzureContextSet
   }
   until ($ReturnCode -eq 'Success')
 }
+
