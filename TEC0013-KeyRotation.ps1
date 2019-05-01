@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Regenerates key1 of a Storage Account and then updates the secret in Azure Key Vault. If the secret is not available in the Azure Key Vault, it will 
 # be created.
 # 
@@ -57,3 +57,4 @@ workflow TEC0013-KeyRotation
     Write-Verbose -Message ('TEC0013-KeyVaultSecretUpated: ' + ($Result | Out-String))
   }
 }
+

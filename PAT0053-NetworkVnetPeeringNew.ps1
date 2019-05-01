@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Creates a VNET peering between two VNETs. $Vnet1Name is the Core VNET and $Vnet2Name is the Use Case VNET. This is important because the
 # Peering is configured accordingly: $Vnet1 = -AllowForwardedTraffic -AllowGatewayTransit / Vnet2 = -AllowForwardedTraffic -UseRemoteGateways
 # 
@@ -124,3 +124,4 @@ workflow PAT0053-NetworkVnetPeeringNew
     }
   }
 }
+

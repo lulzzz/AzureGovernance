@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Setting the Azure context including the storage context for the core storage account. The context setting is attempted in an endless loop of suspend/resume 
 # of this runbook.
 #
@@ -37,7 +37,7 @@ workflow TEC0005-AzureContextSet
       $StorageAccountName = Get-AutomationVariable -Name VAR-AUTO-StorageAccountName
       $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser
       $TenantId = Get-AutomationVariable -Name VAR-AUTO-TenantId
-      $Result = DisConnect-AzAccount -ErrorAction SilentlyContinue
+      $Result = Disconnect-AzAccount -ErrorAction SilentlyContinue
       $AzureAccount = Connect-AzAccount -ServicePrincipal -Credential $AzureAutomationCredential -TenantId $TenantId -ErrorAction Stop
       $AzContext = Set-AzContext -Subscription $SubscriptionName -ErrorAction Stop
       try
@@ -81,4 +81,5 @@ workflow TEC0005-AzureContextSet
   }
   while ($ReturnCode -eq 'Failure')
 }
+
 

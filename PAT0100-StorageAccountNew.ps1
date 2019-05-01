@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Creates a Storage Account (e.g. felweutediag01s) in an existing Resource Group. Tags the Storage Accounts.
 # Configures Firewall - allow access from all Subnets in all VNETs as well as Azure Services.
 #
@@ -80,7 +80,6 @@ workflow PAT0100-StorageAccountNew
     #
     ###########################################################################################################################################################
     $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
-    $Result = DisConnect-AzAccount
     $AzureContext = Set-AzContext -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0100-AzureContextChanged: ' + ($AzureContext | Out-String))
 
@@ -184,3 +183,4 @@ workflow PAT0100-StorageAccountNew
   }
   Return $StorageAccountName
 }
+

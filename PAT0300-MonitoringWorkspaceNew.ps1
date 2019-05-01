@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Creates a Log Analytics Workspace (e.g. felweutecore01) in an existing Resource Group. Tags the created Workspace. 
 # Since Log Analytics is not available in all Regions there is a naming violations in certain regions. The name reflects in what region the Log Analytics
 # Workspace should be deployed, not where it actually is deployed. 
@@ -91,7 +91,6 @@ workflow PAT0300-MonitoringWorkspaceNew
     #
     ###########################################################################################################################################################
     $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
-    $Result = DisConnect-AzAccount
     $AzureContext = Set-AzContext -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0300-AzureContextChanged: ' + ($AzureContext | Out-String))
 
@@ -101,7 +100,7 @@ workflow PAT0300-MonitoringWorkspaceNew
     # Configure Workspace name
     #
     ###########################################################################################################################################################
-    $WorkspaceName = ($RegionCode + '-' + $SubscriptionCode + '-law-' + $WorkspaceNameIndividual + '-')                                                               # e.g. felweutecore01
+    $WorkspaceName = ($RegionCode + '-' + $SubscriptionCode + '-law-' + $CustomerShortCode + $WorkspaceNameIndividual + '-')                                                               # e.g. felweutecore01
     $WorkspaceExisting = Get-AzOperationalInsightsWorkspace `
     |                        Where-Object {$_.Name -like "$WorkspaceName*"} `
     |                        Sort-Object Name -Descending | Select-Object -First $True
@@ -170,3 +169,4 @@ workflow PAT0300-MonitoringWorkspaceNew
   }
   Return $WorkspaceName
 }
+

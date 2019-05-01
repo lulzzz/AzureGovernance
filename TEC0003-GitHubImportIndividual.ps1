@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Used to import an individual Runbook from GitHub into the Azure Automation Account in which TEC0003 is executed. 
 # The import overwrites existing Runbooks in the Azure Automation Account.
 # Runbooks are imported with verbose logging on, a description 'Imported from GitHub' and in a published state.
@@ -74,3 +74,4 @@ workflow TEC0003-GitHubImportIndividual
     Write-Verbose -Message ('TEC0003-RunbookImportedToAzureAutomation: ' + ($RunbookContent | Out-String))
   }
 }
+

@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Imports all the Runbooks from GitHub into Azure Automation. Prior to the import all Runbooks in the Azure Automation Account are deleted - except the 
 # ones with Webhooks.
 # This Runbook needs to be executed from the Automation Account to which the Runbooks are imported. 
@@ -141,3 +141,4 @@ workflow TEC0004-GitHubImportAll
     }
   }
 }
+

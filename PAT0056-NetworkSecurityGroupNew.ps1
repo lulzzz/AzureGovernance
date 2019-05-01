@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Creates default NSGs for the Frontend (e.g. weu-te-nsg-vnt01fe) and Backend (e.g. weu-te-nsg-vnt01fe) Subnets in the '-rsg-security-01' Resource Group. 
 # Adds the NSG to the Security Log Analytics Workspace (e.g. felweutesecurity01). Tags the NSGs.
 #
@@ -84,7 +84,6 @@ workflow PAT0056-NetworkSecurityGroupNew
     #
     ###########################################################################################################################################################
     $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
-    $Result = DisConnect-AzAccount
     $AzureContext = Set-AzContext -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0056-AzureContextChanged: ' + ($AzureContext | Out-String))
 
@@ -184,3 +183,4 @@ workflow PAT0056-NetworkSecurityGroupNew
   }
   Return $NsgNames
 }
+

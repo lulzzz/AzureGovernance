@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Creates a Resource Group (e.g. weu-te-rsg-core-01) with Tags. The counter in the name is determined based on the existing Resource Groups.
 # Assigns Contributor and Reader roles to the provided AD Security Groups. 
 # 
@@ -91,7 +91,6 @@ workflow PAT0010-AzureResourceGroupNew
     #
     ###########################################################################################################################################################
     $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
-    $Result = DisConnect-AzAccount
     $AzureContext = Set-AzContext -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0010-AzureContextChanged: ' + ($AzureContext | Out-String))
 
@@ -149,8 +148,9 @@ workflow PAT0010-AzureResourceGroupNew
     # Configure AD Groups as Contributor and Reader of the Resource Group
     #
     ###########################################################################################################################################################
-    $AzureAutomationCredential = Get-AutomationPSCredential -Name CRE-AUTO-AutomationUser 
-    $Result = Connect-AzureAD -TenantId $TenantId -Credential $AzureAutomationCredential
+    $AutomationConnection = Get-AutomationConnection -Name AzureRunAsConnection
+    $Result = Connect-AzureAD -TenantId $TenantId -ApplicationId $AutomationConnection.ApplicationId `
+                              -CertificateThumbprint $AutomationConnection.CertificateThumbprint
 
     # Assign Contributor Group
     $IamContributorGroup = Get-AzureAdGroup -SearchString $IamContributorGroupName -ErrorAction SilentlyContinue
@@ -200,3 +200,4 @@ workflow PAT0010-AzureResourceGroupNew
   }
   Return $ResourceGroupName
 }
+

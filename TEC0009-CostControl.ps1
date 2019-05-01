@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+ï»¿###############################################################################################################################################################
 # Compares the actual cost accumulated on a resource with the estimated cost value captured in the Tag of the Resource Group.
 # The resource data is retrieved based on the $StartDateTime and $EndDateTime, for the Resource Groups current data is retrieved. This means that Resources
 # in deleted Resource Groups are supplied, but not the Resource Group itself. 
@@ -155,7 +155,7 @@ workflow TEC0009-CostControl
     # Acquire token
     $AccessToken = Get-ADALAccessToken -AuthorityName $AdTenant -ClientId $AadApplicationId -ResourceId 'https://management.core.windows.net/' `
                                        -UserName $Credentials.UserName -Password $Credentials.GetNetworkCredential().password                                    # Requires password as string
- 
+Â 
     # Execute call to get Rate Cards - Select one of the subscriptions assume they all use the same Currency/Locale/RegionInfo ???
     $Filter = "OfferDurableId eq '$OfferDurableId' and Currency eq '$Currency' and Locale eq '$Locale' and RegionInfo eq '$RegionInfo'"
     $Subscription = Get-AzSubscription | Select-Object -First 1
@@ -174,7 +174,7 @@ workflow TEC0009-CostControl
       $RateCard | Where-Object {$RateCardsRequired -contains $RateCard.MeterID}
     }
 
-    Write-Verbose -Message ('TEC0009-RateCardsUsed: ' + $RateCardsMeters.Count) 
+    Write-Verbose -Message ('TEC0009-RateCardsUsed: ' + $RateCardsMeters.Count)Â 
 
 
     ###########################################################################################################################################################
@@ -208,7 +208,7 @@ workflow TEC0009-CostControl
         }
       } 
     }
-    Write-Verbose -Message ('TEC0009-CombinedUsageAndRateCardRecords: ' + $Combined.Count) 
+    Write-Verbose -Message ('TEC0009-CombinedUsageAndRateCardRecords: ' + $Combined.Count)Â 
 
 
     ###########################################################################################################################################################
@@ -237,7 +237,7 @@ workflow TEC0009-CostControl
                         MeterId = $Record.MeterId; `
       }    
     }
-    Write-Verbose -Message ('TEC0009-CombinedSummarizedUsageAndRateCardRecords: ' + $CombinedUsageTotals.Count) 
+    Write-Verbose -Message ('TEC0009-CombinedSummarizedUsageAndRateCardRecords: ' + $CombinedUsageTotals.Count)Â 
 
 
     ###########################################################################################################################################################
@@ -293,7 +293,7 @@ workflow TEC0009-CostControl
                         Tag = $CombinedUsageTotal.Tag; `
       }
     }
-    Write-Verbose -Message ('TEC0009-CombinedSummarizedUsageAndRateCardRecordsChf: ' + $CombinedUsageTotalsChf.Count) 
+    Write-Verbose -Message ('TEC0009-CombinedSummarizedUsageAndRateCardRecordsChf: ' + $CombinedUsageTotalsChf.Count)Â 
 
 
     ###########################################################################################################################################################
@@ -315,7 +315,7 @@ workflow TEC0009-CostControl
                         Tag = $Record.Tag; `
       }    
     }
-    Write-Verbose -Message ('TEC0009-RecordsToBeWrittenToLogAnalytics: ' + $FinalResult.Count) 
+    Write-Verbose -Message ('TEC0009-RecordsToBeWrittenToLogAnalytics: ' + $FinalResult.Count)Â 
 
 
     ###########################################################################################################################################################
@@ -378,3 +378,4 @@ workflow TEC0009-CostControl
     Write-Verbose -Message ('TEC0009-DataWritenToOms: End of process')  
   }  
 }
+

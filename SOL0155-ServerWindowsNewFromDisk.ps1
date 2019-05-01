@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Creates a VM from an existing Managed Disk. NIC is created, data disks need to be attached manually.
 # 
 # Output:         none
@@ -103,3 +103,4 @@ workflow SOL0155-ServerWindowsNewFromDisk
     Write-Verbose -Message ('SOL0155-VmCreated: ' + ($Vm | ConvertTo-Json))
   }
 }
+

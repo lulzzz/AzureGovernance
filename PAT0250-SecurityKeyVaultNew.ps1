@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Creates a Key Vault (e.g. weu-te-key-felkeyvault-01) in an existing Resource Group. Tags the Key Vault. 
 # Adds Key Vault to the corresponding Log Analytics Workspace (e.g. felweutesecurity01).
 # 
@@ -82,7 +82,6 @@ workflow PAT0250-SecurityKeyVaultNew
     #
     ###########################################################################################################################################################
     $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
-    $Result = DisConnect-AzAccount
     $AzureContext = Set-AzContext -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0250-AzureContextChanged: ' + ($AzureContext | Out-String))
 
@@ -180,3 +179,4 @@ workflow PAT0250-SecurityKeyVaultNew
   }
   Return $KeyVaultName
 }
+

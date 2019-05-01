@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Creates a default VNET (e.g. weu-te-vnt-01) in the '-rsg-network-01' Resource Group, IP ranges are retrieved from the Azure Table Ipam
 # Creates an empty Route Table for the Frontend Subnet (e.g. weu-te-rot-routetable-01). 
 # Connects the Subnets (weu-te-sub-vnt01-fe / weu-te-sub-vnt01-be) to the existing NSGs (weu-te-nsg-vnt01fe / weu-te-nsg-vnt01be).
@@ -120,7 +120,6 @@ workflow PAT0050-NetworkVnetNew
     #
     ###########################################################################################################################################################
     $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
-    $Result = DisConnect-AzAccount
     $AzureContext = Set-AzContext -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0050-AzureContextChanged: ' + ($AzureContext | Out-String))
 
@@ -232,3 +231,4 @@ workflow PAT0050-NetworkVnetNew
   }
   Return $VnetName
 }
+

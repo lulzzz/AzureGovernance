@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Exporting tags to an Excel document on the Core Storage Account. 
 # This is not working if the same tag is used with different cases, e.g. Test/test. This is because PowerShell is not case sensitive. 
 # Some Resource Types don't allow changes on the Tags if they are not running, this might block the execution of this script.  
@@ -206,3 +206,4 @@ workflow TEC0001-TagExport
   Remove-Item D:\Tags.csv
   Remove-Item D:\Tags.xlsx
 }
+

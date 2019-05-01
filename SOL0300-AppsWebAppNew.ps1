@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Creates a new App Service Plan and a Web App. Connects the Web App with a GitHub repository. Registers the Web App in AAD and
 # configures AAD Authentication/Authorization. 
 #
@@ -22,8 +22,8 @@ workflow SOL0300-AppsWebAppNew
 	(
     [Parameter(Mandatory=$false)][String] $GitHubRepo = '/fbodmer/felportal',
     [Parameter(Mandatory=$false)][String] $ResourceGroupName = 'weu-co-rsg-automation-01',
-    [Parameter(Mandatory=$false)][String] $AppServicePlanNameIndividual = 'portal-02',
-    [Parameter(Mandatory=$false)][String] $WebAppNameIndividual = 'portal-02',
+    [Parameter(Mandatory=$false)][String] $AppServicePlanNameIndividual = 'portal-01',
+    [Parameter(Mandatory=$false)][String] $WebAppNameIndividual = 'portal-01',
     [Parameter(Mandatory=$false)][String] $SubscriptionCode = 'co',
     [Parameter(Mandatory=$false)][String] $RegionName = 'West Europe',
     [Parameter(Mandatory=$false)][String] $RegionCode = 'weu'
@@ -76,7 +76,6 @@ workflow SOL0300-AppsWebAppNew
     #
     ###########################################################################################################################################################
     $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
-    $Result = DisConnect-AzAccount
     $AzureContext = Set-AzContext -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('SOL0300-AzureContextChanged: ' + ($AzureContext | Out-String))
 
@@ -118,7 +117,9 @@ workflow SOL0300-AppsWebAppNew
     #############################################################################################################################################################
     # Login to AAD
     $AzContext = Get-AzContext
-    $AzureAd = Connect-AzureAD -TenantId $AzContext.Tenant.Id -Credential $AzureAutomationCredential
+    $AutomationConnection = Get-AutomationConnection -Name AzureRunAsConnection
+    $AzureAd = Connect-AzureAD -TenantId $AzContext.Tenant.Id -ApplicationId $AutomationConnection.ApplicationId `
+                               -CertificateThumbprint $AutomationConnection.CertificateThumbprint
     
     # Parameters
     $SiteUri = ('https://' + $WebApp.DefaultHostName)
@@ -174,3 +175,4 @@ workflow SOL0300-AppsWebAppNew
 
   }
 }
+

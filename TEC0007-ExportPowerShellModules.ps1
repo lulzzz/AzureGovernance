@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Exports the PowerShell Modules as well as all the dependent modules to a PowerShell Repository on an Azure Files share in the Core Storage Account. 
 # The PowerShell Modules are exported from the Hybrid Runbook Worker where this Runbook is executed. 
 # For the following reasons this Runbook doesn't support execution on a Azure Automation Server:
@@ -89,7 +89,7 @@ workflow TEC0007-ExportPowerShellModules
       Find-Module -Name $Module.Name -RequiredVersion $Module.Version -IncludeDependencies -Repository PSGallery -ErrorAction SilentlyContinue -Verbose:$false
       $WORKFLOW:VerbosePreference = 'Continue'
     }
-�
+ 
     # Create a report
     $ModulesToExport = foreach ($Item in $Report)
     {
@@ -131,3 +131,4 @@ workflow TEC0007-ExportPowerShellModules
     }
   
 }
+

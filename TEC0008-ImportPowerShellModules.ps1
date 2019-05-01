@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+ï»¿###############################################################################################################################################################
 # Imports the PowerShell Modules from the PowerShell Repository on an Azure Files share in the Core Storage Account. The PowerShell Modules are imported to 
 # the Hybrid Runbook Worker where this Runbook is executed. Prior to the import all PowerShell Modules are deleted. This ensures that Modules no longer used
 # are removed. Some Modules can't be deleted because they haven't been installed using the Install-Module cmdlet, but that is intentional. These modules
@@ -83,30 +83,30 @@ workflow TEC0008-ImportPowerShellModules
     $Modules = Get-Module
     foreach ($Module in $Modules)
     {
-      Remove-Module $Module.Name -Force
+Â      Remove-Module $Module.Name -Force
     }
 
- 
+Â 
     ###########################################################################################################################################################
-    # 
+    #Â 
     # De-install all modules
     # The following modules in the following locations will not be de-installed: 
     # - C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules
-    # - C:\Program Files\Microsoft Monitoring Agent\Agent\AzureAutomation\7.2.13848.0
-    # - C:\Program Files\Microsoft Monitoring Agent\Agent\AzureAutomation\7.2.13848.0\HybridAgent\Modules
-    # - C:\Program Files\Microsoft Monitoring Agent\Agent\PowerShell\
+    #Â - C:\Program Files\Microsoft Monitoring Agent\Agent\AzureAutomation\7.2.13848.0
+    #Â - C:\Program Files\Microsoft Monitoring Agent\Agent\AzureAutomation\7.2.13848.0\HybridAgent\Modules
+    #Â - C:\Program Files\Microsoft Monitoring Agent\Agent\PowerShell\
     #
     ###########################################################################################################################################################
     $Modules = Get-Module -ListAvailable
     foreach ($Module in $Modules)
     {
-      Write-Verbose -Message ('TEC0007-Removing: ' + $Module.Name)
-      $Result = Uninstall-Module $Module.Name -Force -ErrorAction SilentlyContinue
+Â      Write-Verbose -Message ('TEC0007-Removing: ' + $Module.Name)
+Â      $Result = Uninstall-Module $Module.Name -Force -ErrorAction SilentlyContinue
     }
- 
+Â 
 
     ###########################################################################################################################################################
-    #
+  Â  #
     # Reset $env:PSModulePath
     # The following will be re-added automatically: C:\Users\<user>\Documents\WindowsPowerShell\Modules
     #
@@ -117,7 +117,7 @@ workflow TEC0008-ImportPowerShellModules
                                                    $_ -like 'C:\Program Files\WindowsPowerShell\Modules\'} `
                                    | ForEach-Object -Process {$PSmodulePath += $_}
      $env:PSmodulepath = $PSmodulePath -join(';')
- 
+Â 
 
     ###########################################################################################################################################################
     #
@@ -135,3 +135,4 @@ workflow TEC0008-ImportPowerShellModules
     $Result = Remove-Item 'C:\Program Files\WindowsPowerShell\Modules\AzureAutomationAuthoringToolkit' -Recurse -Force
   }
 }
+

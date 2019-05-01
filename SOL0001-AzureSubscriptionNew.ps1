@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Creates and configures a Subscription. Subscriptions with a shortcode 'co' are created as Hub Subscriptions, all other as Spoke Subscriptions.
 # A single Subscription can cover any of six Azure Regions. 
 # This baseline implementation can be enhanced by submitting additional Service Requests. 
@@ -132,11 +132,11 @@ workflow SOL0001-AzureSubscriptionNew
   #############################################################################################################################################################
   if ($WebhookData.RequestHeader -match $PortalUrl)
   {
-    Write-Verbose -Message ('SOL0011-Header: Header has required information')
+    Write-Verbose -Message ('SOL0001-Header: Header has required information')
   }
   else
   {
-    Write-Error -Message ('SOL0011-Header: Header does not contain required information')
+    Write-Error -Message ('SOL0001-Header: Header does not contain required information')
     return
   }
 
@@ -271,6 +271,11 @@ workflow SOL0001-AzureSubscriptionNew
     # Populate with NSG CSV and IPAM Table
     InlineScript
     {
+      $StorageAccountName = $Using:StorageAccountName
+      $StorageAccount = Get-AzStorageAccount | Where-Object -FilterScript {$_.StorageAccountName -eq "$StorageAccountName"}
+      $StorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $StorageAccount.ResourceGroupName -Name $StorageAccount.StorageAccountName).Value[0]
+      $StorageContext = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey  
+
       # Download Runbook NsgRuleSets.csv from GitHub
       $GitHubRepo = '/fbodmer/AzureGovernance'
       [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -296,22 +301,23 @@ workflow SOL0001-AzureSubscriptionNew
       $IpamContent = Import-Csv -Path D:\Ipam.csv
 
       # Create Azure Table for IPAM and load data
-      $Table = New-AzStorageTable -Name Ipam
+      $Table = New-AzStorageTable -Name Ipam -Context $StorageContext
       $Table = (Get-AzStorageTable -Name Ipam -Context $StorageContext).CloudTable
       foreach ($Entity in $IpamContent)
       {
         $Result = Add-AzTableRow -Table $Table -PartitionKey $Entity.PartitionKey -RowKey $Entity.RowKey `
-                                               -Property @{
-                                                             "IpAddress"=$Entity.IpAddress
-                                                             "IpAddressAssignment"=$Entity.IpAddressAssignment
-                                                             "SubnetIpRange"=$Entity.SubnetIpRange
-                                                             "SubnetName"=$Entity.SubnetName
-                                                             "VnetIpRange"=$Entity.VnetIpRange
-                                                             "VnetName"=$Entity.VnetName
-                                                           }
+                                                -Property @{
+                                                              "IpAddress"=$Entity.IpAddress
+                                                              "IpAddressAssignment"=$Entity.IpAddressAssignment
+                                                              "SubnetIpRange"=$Entity.SubnetIpRange
+                                                              "SubnetName"=$Entity.SubnetName
+                                                              "VnetIpRange"=$Entity.VnetIpRange
+                                                              "VnetName"=$Entity.VnetName
+                                                            }
       }
+
     }
-  
+
 
     #############################################################################################################################################################
     #
@@ -463,3 +469,4 @@ workflow SOL0001-AzureSubscriptionNew
     Write-Error -Message ('SOL0007-ConfirmationMailNotSent')
   }
 }
+

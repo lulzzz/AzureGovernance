@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Updates an NSG by applying the selected rule set retrieved from CSV on Files on core Storage Account.  
 #
 # Output:         'Success', 'Failure'
@@ -78,7 +78,6 @@ workflow PAT0058-NetworkSecurityGroupSet
     #
     ###########################################################################################################################################################
     $Subscription = Get-AzSubscription | Where-Object {$_.Name -match $SubscriptionCode} 
-    $Result = DisConnect-AzAccount
     $AzureContext = Set-AzContext -Subscription $Subscription.Name -Force
     Write-Verbose -Message ('PAT0058-AzureContextChanged: ' + ($AzureContext | Out-String))
 
@@ -168,3 +167,4 @@ workflow PAT0058-NetworkSecurityGroupSet
   }
   Return $Result
 }
+

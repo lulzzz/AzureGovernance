@@ -1,4 +1,4 @@
-###############################################################################################################################################################
+﻿###############################################################################################################################################################
 # Retrieving consumption details, formating the data and and writing to a Log Analytics instance.
 # Resource Groups without a 'Budget' Tag will throw an error.
 # 
@@ -139,7 +139,7 @@ workflow TEC0010-ExportUsageData
                                           Budget       = ''
                                        }
     }
-�
+ 
     foreach ($Item in $ResourceGroups) 
     {
       $Collection += [pscustomobject] @{
@@ -201,3 +201,4 @@ workflow TEC0010-ExportUsageData
     Write-Verbose -Message ('TEC0010-DataWritenToOms: End of process')  
   }  
 }
+
